@@ -8,6 +8,7 @@
     let prefetching = {}, next_abort = {}, url_map = {}, result_promise = null;
     // prefetches both of the next possible audio files
     // empty string means that the test is done if they choose that option
+    // TODO: a generic audio prefetch class per URL might be more reusable
     function prefetch(next) { // next = {-1: URL|"", 1: URL|""}
       next_abort = {};
       prefetching = next;
