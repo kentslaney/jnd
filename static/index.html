@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script type="text/javascript">
+    // https://en.wikipedia.org/wiki/Unicode_character_property#General_Category
+    // valid username characters: letters, number digits, number letters, 
+    //                            punctuation connectors, punctuation dashes
+    const username_re = /[^\p{L}\p{Nd}\p{Nl}\p{Pc}\p{Pd}]/u;
+    // time to wait before checking API for username availibility
+    // avoids unnecessary requests for partially typed values
+    const debounce_ms = 200;
+    // request_controller cancels earlier API requests if a new one is made
+    let request_controller = null, previous_username = null;
+    function apijson(response) {
+      if (!response.ok) {
+        throw Error(response.statusText);
+      }
+      return response.json()
+    }
+    function check_username() {
+      const input = document.getElementById("username").value;
+      const output = document.getElementById("username-status");
+      const submit = document.getElementById("submit");
+      // avoids checking on key up for the shift key, for example
+      if (input === previous_username) return;
+      previous_username = input;
+      let invalid;
+      if (input === "") {
+        output.innerText = "";
+        submit.disabled = true;
+      } else if (input.length > 512) {
+        output.innerText = "Too long";
+        submit.disabled = true;
+      } else if (invalid = input.match(username_re)) {
+        // specify "whitespace" for invisible error specifics
+        const char_type = invalid[0].match(/\p{Zs}/u) ? "whitespace " : "";
+        output.innerText = `Invalid {char_type}character "{invalid[0]}"`;
+        submit.disabled = true;
+      } else {
+        output.innerText = "";
+        submit.disabled = false;
+        if (request_controller !== null) {
+          request_controller.abort();
+        }
+        request_controller = new AbortController();
+        const signal = request_controller.signal;
+        setTimeout(() => {
+          if (signal.aborted) return;
+          output.innerText = "checking availability...";
+          const query = encodeURIComponent(input);
+          request = fetch(`/jnd/api/username-available?v={query}`, { signal })
+            .then(apijson).then((data) => {
+              if (data) {
+                output.innerText = "";
+                submit.disabled = false;
+              } else {
+                output.innerText = "Username not available";
+                submit.disabled = true;
+              }
+            }).catch((error) => {
+              if (!signal.aborted) {
+                output.innerText = "Couldn't reach the server";
+              }
+            });
+        }, debounce_ms);
+      }
+    }
+    function claim_username() {
+      const input = document.getElementById("username").value;
+      const output = document.getElementById("username-status");
+      const submit = document.getElementById("submit");
+      if (request_controller !== null) {
+        request_controller.abort();
+      }
+      const signal = request_controller.signal;
+      submit.disabled = true;
+      const query = encodeURIComponent(input);
+      request = fetch(`/jnd/api/set-username?v={query}`, { signal })
+        .then(apijson).then((data) => {
+          if (data) {
+            window.location.href = "/jnd/pitch.html";
+            submit.disabled = false;
+          } else {
+            output.innerText = "Username not available";
+          }
+        }).catch((error) => {
+          if (!signal.aborted) {
+            output.innerText = "Couldn't reach the server";
+            submit.disabled = false;
+          }
+        })
+    }
+    // catches autofilled values
+    window.addEventListener("load", check_username);
+  </script>
+  <div id="content">
+    <div id="instructions">
+      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam
+      condimentum sodales turpis, congue congue felis condimentum in. Nam nec
+      bibendum nunc. Quisque placerat dui justo, id placerat nunc consectetur
+      vel. Nulla luctus ligula id dictum viverra. Curabitur volutpat dui non
+      ipsum tristique, ac tincidunt sem fringilla.  Praesent in leo at nibh
+      ultricies ultrices in eu velit. Donec ullamcorper condimentum nulla, et
+      rhoncus nunc euismod ac. Donec molestie porttitor posuere. Nulla pretium
+      turpis vitae felis molestie tristique. Vivamus eget sollicitudin magna.
+      Morbi tincidunt tortor ultricies purus bibendum, non iaculis tellus
+      tincidunt.  Maecenas porta nulla ex, vel varius elit porttitor sed. Proin
+      luctus, nunc fermentum auctor rhoncus, erat magna malesuada lorem, eu
+      fermentum risus ex sit amet odio.
+    </div>
+    <form action="javascript:;" onsubmit="claim_username()" class="userbox"
+          autocomplete="off">
+      <!-- lpignore is for lastpass because they ignore autocomplete -->
+      <input type="text" id="username" onkeyup="check_username()"
+             placeholder="Enter a username" data-lpignore="true" /><!--
+      --><input type="submit" id="submit" value="start pitch test"
+                disabled />
+      <span id="username-status"></span>
+    </form>
+  </div>
+  <style>
+    #instructions {
+      max-width: 32rem;
+      margin: auto;
+      margin-bottom: 2rem;
+    }
+    .userbox {
+      text-align: center;
+    }
+    #username-status {
+      display: block;
+      margin-top: 0.5rem;
+    }
+    #submit {
+      border-radius: 0px 3px 3px 0px;
+      border: 1px solid #c4c4cc;
+      padding: 4px;
+    }
+    #username {
+      border-radius: 3px 0px 0px 3px;
+      border: 1px solid #c4c4cc;
+      border-width: 1px 0px 1px 1px;
+      outline: 0px;
+      padding: 4px;
+    }
+    #username:focus {
+      border-color: #007aff;
+    }
+    #content {
+      /* 33% of the div is positioned at 33% of the viewport height */
+      transform: translateY(max(0px, calc(33vh - 33%)));
+      color: rgba(0, 0, 0, 0.87);
+    }
+    #username-status:empty::before {
+      content: "\a0";
+    }
+  </style>
+</html>
