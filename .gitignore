@@ -2,6 +2,7 @@ nohup.out
 /secret_key
 /static/pitches
 /pitch_jnd_files.tsv
+/experiments.db
 
 # Python byte-compiled / optimized / DLL files
 __pycache__/

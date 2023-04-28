@@ -134,7 +134,7 @@
       abort_prefetch(sign);
       const url = prefetching[sign];
       result_promise = require_retry(() => {
-        return fetch(`/jnd/api/pitch/result?sign={sign}`)
+        return fetch(`/jnd/api/pitch/result?sign=${sign}`)
            .then(apijson)
            .then((data) => prefetch(data));
       })

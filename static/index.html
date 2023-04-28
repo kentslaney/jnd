@@ -35,7 +35,7 @@
       } else if (invalid = input.match(username_re)) {
         // specify "whitespace" for invisible error specifics
         const char_type = invalid[0].match(/\p{Zs}/u) ? "whitespace " : "";
-        output.innerText = `Invalid {char_type}character "{invalid[0]}"`;
+        output.innerText = `Invalid ${char_type}character "${invalid[0]}"`;
         submit.disabled = true;
       } else {
         output.innerText = "";
@@ -49,7 +49,7 @@
           if (signal.aborted) return;
           output.innerText = "checking availability...";
           const query = encodeURIComponent(input);
-          request = fetch(`/jnd/api/username-available?v={query}`, { signal })
+          request = fetch(`/jnd/api/username-available?v=${query}`, { signal })
             .then(apijson).then((data) => {
               if (data) {
                 output.innerText = "";
@@ -73,10 +73,11 @@
       if (request_controller !== null) {
         request_controller.abort();
       }
+      request_controller = new AbortController();
       const signal = request_controller.signal;
       submit.disabled = true;
       const query = encodeURIComponent(input);
-      request = fetch(`/jnd/api/set-username?v={query}`, { signal })
+      request = fetch(`/jnd/api/set-username?v=${query}`, { signal })
         .then(apijson).then((data) => {
           if (data) {
             window.location.href = "/jnd/pitch.html";
