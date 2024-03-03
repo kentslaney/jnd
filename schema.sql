@@ -20,3 +20,21 @@ CREATE TABLE pitch_results (
   FOREIGN KEY(subject) REFERENCES users(id),
   FOREIGN KEY(trial) REFERENCES pitch_trials(id)
 );
+CREATE TABLE quick_trials (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+  snr INTEGER,
+  level_number INTEGER, /* one indexed */
+  trial_number INTEGER, /* in the current level, which trial number */
+  filename TEXT, /* basename, not path */
+  answer TEXT,
+  active BOOLEAN NOT NULL CHECK(active IN(0,1)) /* version control */
+);
+CREATE TABLE quick_results (
+  subject INTEGER,
+  trial INTEGER,
+  reply_filename TEXT,
+  reply_asr TEXT,
+  FOREIGN KEY(subject) REFERENCES users(id),
+  FOREIGN KEY(trial) REFERENCES quick_trials(id)
+);
+

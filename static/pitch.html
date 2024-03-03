@@ -2,143 +2,14 @@
 <html lang="en-US">
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script type="text/javascript" src="audio.js"></script>
   <script type="text/javascript">
-    // prefetching keeps either the remote URL or blob URL for each
-    // url_map maps from remote URLs to blob URLs
-    let prefetching = {}, next_abort = {}, url_map = {}, result_promise = null;
-    // prefetches both of the next possible audio files
-    // empty string means that the test is done if they choose that option
-    // TODO: a generic audio prefetch class per URL might be more reusable
-    function prefetch(next) { // next = {-1: URL|"", 1: URL|""}
-      next_abort = {};
-      prefetching = next;
-      // deallocate prefetched resources that aren't reused
-      // TODO: this can deallocate the currently playing audio
-      const keep = new Set(Object.values(next));
-      for (let i in url_map) {
-        if (!keep.has(i)) {
-          URL.revokeObjectURL(i);
-          delete url_map[i];
-        }
-      }
-      for (let i of [-1, 1]) {
-        if (next[i] === "") continue;
-        if (next[i] in url_map) {
-          prefetching[i] = url_map[next[i]];
-          continue;
-        }
-        let abort = next_abort[i] = new AbortController();
-        fetch(next[i], { signal: abort.signal })
-          .then(response => response.arrayBuffer())
-          .then(((i, url) => buffer => {
-            const blob = new Blob([buffer], { type: "audio/wav" });
-            url_map[url] = prefetching[i] = URL.createObjectURL(blob);
-          })(i, next[i]));
-      }
+    function start() {
+      return fetch("/jnd/api/pitch/start")
     }
-    function abort_prefetch(sign) {
-      // TODO: this shouldn't abort prefetch calls for reused files
-      //       fold this into the prefetch function
-      for (let i of Object.values(next_abort)) i.abort();
-    }
-    function apijson(response) {
-      if (!response.ok) {
-        throw Error(response.statusText);
-      }
-      return response.json();
-    }
-    window.addEventListener("load", () => {
-      result_promise = require_retry(() => fetch("/jnd/api/pitch/start")
-        .then(response => {
-          if (response.status == 400) { // landed without cookies
-            window.location.href = "/jnd";
-          }
-          return response;
-        }).then(apijson).then(data => {
-          let { cur, next } = data;
-          if (cur === "") { // clicked back after done.html
-            window.location.href = "/jnd";
-          } else {
-             play(cur);
-             prefetch(next);
-          }
-        }));
-      sync_result();
-    })
-    function play(url) {
-      // TODO: deallocate replaced blob URL
-      if (url === "") {
-        sync_result().then(() => window.location.href = "/jnd/done.html");
-      } else {
-        playback_debug(url);
-        const audio = document.getElementById("playing");
-        audio.src = url;
-        audio.play();
-      }
-    }
-    function playback_debug(url) {
-      const debug = document.getElementById("filename-debug");
-      debug.innerText = get_real_url(url);
-    }
-    function get_real_url(uri) {
-      const url = Object.entries(url_map).find(v => v[1] === uri);
-      return url === undefined ? uri : url[0]
-    }
-    // returns a promise for the current result_promise to finish
-    function sync_result() {
-      const answers = document.getElementsByClassName("answer");
-      const waiting = document.getElementById("waiting");
-   
-      if (result_promise !== null) {
-        const o = {};
-        return Promise.race([result_promise, o]).then(async function(v) {
-          if (v === o) {
-            for (let i of answers) i.disabled = true;
-            waiting.classList.remove("hidden");
-            await result_promise;
-            for (let i of answers) i.disabled = false;
-            waiting.classList.add("hidden");
-          }
-        });
-      }
-    }
-    // asks the user to rety f until it returns a promise that resolves
-    const pass = () => {};
-    let retry = pass;
-    function require_retry(f) {
-      const failed = document.getElementById("failed");
-      const retry_button = document.getElementById("retry");
-   
-      return f().catch(async function(e) {
-        failed.classList.remove("hidden");
-        await new Promise((resolve, reject) => {
-          retry_button.disabled = false;
-          const call_retry = retry_button.onclick = retry = () => {
-            retry_button.disabled = true;
-            retry = pass;
-            f().then(() => {
-              resolve();
-            }).catch(e => {
-              retry_button.disabled = false;
-              retry = call_retry;
-            })
-          }
-        })
-        failed.classList.add("hidden");
-      });
-    }
-    async function result(sign) {
-      retry();
-      await sync_result();
-   
-      abort_prefetch(sign);
-      const url = prefetching[sign];
-      result_promise = require_retry(() => {
-        return fetch(`/jnd/api/pitch/result?sign=${sign}`)
-           .then(apijson)
-           .then((data) => prefetch(data));
-      })
-      play(url);
+
+    function submit(key) {
+      return fetch(`/jnd/api/pitch/result?sign=${key}`)
     }
   </script>
   <div id="filename-debug"></div>

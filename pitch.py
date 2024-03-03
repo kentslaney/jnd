@@ -1,9 +1,6 @@
 import os.path, json, random
 from flask import Blueprint, request, session, abort
-from utils import Database, HeadlessDB, relpath
-
-pitch_bp = Blueprint("pitch", __name__, url_prefix="/pitch")
-db = HeadlessDB(relpath("experiments.db"), ["PRAGMA foreign_keys = ON"])
+from utils import Database, relpath, DatabaseBP
 
 pitch_levels = 8
 pitch_files = relpath("pitch_jnd_files.tsv")
@@ -12,7 +9,7 @@ class PitchDB(Database):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         with self.app.app_context():
-            assert pitch_levels <= db.queryone(
+            assert pitch_levels - 1 <= self.queryone(
                 "SELECT MAX(level_number) FROM pitch_trials WHERE active=1")[0]
 
     def db_init_hook(self):
@@ -27,21 +24,13 @@ class PitchDB(Database):
              "(f0, level_number, trial_number, filename, answer, active) "
              "values (?, ?, ?, ?, ?, 1)"), experiments)
         con.commit()
-        # cur.execute(
-        #     "INSERT INTO pitch_trials "
-        #     "(f0, level_number, trial_number, filename, answer, active) "
-        #     "SELECT 0, MAX(level_number) + 1, 0, 'cap.wav', 1, 1 "
-        #     "FROM pitch_trials")
-        # con.commit()
-        with open(relpath("static", "pitches", "cap.wav"), "ab"):
-            pass
 
 pitch_keys = ("id", "f0", "level_number", "trial_number", "filename", "answer")
 pitch_trial_dict = lambda v: dict(zip(pitch_keys, v))
 pitch_url = lambda v: v and "/jnd/pitches/" + v
 pitch_done = [0, 0, 0, 1, "", 1]
 
-def pitch_next(cur, left, sign=None):
+def pitch_next(db, cur, left, sign=None):
     if cur["trial_number"] == 0:
         left -= 1
         session["left"] = json.dumps(left)
@@ -74,8 +63,7 @@ def pitch_next(cur, left, sign=None):
     session["pos"], session["neg"] = json.dumps(pos), json.dumps(neg)
     return {-1: pitch_url(neg["filename"]), 1: pitch_url(pos["filename"])}
 
-@pitch_bp.route("/start")
-def pitch_start():
+def pitch_start(db):
     if "user" not in session:
         abort(400)
     elif "cur" in session:
@@ -87,11 +75,11 @@ def pitch_start():
                        "trial_number=0 AND level_number=0"))
     cur = pitch_trial_dict(random.choice(cur))
     session["cur"], session["left"] = json.dumps(cur), json.dumps(pitch_levels)
-    return json.dumps({"cur": pitch_url(cur["filename"]),
-                       "next": pitch_next(cur, json.loads(session["left"]))})
+    return json.dumps({
+        "cur": pitch_url(cur["filename"]),
+        "next": pitch_next(db, cur, json.loads(session["left"]))})
 
-@pitch_bp.route("/result")
-def pitch_result():
+def pitch_result(db):
     sign = request.args.get("sign", None)
     if sign not in ("-1", "1") or "user" not in session:
         abort(400)
@@ -108,6 +96,17 @@ def pitch_result():
                (session["user"], cur["id"], sign, left))
 
     update = session["pos" if sign == 1 else "neg"]
-    next_urls = pitch_next(json.loads(update), left, sign)
+    next_urls = pitch_next(db, json.loads(update), left, sign)
     session["cur"] = update
     return json.dumps(next_urls)
+
+class PitchBP(DatabaseBP):
+    def __init__(self, db, name="pitch", url_prefix="/pitch"):
+        Blueprint.__init__(self, name, __name__, url_prefix=url_prefix)
+        self._route_db("/start")(pitch_start)
+        self._route_db("/result")(pitch_result)
+        self._bind_db = db
+
+    @property
+    def _blueprint_db(self):
+        return self._bind_db()

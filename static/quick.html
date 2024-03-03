@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script type="text/javascript" src="audio.js"></script>
+  <script type="text/javascript">
+    function start() {
+      return fetch("/jnd/api/quick/start")
+    }
+
+    if (!navigator.mediaDevices.getUserMedia) {
+      console.error("media devices API unsupported")
+    }
+
+    const constraints = { audio: true };
+    let chunks = [];
+
+    let onSuccess = function (stream) {
+      const mediaRecorder = new MediaRecorder(stream);
+
+      const record = document.getElementById("record")
+      const start = function () {
+        mediaRecorder.start();
+        record.setAttribute("value", "stop")
+        record.onclick = stop;
+      }
+
+      const stop = function () {
+        mediaRecorder.stop();
+        record.setAttribute("value", "start")
+        record.onclick = start;
+      }
+
+      record.onclick = start
+
+      mediaRecorder.onstop = function (e) {
+        const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
+        chunks = [];
+        var data = new FormData()
+        data.append('file', blob , 'file')
+        result(1, (k) =>
+          fetch(`/jnd/api/quick/result`, {method: "POST", body: data}))
+      }
+
+      mediaRecorder.ondataavailable = function (e) {
+        chunks.push(e.data);
+      };
+    }
+
+    navigator.mediaDevices.getUserMedia(constraints).then(onSuccess);
+  </script>
+  <div id="filename-debug"></div>
+  <audio controls id="playing"></audio>
+  <br>
+  <input type="button" class="answer" disabled value="start" id="record" />
+  <div id="waiting">Waiting for server...</div>
+  <div id="failed" class="hidden">
+    Failed to connect to server
+    <br>
+    <input type="button" id="retry" value="retry" />
+  </div>
+  <style>
+    .hidden {
+      display: none;
+    }
+    #filename-debug:not(:empty)::before {
+      content: 'Currently playing ';
+    }
+  </style>
+</html>

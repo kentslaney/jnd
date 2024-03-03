@@ -5,10 +5,21 @@ def relpath(*args):
 import sqlite3, os.path
 from flask import g
 
-class HeadlessDB:
-    def __init__(self, database, init=[]):
+class Database:
+    # creates database if it doesn't exist; set up by schema
+    def __init__(self, app, database, schema, init=[]):
         self.database = os.path.abspath(database)
         self.init = init
+        if not os.path.exists(database):
+            with app.app_context():
+                db = self.get()
+                with app.open_resource(schema, mode='r') as f:
+                    db.cursor().executescript(f.read())
+                db.commit()
+                self.db_init_hook()
+
+        self.app = app
+        app.teardown_appcontext(lambda e: self.close())
 
     # returns a database connection
     def get(self):
@@ -48,17 +59,22 @@ class HeadlessDB:
     def db_init_hook(self):
         pass
 
-class Database(HeadlessDB):
-    # creates database if it doesn't exist; set up by schema
-    def __init__(self, app, database, schema, init=[]):
-        super().__init__(database, init)
-        if not os.path.exists(database):
-            with app.app_context():
-                db = self.get()
-                with app.open_resource(schema, mode='r') as f:
-                    db.cursor().executescript(f.read())
-                db.commit()
-                self.db_init_hook()
+from flask import Blueprint
+import functools
 
-        self.app = app
-        app.teardown_appcontext(lambda e: self.close())
+class DatabaseBP(Blueprint):
+    def __init__(self, db_path, schema_path, name, url_prefix=None):
+        super().__init__(name, __name__, url_prefix=url_prefix)
+        self._db_paths = (db_path, schema_path)
+        self.record(lambda setup: self._bind_db(setup.app))
+
+    def _route_db(self, *a, **kw):
+        def wrapper(f):
+            @functools.wraps(f)
+            def wrapped():
+                return f(self._blueprint_db)
+            return self.route(*a, **kw)(wrapped)
+        return wrapper
+
+    def _bind_db(self, app):
+        self._blueprint_db = None

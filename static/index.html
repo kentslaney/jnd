@@ -80,7 +80,8 @@
       request = fetch(`/jnd/api/set-username?v=${query}`, { signal })
         .then(apijson).then((data) => {
           if (data) {
-            window.location.href = "/jnd/pitch.html";
+            // window.location.href = "/jnd/pitch.html";
+            window.location.href = "/jnd/quick.html";
             submit.disabled = false;
           } else {
             output.innerText = "Username not available";
@@ -115,7 +116,9 @@
       <!-- lpignore is for lastpass because they ignore autocomplete -->
       <input type="text" id="username" onkeyup="check_username()"
              placeholder="Enter a username" data-lpignore="true" /><!--
-      --><input type="submit" id="submit" value="start pitch test"
+      --><!--<input type="submit" id="submit" value="start pitch test"
+                disabled />
+      --><input type="submit" id="submit" value="start hearing test"
                 disabled />
       <span id="username-status"></span>
     </form>
