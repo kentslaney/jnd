@@ -85,7 +85,8 @@ def quick_result(db):
             if option in reply:
                 correct += 1
     session["cur"] = session["q"]
-    return json.dumps({1: quick_next(db, cur, correct == 0)})
+    return json.dumps({1: quick_next(
+        db, json.loads(session["cur"]), correct == 0)})
 
 class QuickBP(DatabaseBP):
     def __init__(self, db, name="quick", url_prefix="/quick"):
