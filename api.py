@@ -19,6 +19,7 @@ class APIBlueprint(DatabaseBP):
         self.register_blueprint(QuickBP(db))
         self._route_db("/username-available")(username_available)
         self._route_db("/set-username")(set_username)
+        self._route_db("/authorized", methods=["POST"])(authorized)
 
     def _bind_db(self, app):
         super()._bind_db(app)
@@ -67,4 +68,7 @@ def set_username(db):
 
     session.clear()
     session["user"] = uid
+    return json.dumps(True)
+
+def authorized(db):
     return json.dumps(True)

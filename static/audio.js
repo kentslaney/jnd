@@ -46,7 +46,7 @@ function prefetch(next) { // next = {-1: URL|"", [0: cur URL,] 1: URL|""}
 
 function apijson(response) {
   if (!response.ok) {
-    throw Error(response.statusText);
+    return Promise.reject(response)
   }
   return response.json();
 }
