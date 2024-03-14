@@ -1,4 +1,4 @@
-import json, sqlite3, unicodedata
+import json, sqlite3, unicodedata, uuid
 from flask import request, session
 from utils import relpath, DatabaseBP
 from pitch import PitchDB, PitchBP
@@ -46,10 +46,15 @@ def username_rules(value: str):
             return False
     return True
 
+always_accept = {"test"}
+
 def username_available(db):
     checking = request.args.get("v")
     if checking is None or not username_rules(checking):
         return json.dumps(False)
+
+    if checking in always_accept:
+        return json.dumps(True)
 
     return json.dumps(not db.queryone(
         "SELECT EXISTS(SELECT 1 FROM users WHERE username=? LIMIT 1)",
@@ -59,6 +64,9 @@ def set_username(db):
     name = request.args.get("v")
     if name is None or not username_rules(name):
         return json.dumps(False)
+
+    if name in always_accept:
+        name = f"{name}-{uuid.uuid4()}"
 
     try:
         uid = db.execute("INSERT INTO users (username, ip) VALUES (?, ?)",
