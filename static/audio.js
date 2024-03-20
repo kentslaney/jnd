@@ -3,7 +3,6 @@
 let prefetching = {}, next_abort = {}, url_map = {}, result_promise = null;
 // prefetches both of the next possible audio files
 // empty string means that the test is done if they choose that option
-// TODO: a generic audio prefetch class per URL might be more reusable
 function prefetch(next) { // next = {-1: URL|"", [0: cur URL,] 1: URL|""}
   let keep_abort = {}
   // deallocate prefetched resources that aren't reused
@@ -66,7 +65,8 @@ window.addEventListener("load", () => {
           play(cur);
           prefetch(Object.assign(next, {0: cur}));
       }
-    }));
+      return Promise.resolve(data);
+    }).then(initialize));
   sync_result();
 })
 
@@ -75,6 +75,9 @@ function play(url) {
     sync_result().then(() => window.location.href = "/jnd/done.html");
   } else {
     playback_debug(url);
+    // the audio could be played via js, but if the file hasn't preloaded by now
+    // the assumption is that the built in streaming will do better with retry
+    // and bitrate adjustment and events
     const audio = document.getElementById("playing");
     audio.src = url;
     audio.play();
@@ -157,3 +160,6 @@ function start() {
 function submit(key) {
   throw new Error("unimplemented")
 }
+
+function initialize(data) {}
+

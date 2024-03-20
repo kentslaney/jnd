@@ -37,4 +37,3 @@ CREATE TABLE quick_results (
   FOREIGN KEY(subject) REFERENCES users(id),
   FOREIGN KEY(trial) REFERENCES quick_trials(id)
 );
-

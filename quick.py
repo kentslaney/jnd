@@ -39,9 +39,9 @@ def quick_next(db, cur, done = False):
     if left == 0 or done:
         q = quick_done
     else:
-        q = db.queryall(("SELECT * FROM quick_trials WHERE active=1 "
-                        "AND level_number=?"),
-                        (cur["level_number"] + 1,))
+        q = db.queryall(
+            "SELECT * FROM quick_trials WHERE active=1 AND level_number=?",
+            (cur["level_number"] + 1,))
         if len(q) == 0:
             abort(400)
         q = random.choice(q)
@@ -55,13 +55,15 @@ def quick_start(db):
     elif "cur" in session:
         cur, q = map(lambda x: quick_url(json.loads(x)["filename"]), (
             session["cur"], session["q"]))
-        return json.dumps({"cur": cur, "next": {1: q}})
-    cur = db.queryall(("SELECT * FROM quick_trials WHERE active=1 AND "
-                       "level_number=1"))
+        return json.dumps({
+            "cur": cur, "next": {1: q}, "name": session["username"]})
+    cur = db.queryall(
+        "SELECT * FROM quick_trials WHERE active=1 AND level_number=1")
     cur = quick_trial_dict(random.choice(cur))
     session["cur"], session["left"] = json.dumps(cur), json.dumps(quick_levels)
     return json.dumps({
-        "cur": quick_url(cur["filename"]), "next": {1: quick_next(db, cur)}})
+        "cur": quick_url(cur["filename"]), "next": {1: quick_next(db, cur)},
+        "name": session["username"]})
 
 def quick_result(db):
     if "user" not in session or "file" not in request.files:

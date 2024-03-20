@@ -1,0 +1,290 @@
+/* element size config */
+:root {
+  font-size: 1em; /* scales rem */
+
+  --title-size: 3rem;
+  --description-size: 2rem;
+  --info-size: 1rem;
+
+  --header-padding-scale: 0.3;
+  --description-padding-scale: 1;
+
+  --symbol-height: 4rem;
+  --playback-padding-scale: 0.4;
+  --playback-border-scale: 0.1;
+  --stop-scale: 0.8;
+
+  --next-audio-padding: 0.8rem;
+}
+/* end of element size config */
+
+/* https://identity.stanford.edu/design-elements */
+:root {
+  --primary: #8C1515;
+  --light: #CBA8A6;
+  --dark: #820000;
+  --secondary: #53565A;
+  --soft-grey: #ABABA9;
+  --active: #008566;
+  --disabled: var(--soft-grey);
+  --interact: #67AFD2;
+
+  --title: 'Source Sans 3', sans-serif;
+  --compact: 'Roboto', sans-serif;
+}
+
+/* TODO: media queries */
+
+:root {
+  --padding-value: calc(var(--playback-padding-scale) * var(--symbol-height));
+  --border-value: calc(var(--playback-border-scale) * var(--symbol-height));
+  --container-size: calc(var(--padding-value) * 2 + var(--symbol-height));
+  --header-padding: calc(var(--title-size) * var(--header-padding-scale));
+  --description-padding: calc(
+      var(--description-size) * var(--description-padding-scale));
+  --sound-size: calc(var(--container-size) / 12);
+
+}
+
+.hidden {
+  display: none;
+}
+#filename-debug:not(:empty)::before {
+}
+.answer {
+  display: none;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  display: flex;
+  justify-content: space-between;
+  flex-direction: column;
+}
+#header {
+  background: var(--primary);
+  color: white;
+  display: flex;
+  flex-wrap: wrap;
+  padding: var(--header-padding);
+}
+#footer {
+  height: calc(var(--title-size) + var(--header-padding) * 2);
+  background: var(--secondary);
+}
+
+#org > span, #username > span {
+  display: inline-block;
+  white-space: nowrap;
+}
+#project {
+  flex-grow: 1;
+  text-align: center;
+}
+#org, #project {
+  font-family: var(--title);
+  font-size: var(--title-size);
+}
+#username {
+  font-family: var(--compact);
+  display: inline-block;
+  align-self: end;
+  text-align: right;
+  font-size: var(--info-size);
+}
+#username > span {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.center-wrapper {
+  display: flex;
+}
+.offset-description, .spacer {
+  flex: 1 1 0;
+  padding: 0 var(--description-padding);
+}
+.offset-description {
+  text-align: right;
+  font-family: var(--compact);
+  display: inline-block;
+  align-self: center;
+}
+.center-wrapper {
+  font-size: var(--description-size);
+}
+
+#next-wrapper {
+  display: flex;
+}
+#next-spacer-left { flex-grow: 4; }
+#next-spacer-right { flex-grow: 1; }
+#next-audio {
+  font-family: var(--compact);
+  color: white;
+  background: var(--interact);
+  font-size: var(--description-size);
+  padding: var(--next-audio-padding);
+  border-radius: var(--next-audio-padding);
+  display: inline-block;
+  cursor: pointer;
+  border-width: 0;
+}
+#next-audio[disabled] { background: var(--disabled); }
+#next-audio > span {
+  font-size: var(--description-size);
+  vertical-align: text-top;
+}
+
+#audio-description, #recording-description {
+  color: var(--light);
+}
+#recording-wrapper.active #recording-description,
+    #playback-wrapper.active #audio-description {
+  color: var(--dark);
+}
+#recording-wrapper span::before {
+  color: var(--soft-grey);
+  font-size: var(--container-size);
+  content: "mic_off";
+}
+#recording-wrapper.active span::before {
+  color: var(--active);
+  content: "mic";
+}
+#sound-wrapper {
+  position: relative;
+}
+.sound-bar {
+  --sound-color: var(--soft-grey);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+.sound-bar.active {
+  --sound-color: var(--active);
+}
+.sound-bar::before {
+  --s: calc(var(--sound-size) * var(--r));
+  content: "";
+  display: block;
+  height: var(--s);
+  width: var(--s);
+  margin-left: 50%;
+  margin-top: calc(var(--sound-size) * 2);
+  transform: translate(-50%, -50%);
+  border-radius: 100%;
+  border-style: solid;
+  border-color: var(--sound-color) transparent transparent transparent;
+  border-width: var(--sound-size);
+}
+.sound-bar.first { --r: 3; }
+.sound-bar.second { --r: 6; }
+.sound-bar.third { --r: 9; }
+
+/* playback icon CSS */
+:root { --playback-color: var(--soft-grey); }
+.playback-interface.playing { --playback-color: var(--active); }
+.playback-interface.play { --playback-color: var(--interact); }
+
+.playback-interface {
+  display: inline-block;
+  border-radius: 100%;
+  border: var(--border-value) solid var(--playback-color);
+  cursor: pointer;
+  width: calc(var(--container-size) + var(--border-value) * 2);
+  height: calc(var(--container-size) + var(--border-value) * 2);
+  background: transparent;
+  padding: 0;
+}
+.playback-interface::before, .playback-interface::after {
+  content: "";
+  display: block;
+}
+.playback-interface.play::before, .playback-interface.playing::before {
+  --h: calc(var(--symbol-height) / 2);
+  --w: calc(var(--symbol-height) * sqrt(3) / 2);
+  border-color: transparent var(--playback-color);
+  border-style: solid;
+  border-width: var(--h) 0px var(--h) var(--w);
+
+  --tri-offset: calc((sqrt(3) - 3 / 2) * var(--symbol-height) / 2);
+  margin-top: var(--padding-value);
+  margin-bottom: var(--padding-value);
+  margin-left: calc(var(--padding-value) + var(--symbol-height) / 4);
+  margin-right: calc(var(--padding-value) - var(--tri-offset));
+}
+
+.playback-interface.pause::before {
+  --w: calc(var(--symbol-height) / 3);
+  width: var(--w);
+  height: var(--symbol-height);
+  border-width: 0 var(--w);
+  border-color: var(--playback-color);
+  border-style: solid;
+  margin: var(--padding-value) auto;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.playback-interface.load::before, .playback-interface.load::after {
+  --w: calc(var(--padding-value) + var(--symbol-height) * 1 / 3);
+  width: calc(var(--symbol-height) / 3);
+  height: calc(var(--symbol-height) / 3);
+  border-radius: 100%;
+  background: var(--playback-color);
+  margin: calc(var(--symbol-height) / 3) var(--w);
+  animation: 2s infinite linear rotate;
+}
+.playback-interface.load::before {
+  margin-top: var(--padding-value);
+  transform-origin: center calc(var(--symbol-height) / 2);
+}
+.playback-interface.load::after {
+  margin-bottom: var(--padding-value);
+  transform-origin: center calc(var(--symbol-height) / -6);
+}
+
+.playback-interface.stop::before {
+  --size: calc(var(--symbol-height) * var(--stop-scale));
+  --inset: calc((var(--symbol-height) - var(--size)) / 2);
+  --top: calc(var(--padding-value) + var(--inset));
+  width: var(--size);
+  height: var(--size);
+  background: var(--playback-color);
+  margin: var(--top) auto;
+}
+
+.playback-interface.done::before {
+  --size: calc(var(--symbol-height) - var(--border-value) / 2);
+  --inset: var(--border-value);
+  --top: calc(var(--padding-value) + var(--inset) - var(--size) * 1.2);
+  width: calc(var(--size) / 2);
+  height: var(--size);
+  margin: var(--top) auto;
+  transform: rotate(45deg);
+  border-color: var(--playback-color);
+  border-style: solid;
+  border-width: 0 var(--inset) var(--inset) 0;
+}
+
+.playback-interface.error::before {
+  --size: calc(var(--symbol-height) * var(--stop-scale));
+  --inset: calc((var(--symbol-height) - var(--size)) / 2);
+  --top: calc(var(--padding-value) + var(--inset));
+  --line: calc(var(--size) - 3 * var(--border-value));
+  --v: calc(var(--border-value) * 1.5);
+  width: var(--border-value);
+  height: var(--v);
+  margin: var(--top) auto;
+  border-color: var(--playback-color);
+  border-style: solid;
+  border-width: var(--line) 0 var(--v) 0;
+}
+

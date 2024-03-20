@@ -75,7 +75,7 @@ def set_username(db):
         return json.dumps(False)
 
     session.clear()
-    session["user"] = uid
+    session["user"], session["username"] = uid, name
     return json.dumps(True)
 
 def authorized(db):
