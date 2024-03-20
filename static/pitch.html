@@ -4,21 +4,58 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script type="text/javascript" src="audio.js"></script>
   <script type="text/javascript">
-    function start() {
-      return fetch("/jnd/api/pitch/start")
+    class Audio extends AudioPrefetch {
+      start() {
+        return fetch("/jnd/api/pitch/start")
+      }
+
+      submit(key) {
+        return fetch(`/jnd/api/pitch/result?sign=${key}`)
+      }
+
+      initialize(data) {
+        this.waiter = document.getElementById("waiting");
+        this.answers = document.getElementsByClassName("answer");
+        this.fails = document.getElementById("failed");
+        this.retry_button = document.getElementById("retry");
+      }
+
+      waiting() {
+        for (const i of this.answers) i.disabled = true;
+        this.waiter.classList.remove("hidden");
+      }
+
+      waited() {
+        for (const i of this.answers) i.disabled = false;
+        this.waiter.classList.add("hidden");
+      }
+
+      failed() {
+        this.fails.classList.remove("hidden");
+      }
+
+      success() {
+        this.fails.classList.add("hidden");
+      }
+
+      retries(f) {
+        this.retry_button.onclick = f;
+      }
+
+      retrying(still) {
+        this.retry_button.disabled = still;
+      }
     }
 
-    function submit(key) {
-      return fetch(`/jnd/api/pitch/result?sign=${key}`)
-    }
+    let audio = Audio()
   </script>
   <div id="filename-debug"></div>
   <audio controls id="playing"></audio>
   <br>
   The pitch went...
-  <input type="button" class="answer" disabled onclick="result(1)"
+  <input type="button" class="answer" disabled onclick="audio.result(1)"
          value="up" />
-  <input type="button" class="answer" disabled onclick="result(-1)"
+  <input type="button" class="answer" disabled onclick="audio.result(-1)"
          value="down" />
   <div id="waiting">Waiting for server...</div>
   <div id="failed" class="hidden">

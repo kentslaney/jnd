@@ -1,11 +1,15 @@
-function start() {
-  return fetch("/jnd/api/quick/start")
+class Audio extends AudioPrefetch {
+  function start() {
+    return fetch("/jnd/api/quick/start")
+  }
+
+  function initialize(data) {
+    let { name } = data;
+    document.getElementById("username").firstElementChild.innerText = name;
+  }
 }
 
-function initialize(data) {
-  let { name } = data;
-  document.getElementById("username").firstElementChild.innerText = name;
-}
+let audio = Audio();
 
 if (!navigator.mediaDevices.getUserMedia) {
   console.error("media devices API unsupported")
@@ -56,7 +60,7 @@ let onSuccess = function (stream) {
     chunks = [];
     var data = new FormData()
     data.append('file', blob , 'file')
-    result(1, (k) =>
+    audio.result(1, (k) =>
       fetch(`/jnd/api/quick/result`, {method: "POST", body: data}))
   }
 
