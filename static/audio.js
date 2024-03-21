@@ -8,12 +8,13 @@ function apijson(response) {
 const pass = () => {};
 
 class AudioPrefetch {
-  static audioQuery = "#playing"
-  static debugQuery = "#filename-debug"
+  audioQuery = "#playing"
+  debugQuery = "#filename-debug"
 
   constructor() {
     window.addEventListener("load", () => {
-      this.result_promise = this.require_retry(() => this.start()
+      this.initialize()
+      this.#result_promise = this.require_retry(() => this.start()
         .then(response => {
           if (response.status == 400) { // landed without cookies
             window.location.href = "/jnd";
@@ -28,7 +29,7 @@ class AudioPrefetch {
               this.prefetch(Object.assign(next, {0: cur}));
           }
           return Promise.resolve(data);
-        }).then(this.initialize));
+        }).then((data) => this.load.call(this, data)));
       this.sync_result();
     })
   }
@@ -45,38 +46,38 @@ class AudioPrefetch {
     let keep_abort = {}
     // deallocate prefetched resources that aren't reused
     const keep = new Set(Object.values(next));
-    for (const i in this.url_map) {
+    for (const i in this.#url_map) {
       if (!keep.has(i)) {
         URL.revokeObjectURL(i);
-        delete this.url_map[i];
+        delete this.#url_map[i];
       }
     }
-    for (const i in this.next_abort) {
-      if (keep.has(this.prefetching[i])) {
+    for (const i in this.#next_abort) {
+      if (keep.has(this.#prefetching[i])) {
         // find key in next with the value that matches next[i]
         for (const [k, v] of Object.entries(next)) {
-          if (v === this.prefetching[i]) {
-            keep_abort[k] = this.next_abort[i]
+          if (v === this.#prefetching[i]) {
+            keep_abort[k] = this.#next_abort[i]
           }
         }
       } else {
-        this.next_abort[i].abort()
+        this.#next_abort[i].abort()
       }
     }
-    this.next_abort = Object.assign({}, keep_abort);
-    this.prefetching = next;
+    this.#next_abort = Object.assign({}, keep_abort);
+    this.#prefetching = next;
     for (const i in next) {
-      if (next[i] in this.url_map) {
-        this.prefetching[i] = this.url_map[next[i]];
+      if (next[i] in this.#url_map) {
+        this.#prefetching[i] = this.#url_map[next[i]];
         continue;
       }
       if (next[i] === "" || i in keep_abort || i === 0) continue;
-      let abort = this.next_abort[i] = new AbortController();
+      let abort = this.#next_abort[i] = new AbortController();
       fetch(next[i], { signal: abort.signal })
         .then(response => response.arrayBuffer())
         .then(((i, url) => buffer => {
           const blob = new Blob([buffer], { type: "audio/wav" });
-          this.url_map[url] = this.prefetching[i] = URL.createObjectURL(blob);
+          this.#url_map[url] = this.#prefetching[i] = URL.createObjectURL(blob);
         })(i, next[i]));
     }
   }
@@ -88,7 +89,10 @@ class AudioPrefetch {
       this.playback_debug(url);
       const audio = document.querySelector(this.audioQuery);
       audio.src = url;
-      audio.play();
+      audio.play().catch(e => {
+        console.error(e);
+        this.ready();
+      });
     }
   }
 
@@ -98,19 +102,22 @@ class AudioPrefetch {
   }
 
   get_real_url(uri) {
-    const url = Object.entries(this.url_map).find(v => v[1] === uri);
+    const url = Object.entries(this.#url_map).find(v => v[1] === uri);
     return url === undefined ? uri : url[0]
   }
 
   // returns a promise for the current result_promise to finish
   sync_result() {
-    if (this.result_promise !== null) {
+    if (this.#result_promise !== null) {
       const o = {};
-      return Promise.race([this.result_promise, o]).then(async function(v) {
+      const waiting = () => this.waiting.call(this);
+      const waited = () => this.waited.call(this);
+      let result = this.#result_promise;
+      return Promise.race([result, o]).then(async function(v) {
         if (v === o) {
-          this.waiting()
-          await this.result_promise;
-          this.waited()
+          waiting()
+          await result;
+          waited()
         }
       });
     }
@@ -119,33 +126,34 @@ class AudioPrefetch {
   // asks the user to rety f until it returns a promise that resolves
   #retry = pass;
   require_retry(f) {
+    let that = this;
     return f().catch(async function(e) {
       console.error(e)
-      this.failed()
+      that.failed.call(that)
       await new Promise((resolve, reject) => {
-        this.retrying(false)
-        const call_retry = this.retry = () => {
-          this.retrying(true)
-          this.retry = pass;
+        that.retrying.call(that, false)
+        const call_retry = that.#retry = () => {
+          that.retrying.call(that, true)
+          that.#retry = pass;
           f().then(() => {
             resolve();
           }).catch(e => {
-            this.retrying(false)
-            this.retry = call_retry;
+            that.retrying.call(that, false)
+            that.#retry = call_retry;
           })
         }
-        this.retries(call_retry)
+        that.retries.call(that, call_retry)
       })
-      this.success()
+      that.success()
     });
   }
 
   async result(key, f=undefined) {
-    this.retry();
+    this.#retry();
     await this.sync_result();
 
-    const url = this.prefetching[key];
-    this.result_promise = this.require_retry(() => {
+    const url = this.#prefetching[key];
+    this.#result_promise = this.require_retry(() => {
       return (f === undefined ? this.submit(key) : f(key))
           .then(apijson)
           .then((data) => this.prefetch(Object.assign(data, {0: url})));
@@ -155,11 +163,15 @@ class AudioPrefetch {
 
   start() { throw new Error("unimplemented") }
   submit(key) { throw new Error("unimplemented") }
-  initialize(data) {}
+  initialize() {}
+  load(data) {}
   waiting() {}
   waited() {}
   failed() {}
   success() {}
   retries(f) {}
   retrying(still) {}
+  ready() {}
+  // TODO: canplaythrough
+  // https://developer.mozilla.org/en-US/docs/Web/HTML/Element/audio
 }

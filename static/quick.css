@@ -188,8 +188,6 @@ body {
 
 /* playback icon CSS */
 :root { --playback-color: var(--soft-grey); }
-.playback-interface.playing { --playback-color: var(--active); }
-.playback-interface.play { --playback-color: var(--interact); }
 
 .playback-interface {
   display: inline-block;
@@ -205,7 +203,7 @@ body {
   content: "";
   display: block;
 }
-.playback-interface.play::before, .playback-interface.playing::before {
+.playback-interface.play::before {
   --h: calc(var(--symbol-height) / 2);
   --w: calc(var(--symbol-height) * sqrt(3) / 2);
   border-color: transparent var(--playback-color);

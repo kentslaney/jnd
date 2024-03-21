@@ -1,15 +1,16 @@
+// TODO: auto record option
 class Audio extends AudioPrefetch {
-  function start() {
+  start() {
     return fetch("/jnd/api/quick/start")
   }
 
-  function initialize(data) {
+  load(data) {
     let { name } = data;
     document.getElementById("username").firstElementChild.innerText = name;
   }
 }
 
-let audio = Audio();
+let audio = new Audio();
 
 if (!navigator.mediaDevices.getUserMedia) {
   console.error("media devices API unsupported")
@@ -32,6 +33,7 @@ window.addEventListener("load", () => {
       sounds[i].classList.remove("active")
     }
   }
+  // TODO: volume meter
   // https://developer.mozilla.org/en-US/docs/Web/API/AnalyserNode/getByteFrequencyData
   // https://codepen.io/huooo/pen/xJNPOL
   volume(1)
@@ -60,7 +62,7 @@ let onSuccess = function (stream) {
     chunks = [];
     var data = new FormData()
     data.append('file', blob , 'file')
-    audio.result(1, (k) =>
+    audio.result(1, k =>
       fetch(`/jnd/api/quick/result`, {method: "POST", body: data}))
   }
 
