@@ -73,6 +73,7 @@ body {
 #footer {
   height: calc(var(--title-size) + var(--header-padding) * 2);
   background: var(--secondary);
+  color: white;
 }
 
 #org > span, #username > span {

@@ -37,7 +37,6 @@ function resetPlaybackButton(button, ...add) {
   }
 }
 
-// TODO: autoplay success
 class Audio extends AudioPrefetch {
   constructor() {
     super("#playing")
@@ -68,6 +67,13 @@ class Audio extends AudioPrefetch {
 
   ready() {
     this.pause()
+  }
+
+  result(key, f=undefined) {
+    super.result(key, k => f(k).then(data => {
+      // TODO: check if backlogged
+      return data
+    }));
   }
 
   retries(f) {
@@ -116,40 +122,15 @@ class Recording {
     this.#chunks.push(e.data)
   }
 
-  // TODO: start uploading audio stream as it's recorded
+  // TODO: start uploading audio stream as it's recorded?
+  //       it would interfere with the ability to rerecord so unclear
   blob() {
     return new Blob(this.#chunks, { type: this.#mediaRecorder.mimeType });
   }
 }
 
 class Recorder {
-  #soundBars = [".sound-bar.first", ".sound-bar.second", ".sound-bar.third"];
-  volumeBars(v) {
-    if (document.readyState !== "complete") {
-      window.addEventListener("load", e => this.volumeBars(v), {passive: true});
-      return
-    }
-
-    this.#soundBars = this.#soundBars.map(x => document.querySelector(x))
-    this.volumeBars = v => { // v in {0, 1, 2, 3}
-      console.assert(0 <= v && v <= this.#soundBars.length
-        && v == Math.trunc(v));
-      v = Math.min(Math.trunc(v * (sounds.length + 1)), sounds.length)
-      for(var i = 0; i < v; i++) {
-        sounds[i].classList.add("active")
-      }
-      for(; i < sounds.length; i++) {
-        sounds[i].classList.remove("active")
-      }
-    }
-  }
-
-  #mic
   constructor() {
-    new LoadQueue().add(() => {
-      findButtons(this)
-      this.#mic = document.getElementById("sound-wrapper")
-    })
     if (!navigator.mediaDevices.getUserMedia) {
       console.error("media devices API unsupported")
     }
@@ -166,7 +147,7 @@ class Recorder {
   onSuccess(stream) {
     this.#mediaRecorder = new MediaRecorder(stream);
     this.#mediaRecorder.onstop = () => this.#stopped.call(this)
-    this.#mediaRecorder.ondataavailable = e => this.recieve.call(this, e)
+    this.#mediaRecorder.ondataavailable = e => this.recieve(e)
   }
 
   #recording
@@ -177,7 +158,6 @@ class Recorder {
   start() {
     this.#stopnt()
     this.#mediaRecorder.start(); // TODO catch err?
-    this.#mic.classList.add("active")
   }
 
   #stopping
@@ -186,7 +166,6 @@ class Recorder {
 
   stop() {
     this.#stopnt()
-    this.#mic.classList.remove("active")
     this.#mediaRecorder.stop();
     let that = this;
     return new Promise((resolve, reject) => {
@@ -212,10 +191,92 @@ class Recorder {
   }
 }
 
-class InteractiveRecorder extends Recorder {
+// https://github.com/mdn/webaudio-examples
+class MeteredRecorder extends Recorder {
+  #audioCtx
+  #analyser
+  #bins
+  #buffer
+  initialize() {
+    this.#audioCtx = new AudioContext();
+    this.#analyser = this.#audioCtx.createAnalyser();
+    this.#analyser.minDecibels = -90;
+    this.#analyser.maxDecibels = -10;
+    this.#analyser.smoothingTimeConstant = 0.85;
+    this.#analyser.fftSize = 256;
+    this.#bins = this.#analyser.frequencyBinCount;
+    this.#buffer = new Uint8Array(this.#bins);
+  }
+
+  onSuccess(stream) {
+    this.initialize()
+    super.onSuccess(stream)
+    const source = this.#audioCtx.createMediaStreamSource(stream);
+    source.connect(this.#analyser)
+    this.visualize()
+    // echo playback:
+    //this.#analyser.connect(this.#audioCtx.destination);
+  }
+
+  #soundBars = [".sound-bar.first", ".sound-bar.second", ".sound-bar.third"];
+  volumeBars(v) {
+    if (document.readyState !== "complete") {
+      window.addEventListener("load", e => this.volumeBars(v), {passive: true});
+      return
+    }
+
+    this.#soundBars = this.#soundBars.map(x => document.querySelector(x))
+    this.volumeBars = v => { // v in {0, 1, 2, 3}
+      console.assert(0 <= v && v <= this.#soundBars.length
+        && v == Math.trunc(v));
+      for(var i = 0; i < v; i++) {
+        this.#soundBars[i].classList.add("active")
+      }
+      for(; i < this.#soundBars.length; i++) {
+        this.#soundBars[i].classList.remove("active")
+      }
+    }
+  }
+
+  rms() {
+    let total = 0;
+    for (let i of this.#buffer) {
+      total += Math.sqrt(i / 255)
+    }
+    return Math.pow(total / this.#bins, 2)
+  }
+
+  visualize() {
+    requestAnimationFrame(() => this.visualize())
+    this.#analyser.getByteFrequencyData(this.#buffer);
+    this.volume(Math.log(this.rms()));
+  }
+
+  #cutoffs = [-8, -6, -4]
+  volume(v) {
+    this.debug(v)
+    for (var i = 0; i < this.#cutoffs.length; i++) {
+      if (v < this.#cutoffs[i]){
+        break
+      }
+    }
+    this.volumeBars(i)
+  }
+
+  debug(v) {
+    //document.getElementById("footer").innerText = v;
+  }
+}
+
+class InteractiveRecorder extends MeteredRecorder {
   #audio
+  #mic
   constructor(audio) {
     super()
+    new LoadQueue().add(() => {
+      findButtons(this)
+      this.#mic = document.getElementById("sound-wrapper")
+    })
     this.#audio = audio
     const f = audio.initialize
     let that = this
@@ -225,6 +286,16 @@ class InteractiveRecorder extends Recorder {
     }
   }
 
+  start() {
+    this.#mic.classList.add("active")
+    return super.start()
+  }
+
+  stop() {
+    this.#mic.classList.remove("active")
+    return super.stop()
+  }
+
   async complete() {
     if (this.state === "recording") {
       await this.stop().then(() => this.complete())
@@ -232,6 +303,7 @@ class InteractiveRecorder extends Recorder {
     }
     this.nextButton.disabled = true;
     await this.#audio.result(1, k => this.upload(`/jnd/api/quick/result`));
+    // TODO: switch activation row
     this.#audio.play()
   }
 
@@ -255,7 +327,7 @@ class InteractiveRecorder extends Recorder {
   }
 
   ready() {
-    // TODO switch activation row
+    // TODO: switch activation row
     if (this.autostart()) {
       this.activate()
     } else {

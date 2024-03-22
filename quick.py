@@ -81,15 +81,20 @@ def quick_result(db):
         "INSERT INTO quick_results "
         "(subject, trial, reply_filename, reply_asr) VALUES (?, ?, ?, ?)",
         (session["user"], cur["id"], fname, reply))
+    session["cur"] = session["q"]
+    return json.dumps({1: quick_next(
+        db, json.loads(session["cur"]),
+        completion_condition(reply, cur["answer"]))})
+
+# delayed by one level because of preloading
+def completion_condition(reply, answer):
     reply = set(reply.split(" "))
     correct = 0
-    for options in cur["answer"].split(","):
+    for options in answer.split(","):
         for option in options.split("/"):
             if option in reply:
                 correct += 1
-    session["cur"] = session["q"]
-    return json.dumps({1: quick_next(
-        db, json.loads(session["cur"]), correct == 0)})
+    return correct == 0
 
 class QuickBP(DatabaseBP):
     def __init__(self, db, name="quick", url_prefix="/quick"):

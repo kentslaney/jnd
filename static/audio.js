@@ -71,7 +71,11 @@ class AudioPrefetch {
         }
         return Promise.resolve(data);
       }).then(a => q.wait.call(q, a)).then(data => {
-        this.src(this.#prefetching[0]);
+        this.src(data["cur"]);
+        // TODO: canplaythrough
+        // https://developer.mozilla.org/en-US/docs/Web/HTML/Element/audio
+        // using the prefetch url to stream on load ends up choppy as is
+        //this.src(this.#prefetching[0]);
         return Promise.resolve(data)
       }).then(data => this.load.call(this, data)));
     q.add(this.sync_result)
@@ -129,7 +133,7 @@ class AudioPrefetch {
     if (url === "") {
       this.sync_result().then(() => window.location.href = "/jnd/done.html");
     } else {
-      this.playback_debug(url); // TODO: comment out for prod
+      this.playback_debug(url); // TODO: comment out for prod (probably?)
       this.audio.src = url;
       this.audio.play().catch(e => {
         console.error(e);
@@ -157,9 +161,12 @@ class AudioPrefetch {
       let result = this.#result_promise;
       return Promise.race([result, o]).then(async function(v) {
         if (v === o) {
-          waiting()
-          await result;
-          waited()
+          try {
+            waiting()
+            await result;
+          } finally {
+            waited()
+          }
         }
       });
     }
@@ -215,6 +222,4 @@ class AudioPrefetch {
   redeemed() {}
   ready() {}
   debug(url) {}
-  // TODO: canplaythrough
-  // https://developer.mozilla.org/en-US/docs/Web/HTML/Element/audio
 }
