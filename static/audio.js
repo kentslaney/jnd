@@ -7,31 +7,74 @@ function apijson(response) {
 
 const pass = () => {};
 
-class AudioPrefetch {
-  audioQuery = "#playing"
-  debugQuery = "#filename-debug"
+class LoadQueue {
+  #q = []
+  #v = []
+  #that
+  #loaded
+  constructor(that) {
+    this.#that = that
+    this.loaded = document.readyState === "complete"
+    if (!this.loaded) {
+      let t = this
+      window.addEventListener("load", () => this.load.call(t), {passive: true});
+    }
+  }
 
-  constructor() {
-    window.addEventListener("load", () => {
-      this.initialize()
-      this.#result_promise = this.require_retry(() => this.start()
-        .then(response => {
-          if (response.status == 400) { // landed without cookies
-            window.location.href = "/jnd";
-          }
-          return response;
-        }).then(apijson).then(data => {
-          let { cur, next } = data;
-          if (cur === "") { // clicked back after done.html
-            window.location.href = "/jnd";
-          } else {
-              this.play(cur);
-              this.prefetch(Object.assign(next, {0: cur}));
-          }
-          return Promise.resolve(data);
-        }).then((data) => this.load.call(this, data)));
-      this.sync_result();
+  load() {
+    for (let i of this.#q) i();
+    for (let j of this.#v) j();
+    this.loaded = true;
+  }
+
+  add(f, arr) {
+    const g = r => r.call(this.#that, f.call(this.#that))
+    arr = arr === undefined ? this.#q : arr;
+    return new Promise((resolve, reject) => {
+      if (this.#loaded) g(resolve);
+      else arr.push(() => g(resolve))
     })
+  }
+
+  // wait resolves after functions in q from add
+  async wait(arg) {
+    return this.add(() => arg, this.#v)
+  }
+}
+
+class AudioPrefetch {
+  audio;
+  constructor(audio) {
+    let q = new LoadQueue(this)
+
+    q.add(() => {
+      this.audio = audio
+      if (typeof this.audio === 'string') {
+        this.audio = document.querySelector(audio);
+      }
+
+      this.initialize()
+    })
+
+    this.#result_promise = this.require_retry(() => this.start()
+      .then(response => {
+        if (response.status == 400) { // landed without cookies
+          window.location.href = "/jnd";
+        }
+        return response;
+      }).then(apijson).then(data => {
+        let { cur, next } = data;
+        if (cur === "") { // clicked back after done.html
+          window.location.href = "/jnd";
+        } else {
+            this.prefetch(Object.assign({0: cur}, next));
+        }
+        return Promise.resolve(data);
+      }).then(a => q.wait.call(q, a)).then(data => {
+        this.src(this.#prefetching[0]);
+        return Promise.resolve(data)
+      }).then(data => this.load.call(this, data)));
+    q.add(this.sync_result)
   }
 
   // prefetching keeps either the remote URL or blob URL for each
@@ -82,14 +125,13 @@ class AudioPrefetch {
     }
   }
 
-  play(url) {
+  src(url) {
     if (url === "") {
       this.sync_result().then(() => window.location.href = "/jnd/done.html");
     } else {
-      this.playback_debug(url);
-      const audio = document.querySelector(this.audioQuery);
-      audio.src = url;
-      audio.play().catch(e => {
+      this.playback_debug(url); // TODO: comment out for prod
+      this.audio.src = url;
+      this.audio.play().catch(e => {
         console.error(e);
         this.ready();
       });
@@ -98,7 +140,7 @@ class AudioPrefetch {
 
   playback_debug(url) {
     const debug = document.querySelector(this.debugQuery);
-    debug.innerText = this.get_real_url(url);
+    this.debug(this.get_real_url(url));
   }
 
   get_real_url(uri) {
@@ -144,7 +186,7 @@ class AudioPrefetch {
         }
         that.retries.call(that, call_retry)
       })
-      that.success()
+      that.redeemed()
     });
   }
 
@@ -158,7 +200,7 @@ class AudioPrefetch {
           .then(apijson)
           .then((data) => this.prefetch(Object.assign(data, {0: url})));
     })
-    this.play(url);
+    this.src(url);
   }
 
   start() { throw new Error("unimplemented") }
@@ -168,10 +210,11 @@ class AudioPrefetch {
   waiting() {}
   waited() {}
   failed() {}
-  success() {}
   retries(f) {}
   retrying(still) {}
+  redeemed() {}
   ready() {}
+  debug(url) {}
   // TODO: canplaythrough
   // https://developer.mozilla.org/en-US/docs/Web/HTML/Element/audio
 }

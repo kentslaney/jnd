@@ -37,7 +37,7 @@ class APIBlueprint(DatabaseBP):
                 f.write(secret)
                 app.secret_key = secret
 
-username_blocks = ("L", "Nd", "Nl", "Pc", "Pd")
+username_blocks = ("L", "Nd", "Nl", "Pc", "Pd", "Zs")
 def username_rules(value: str):
     if not 0 < len(value) <= 512:
         return False

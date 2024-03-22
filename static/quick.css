@@ -28,6 +28,7 @@
   --active: #008566;
   --disabled: var(--soft-grey);
   --interact: #67AFD2;
+  --record: #E50808;
 
   --title: 'Source Sans 3', sans-serif;
   --compact: 'Roboto', sans-serif;
@@ -132,7 +133,10 @@ body {
   cursor: pointer;
   border-width: 0;
 }
-#next-audio[disabled] { background: var(--disabled); }
+#next-audio[disabled] {
+  background: var(--disabled);
+  cursor: inherit;
+}
 #next-audio > span {
   font-size: var(--description-size);
   vertical-align: text-top;
@@ -150,7 +154,7 @@ body {
   font-size: var(--container-size);
   content: "mic_off";
 }
-#recording-wrapper.active span::before {
+#sound-wrapper.active span::before {
   color: var(--active);
   content: "mic";
 }
@@ -159,22 +163,24 @@ body {
 }
 .sound-bar {
   --sound-color: var(--soft-grey);
+  --sound-source: 48.5%;
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
 }
-.sound-bar.active {
-  --sound-color: var(--active);
+#sound-wrapper.active .sound-bar {
+  --sound-source: 50%;
 }
+.sound-bar.active { --sound-color: var(--active); }
 .sound-bar::before {
   --s: calc(var(--sound-size) * var(--r));
   content: "";
   display: block;
   height: var(--s);
   width: var(--s);
-  margin-left: 50%;
+  margin-left: var(--sound-source);
   margin-top: calc(var(--sound-size) * 2);
   transform: translate(-50%, -50%);
   border-radius: 100%;
@@ -188,6 +194,8 @@ body {
 
 /* playback icon CSS */
 :root { --playback-color: var(--soft-grey); }
+/* .playback-interface.playable { --playback-color: var(--active); } */
+.playback-interface.play { --playback-color: var(--interact); }
 
 .playback-interface {
   display: inline-block;
@@ -198,12 +206,13 @@ body {
   height: calc(var(--container-size) + var(--border-value) * 2);
   background: transparent;
   padding: 0;
+  overflow: hidden;
 }
 .playback-interface::before, .playback-interface::after {
   content: "";
   display: block;
 }
-.playback-interface.play::before {
+.playback-interface.play::before, .playback-interface.playable::before {
   --h: calc(var(--symbol-height) / 2);
   --w: calc(var(--symbol-height) * sqrt(3) / 2);
   border-color: transparent var(--playback-color);
@@ -249,7 +258,8 @@ body {
   transform-origin: center calc(var(--symbol-height) / -6);
 }
 
-.playback-interface.stop::before {
+.playback-interface.record { --playback-color: var(--record); }
+.playback-interface.stop::before, .playback-interface.record::before {
   --size: calc(var(--symbol-height) * var(--stop-scale));
   --inset: calc((var(--symbol-height) - var(--size)) / 2);
   --top: calc(var(--padding-value) + var(--inset));

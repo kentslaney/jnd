@@ -1,6 +1,7 @@
 import os, os.path, json, random
 from flask import Blueprint, request, session, abort
 from utils import Database, relpath, DatabaseBP
+from werkzeug.wrappers import Response
 
 quick_levels = 6
 quick_files = relpath("all_spin_index.csv")
@@ -43,7 +44,7 @@ def quick_next(db, cur, done = False):
             "SELECT * FROM quick_trials WHERE active=1 AND level_number=?",
             (cur["level_number"] + 1,))
         if len(q) == 0:
-            abort(400)
+            abort(Reponse("out of levels", code=400))
         q = random.choice(q)
     q = quick_trial_dict(q)
     session["q"] = json.dumps(q)

@@ -5,6 +5,10 @@
   <script type="text/javascript" src="audio.js"></script>
   <script type="text/javascript">
     class Audio extends AudioPrefetch {
+      constructor() {
+        super("#playing")
+      }
+
       start() {
         return fetch("/jnd/api/pitch/start")
       }
@@ -18,6 +22,7 @@
         this.answers = document.getElementsByClassName("answer");
         this.fails = document.getElementById("failed");
         this.retry_button = document.getElementById("retry");
+        this.filename_debug = document.getElementById("filename-debug");
       }
 
       waiting() {
@@ -34,7 +39,7 @@
         this.fails.classList.remove("hidden");
       }
 
-      success() {
+      redeemed() {
         this.fails.classList.add("hidden");
       }
 
@@ -44,6 +49,10 @@
 
       retrying(still) {
         this.retry_button.disabled = still;
+      }
+
+      debug(url) {
+        this.filename_debug.innerText(url);
       }
     }
 

@@ -6,7 +6,7 @@
     // https://en.wikipedia.org/wiki/Unicode_character_property#General_Category
     // valid username characters: letters, number digits, number letters, 
     //                            punctuation connectors, punctuation dashes
-    const username_re = /[^\p{L}\p{Nd}\p{Nl}\p{Pc}\p{Pd}]/u;
+    const username_re = /[^\p{L}\p{Nd}\p{Nl}\p{Pc}\p{Pd}\p{Zs}]/u;
     // time to wait before checking API for username availibility
     // avoids unnecessary requests for partially typed values
     const debounce_ms = 200;
