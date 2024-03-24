@@ -69,9 +69,11 @@ class Audio extends AudioPrefetch {
     this.pause()
   }
 
+  #backlogged = 0;
   result(key, f=undefined) {
+    this.#backlogged += 1;
     super.result(key, k => f(k).then(data => {
-      // TODO: check if backlogged
+      this.#backlogged -= 1;
       return data
     }));
   }
@@ -81,9 +83,10 @@ class Audio extends AudioPrefetch {
   }
 
   retrying(still) {
-    // TODO: only display while blocked
-    resetPlaybackButton(this.playbackButton, still ? "load" : "error");
-    this.nextButton.disabled = still
+    if (this.#backlogged === 2) {
+      resetPlaybackButton(this.playbackButton, still ? "load" : "error");
+      this.nextButton.disabled = still
+    }
   }
 
   redeemed() {
@@ -122,8 +125,8 @@ class Recording {
     this.#chunks.push(e.data)
   }
 
-  // TODO: start uploading audio stream as it's recorded?
-  //       it would interfere with the ability to rerecord so unclear
+  // TODO?: start uploading audio stream as it's recorded?
+  //        it would interfere with the ability to rerecord so unclear
   blob() {
     return new Blob(this.#chunks, { type: this.#mediaRecorder.mimeType });
   }
@@ -157,7 +160,7 @@ class Recorder {
 
   start() {
     this.#stopnt()
-    this.#mediaRecorder.start(); // TODO catch err?
+    this.#mediaRecorder.start(); // TODO?: catch err?
   }
 
   #stopping
@@ -218,14 +221,14 @@ class MeteredRecorder extends Recorder {
     //this.#analyser.connect(this.#audioCtx.destination);
   }
 
-  #soundBars = [".sound-bar.first", ".sound-bar.second", ".sound-bar.third"];
+  #soundBars = ".sound-bar"
   volumeBars(v) {
     if (document.readyState !== "complete") {
       window.addEventListener("load", e => this.volumeBars(v), {passive: true});
       return
     }
 
-    this.#soundBars = this.#soundBars.map(x => document.querySelector(x))
+    this.#soundBars = document.querySelectorAll(this.#soundBars)
     this.volumeBars = v => { // v in {0, 1, 2, 3}
       console.assert(0 <= v && v <= this.#soundBars.length
         && v == Math.trunc(v));
@@ -271,11 +274,13 @@ class MeteredRecorder extends Recorder {
 class InteractiveRecorder extends MeteredRecorder {
   #audio
   #mic
+  #steps = "#playback-wrapper, #recording-wrapper";
   constructor(audio) {
     super()
     new LoadQueue().add(() => {
       findButtons(this)
       this.#mic = document.getElementById("sound-wrapper")
+      this.#steps = document.querySelectorAll(this.#steps);
     })
     this.#audio = audio
     const f = audio.initialize
@@ -284,6 +289,13 @@ class InteractiveRecorder extends MeteredRecorder {
       f.call(audio)
       audio.audio.addEventListener("ended", () => that.ready())
     }
+  }
+
+  highlight(step) {
+    for (let i of this.#steps) {
+      i.classList.remove("active")
+    }
+    this.#steps[step].classList.add("active")
   }
 
   start() {
@@ -303,12 +315,12 @@ class InteractiveRecorder extends MeteredRecorder {
     }
     this.nextButton.disabled = true;
     await this.#audio.result(1, k => this.upload(`/jnd/api/quick/result`));
-    // TODO: switch activation row
+    this.highlight(0)
     this.#audio.play()
   }
 
+  // TODO?: user option? pause instead of restart recording?
   autostart() { return true; }
-  // TODO: user option? pause instead of restart recording?
 
   activate() {
     this.create()
@@ -327,7 +339,7 @@ class InteractiveRecorder extends MeteredRecorder {
   }
 
   ready() {
-    // TODO: switch activation row
+    this.highlight(1)
     if (this.autostart()) {
       this.activate()
     } else {

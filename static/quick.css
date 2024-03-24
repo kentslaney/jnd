@@ -269,6 +269,7 @@ body {
   background: var(--playback-color);
   margin: var(--top) auto;
 }
+.playback-interface.record::before { border-radius: 100%; }
 
 .playback-interface.done::before {
   --size: calc(var(--symbol-height) - var(--border-value) / 2);

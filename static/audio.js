@@ -133,7 +133,7 @@ class AudioPrefetch {
     if (url === "") {
       this.sync_result().then(() => window.location.href = "/jnd/done.html");
     } else {
-      this.playback_debug(url); // TODO: comment out for prod (probably?)
+      this.playback_debug(url); // TODO?: comment out for prod?
       this.audio.src = url;
       this.audio.play().catch(e => {
         console.error(e);
