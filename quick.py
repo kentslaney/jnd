@@ -1,7 +1,8 @@
 import os, os.path, json, random
-from flask import Blueprint, request, session, abort, redirect
+from flask import Blueprint, request, session, abort, redirect, Response
 from utils import Database, relpath, DatabaseBP
 from werkzeug.wrappers import Response
+from matplotlib import pyplot
 
 quick_levels = 6
 quick_files = relpath("all_spin_index.csv")
@@ -57,7 +58,8 @@ def quick_start(db):
         cur, q = map(lambda x: quick_url(json.loads(x)["filename"]), (
             session["cur"], session["q"]))
         return json.dumps({
-            "cur": cur, "next": {1: q}, "name": session["username"]})
+            "cur": cur, "next": {1: q}, "name": session["username"],
+            "has_results": json.loads(session["left"]) < quick_levels - 1})
     cur = db.queryall(
         "SELECT * FROM quick_trials WHERE active=1 AND level_number=1")
     if len(cur) == 0:
@@ -66,7 +68,7 @@ def quick_start(db):
     session["cur"], session["left"] = json.dumps(cur), json.dumps(quick_levels)
     return json.dumps({
         "cur": quick_url(cur["filename"]), "next": {1: quick_next(db, cur)},
-        "name": session["username"]})
+        "name": session["username"], "has_results": False})
 
 def quick_result(db):
     if "user" not in session or "file" not in request.files:
@@ -90,27 +92,42 @@ def quick_result(db):
 
 # delayed by one level because of preloading
 def completion_condition(reply, answer):
+    return proportion_correct(reply, answer) == 0
+
+def proportion_correct(reply, answer):
     reply = set(reply.split(" "))
-    correct = 0
+    correct, total = 0, 0
     for options in answer.split(","):
         for option in options.split("/"):
+            total += 1
             if option in reply:
                 correct += 1
-    return correct == 0
+    return correct / max(total, 1)
 
 def quick_plot(db):
-    return redirect("https://http.cat/200")
+    results = db.queryall(
+        "SELECT quick_trials.snr, quick_results.reply_asr, "
+        "quick_trials.answer FROM quick_results LEFT JOIN quick_trials "
+        "ON quick_results.trial=quick_trials.id WHERE quick_results.subject=?",
+         (session["user"],))
+    if len(results) == 0:
+        abort(400)
+    results = [(snr, proportion_correct(*score)) for snr, *score in results]
+    png_bytes = results_png(*zip(*results))
+    return Response(png_bytes, mimetype='image/png')
 
 class QuickBP(DatabaseBP):
     def __init__(self, db, name="quick", url_prefix="/quick"):
-        global asr
+        # don't want to import (loads model) if BP isn't constructed
+        global asr, results_png
         Blueprint.__init__(self, name, __name__, url_prefix=url_prefix)
         self._route_db("/start")(quick_start)
         self._route_db("/result", methods=["POST"])(quick_result)
         self._route_db("/plot")(quick_plot)
         self._bind_db = db
-        from asr import asr
+        from asr import asr, results_png
 
     @property
     def _blueprint_db(self):
         return self._bind_db()
+

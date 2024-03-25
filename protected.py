@@ -11,3 +11,4 @@ app.register_blueprint(login_required(APIBlueprint(), group=group))
 
 if __name__ == "__main__":
     app.run(host="unix:///tmp/audio.experiments.api.sock")
+

@@ -80,3 +80,4 @@ def set_username(db):
 
 def authorized(db):
     return json.dumps(True)
+

@@ -135,10 +135,10 @@ class Audio extends AudioPrefetch {
 class AudioResults extends Audio {
   load(data) {
     super.load(data)
-    const { name } = data;
+    const { name, has_results } = data;
     // second clause checks that it ends with a UUID4
     if (name.startsWith('test-') && name.at(-22) === "4") {
-      this.#enableOverlay()
+      this.#enableOverlay(has_results)
     }
   }
 
@@ -146,7 +146,8 @@ class AudioResults extends Audio {
   #overlayEle = "#results-overlay"
   #overlayImg = "#results-overlay img"
   #resultsClickable = "#results-clickable"
-  #enableOverlay() {
+  #overlayEnabled = 1
+  #enableOverlay(immediately) {
     this.#overlayButton = document.querySelector(this.#overlayButton)
     this.#overlayEle = document.querySelector(this.#overlayEle)
     this.#overlayImg = document.querySelector(this.#overlayImg)
@@ -158,6 +159,18 @@ class AudioResults extends Audio {
       "click", e => document.body.classList.remove("overlaying"));
     this.#resultsClickable.addEventListener(
       "click", e => e.stopPropagation());
+    this.#overlayEnabled ^= immediately
+    // matches (enabled) immediately if first, inverts it if not
+    this.#overlayButton.disabled = !(this.#overlayEnabled & 1);
+  }
+
+  loaded() {
+    super.loaded()
+    this.#overlayEnabled ^= 1
+    // first call: matches (enabled) immediately if first, inverts it if not
+    // subsequent calls: always false
+    this.#overlayButton.disabled = !this.#overlayEnabled;
+    this.#overlayEnabled |= 2
   }
 
   #overlayResults(e) {

@@ -91,3 +91,4 @@ with open(metapath, 'w') as fp:
                     print(f"Failed to process {tmpname}", file=sys.stderr)
                     exitcode = 1
 exit(exitcode)
+

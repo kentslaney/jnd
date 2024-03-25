@@ -78,3 +78,4 @@ class DatabaseBP(Blueprint):
 
     def _bind_db(self, app):
         self._blueprint_db = None
+
