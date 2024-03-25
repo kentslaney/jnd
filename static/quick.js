@@ -52,6 +52,14 @@ class Audio extends AudioPrefetch {
     this.waited()
   }
 
+  loading() {
+    resetPlaybackButton(this.playbackButton, "load");
+  }
+
+  loaded() {
+    this.play()
+  }
+
   initialize() {
     findButtons(this)
   }
@@ -72,24 +80,35 @@ class Audio extends AudioPrefetch {
   #backlogged = 0;
   result(key, f=undefined) {
     this.#backlogged += 1;
-    super.result(key, k => f(k).then(data => {
-      this.#backlogged -= 1;
-      return data
+    super.result(key, k => f(k).then(response => {
+      if (response.ok) this.#backlogged = 0;
+      return response
     }));
   }
 
+
   retries(f) {
-    this.nextButton.onclick = f
+    this.loadq.add(() => {
+      this.nextButton.onclick = f
+    })
   }
 
   retrying(still) {
-    if (this.#backlogged === 2) {
-      resetPlaybackButton(this.playbackButton, still ? "load" : "error");
-      this.nextButton.disabled = still
-    }
+    // this.#backlogged:
+    // 0 -> failed not on result fetch or recovering
+    // 1 -> failed but has preloaded audio pending
+    // 2 -> nothing queued to play; ask user to retry
+    this.loadq.add(() => {
+      if (this.#backlogged >= 2) {
+        resetPlaybackButton(this.playbackButton, still ? "load" : "error");
+        this.nextButton.disabled = still
+        this.nextButton.firstElementChild.innerText = (
+          still ? "Next Audio" : "Retry")
+      }
+    })
   }
 
-  redeemed() {
+  recovered() {
     this.play()
   }
 
@@ -113,6 +132,49 @@ class Audio extends AudioPrefetch {
   }
 }
 
+class AudioResults extends Audio {
+  load(data) {
+    super.load(data)
+    const { name } = data;
+    // second clause checks that it ends with a UUID4
+    if (name.startsWith('test-') && name.at(-22) === "4") {
+      this.#enableOverlay()
+    }
+  }
+
+  #overlayButton = "#overlay-results"
+  #overlayEle = "#results-overlay"
+  #overlayImg = "#results-overlay img"
+  #resultsClickable = "#results-clickable"
+  #enableOverlay() {
+    this.#overlayButton = document.querySelector(this.#overlayButton)
+    this.#overlayEle = document.querySelector(this.#overlayEle)
+    this.#overlayImg = document.querySelector(this.#overlayImg)
+    this.#resultsClickable = document.querySelector(this.#resultsClickable)
+    this.#overlayButton.classList.remove("hidden")
+    this.#overlayButton.addEventListener(
+      "click", this.#overlayResults.bind(this))
+    this.#overlayEle.addEventListener(
+      "click", e => document.body.classList.remove("overlaying"));
+    this.#resultsClickable.addEventListener(
+      "click", e => e.stopPropagation());
+  }
+
+  #overlayResults(e) {
+    document.body.classList.add("overlaying")
+    this.#overlayImg.setAttribute("src", this.#overlayURL)
+    this.#overlayImg.addEventListener("load", e => {
+      const { naturalWidth, naturalHeight } = this.#overlayImg;
+      this.#resultsClickable.style.aspectRatio = naturalWidth / naturalHeight;
+    })
+  }
+
+  get #overlayURL() {
+    // time parameter to prevent caching; should be done with response headers
+    return "/jnd/api/quick/plot?t=" + Date.now();
+  }
+}
+
 class Recording {
   #chunks = [];
 
@@ -125,8 +187,6 @@ class Recording {
     this.#chunks.push(e.data)
   }
 
-  // TODO?: start uploading audio stream as it's recorded?
-  //        it would interfere with the ability to rerecord so unclear
   blob() {
     return new Blob(this.#chunks, { type: this.#mediaRecorder.mimeType });
   }
@@ -142,7 +202,9 @@ class Recorder {
     navigator.mediaDevices.getUserMedia(constraints)
       .then(stream => this.onSuccess(stream))
       .catch(e => {
-        throw new DOMException("user denied mic permissions", {cause: e});
+        const err = new DOMException("user denied mic permissions", {cause: e});
+        console.error(err)
+        this.debug(err.message);
       });
   }
 
@@ -160,7 +222,12 @@ class Recorder {
 
   start() {
     this.#stopnt()
-    this.#mediaRecorder.start(); // TODO?: catch err?
+    try {
+      this.#mediaRecorder.start();
+    } catch(e) {
+      this.debug(e.message);
+      throw e
+    }
   }
 
   #stopping
@@ -170,11 +237,10 @@ class Recorder {
   stop() {
     this.#stopnt()
     this.#mediaRecorder.stop();
-    let that = this;
     return new Promise((resolve, reject) => {
-      that.#stopping = worked => {
-        (worked ? resolve : reject).call(that);
-        that.#stopping = undefined;
+      this.#stopping = worked => {
+        (worked ? resolve : reject).call(this);
+        this.#stopping = undefined;
       }
     })
   }
@@ -191,6 +257,10 @@ class Recorder {
 
   get state() {
     return this.#mediaRecorder.state
+  }
+
+  debug(v) {
+    document.getElementById("footer").innerText = v;
   }
 }
 
@@ -257,17 +327,12 @@ class MeteredRecorder extends Recorder {
 
   #cutoffs = [-8, -6, -4]
   volume(v) {
-    this.debug(v)
     for (var i = 0; i < this.#cutoffs.length; i++) {
       if (v < this.#cutoffs[i]){
         break
       }
     }
     this.volumeBars(i)
-  }
-
-  debug(v) {
-    //document.getElementById("footer").innerText = v;
   }
 }
 
@@ -284,10 +349,9 @@ class InteractiveRecorder extends MeteredRecorder {
     })
     this.#audio = audio
     const f = audio.initialize
-    let that = this
     audio.initialize = () => {
       f.call(audio)
-      audio.audio.addEventListener("ended", () => that.ready())
+      audio.audio.addEventListener("ended", this.ready.bind(this))
     }
   }
 
@@ -314,12 +378,20 @@ class InteractiveRecorder extends MeteredRecorder {
       return
     }
     this.nextButton.disabled = true;
-    await this.#audio.result(1, k => this.upload(`/jnd/api/quick/result`));
+    await this.#audio.result(1, k => {
+      return this.upload(`/jnd/api/quick/result`).then(response => {
+        if (!response.ok) this.debug(response.statusText);
+        return response
+      }).catch(e => {
+        this.debug(e.message)
+        console.error(e)
+        return Promise.reject(e)
+      })
+    })
     this.highlight(0)
     this.#audio.play()
   }
 
-  // TODO?: user option? pause instead of restart recording?
   autostart() { return true; }
 
   activate() {
@@ -349,6 +421,6 @@ class InteractiveRecorder extends MeteredRecorder {
   }
 }
 
-let audio = new Audio();
+let audio = new AudioResults();
 let recorder = new InteractiveRecorder(audio);
 

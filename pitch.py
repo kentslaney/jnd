@@ -6,12 +6,6 @@ pitch_levels = 8
 pitch_files = relpath("pitch_jnd_files.tsv")
 
 class PitchDB(Database):
-    def __init__(self, *args, **kw):
-        super().__init__(*args, **kw)
-        with self.app.app_context():
-            assert pitch_levels - 1 <= self.queryone(
-                "SELECT MAX(level_number) FROM pitch_trials WHERE active=1")[0]
-
     def db_init_hook(self):
         super().db_init_hook()
         assert os.path.exists(pitch_files)
@@ -24,6 +18,9 @@ class PitchDB(Database):
              "(f0, level_number, trial_number, filename, answer, active) "
              "values (?, ?, ?, ?, ?, 1)"), experiments)
         con.commit()
+        # levels 0 indexed
+        assert pitch_levels - 1 <= self.queryone(
+            "SELECT MAX(level_number) FROM pitch_trials WHERE active=1")[0]
 
 pitch_keys = ("id", "f0", "level_number", "trial_number", "filename", "answer")
 pitch_trial_dict = lambda v: dict(zip(pitch_keys, v))

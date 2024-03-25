@@ -1,5 +1,5 @@
 import os, os.path, json, random
-from flask import Blueprint, request, session, abort
+from flask import Blueprint, request, session, abort, redirect
 from utils import Database, relpath, DatabaseBP
 from werkzeug.wrappers import Response
 
@@ -11,9 +11,6 @@ class QuickDB(Database):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         os.makedirs(upload_location, exist_ok=True)
-        with self.app.app_context():
-            assert quick_levels <= self.queryone(
-                "SELECT MAX(level_number) FROM quick_trials WHERE active=1")[0]
 
     def db_init_hook(self):
         super().db_init_hook()
@@ -28,6 +25,9 @@ class QuickDB(Database):
              "(trial_number, level_number, snr, filename, answer, active) "
              "values (?, ?, ?, ?, ?, 1)"), experiments)
         con.commit()
+        # levels 1 indexed
+        assert quick_levels <= self.queryone(
+            "SELECT MAX(level_number) FROM quick_trials WHERE active=1")[0]
 
 quick_keys = ("id", "snr", "level_number", "trial_number", "filename", "answer")
 quick_trial_dict = lambda v: dict(zip(quick_keys, v))
@@ -60,6 +60,8 @@ def quick_start(db):
             "cur": cur, "next": {1: q}, "name": session["username"]})
     cur = db.queryall(
         "SELECT * FROM quick_trials WHERE active=1 AND level_number=1")
+    if len(cur) == 0:
+        abort(400)
     cur = quick_trial_dict(random.choice(cur))
     session["cur"], session["left"] = json.dumps(cur), json.dumps(quick_levels)
     return json.dumps({
@@ -96,12 +98,16 @@ def completion_condition(reply, answer):
                 correct += 1
     return correct == 0
 
+def quick_plot(db):
+    return redirect("https://http.cat/200")
+
 class QuickBP(DatabaseBP):
     def __init__(self, db, name="quick", url_prefix="/quick"):
         global asr
         Blueprint.__init__(self, name, __name__, url_prefix=url_prefix)
         self._route_db("/start")(quick_start)
         self._route_db("/result", methods=["POST"])(quick_result)
+        self._route_db("/plot")(quick_plot)
         self._bind_db = db
         from asr import asr
 

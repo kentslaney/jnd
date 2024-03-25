@@ -11,29 +11,36 @@ class LoadQueue {
   #q = []
   #v = []
   #that
-  #loaded
+  // binds this in function context to that given below
   constructor(that) {
     this.#that = that
-    this.loaded = document.readyState === "complete"
     if (!this.loaded) {
-      let t = this
-      window.addEventListener("load", () => this.load.call(t), {passive: true});
+      window.addEventListener("load", this.load.bind(this), {passive: true});
     }
+    this.wait = this.wait.bind(this)
+  }
+
+  get loaded() {
+    return document.readyState === "complete"
   }
 
   load() {
     for (let i of this.#q) i();
     for (let j of this.#v) j();
-    this.loaded = true;
   }
 
   add(f, arr) {
     const g = r => r.call(this.#that, f.call(this.#that))
     arr = arr === undefined ? this.#q : arr;
-    return new Promise((resolve, reject) => {
-      if (this.#loaded) g(resolve);
+    const preloaded = this.loaded
+    if (preloaded) {
+      var res = f.call(this.#that)
+    }
+    return new Promise(((resolve, reject) => {
+      if (preloaded) resolve(res)
+      else if (this.loaded) g(resolve);
       else arr.push(() => g(resolve))
-    })
+    }).bind(this))
   }
 
   // wait resolves after functions in q from add
@@ -44,14 +51,22 @@ class LoadQueue {
 
 class AudioPrefetch {
   audio;
+  loadq
   constructor(audio) {
-    let q = new LoadQueue(this)
+    this.loadq = new LoadQueue(this)
 
-    q.add(() => {
+    this.loadq.add(() => {
       this.audio = audio
       if (typeof this.audio === 'string') {
         this.audio = document.querySelector(audio);
       }
+      this.audio.addEventListener("canplaythrough", e => {
+        this.loaded()
+        this.audio.play().catch(e => {
+          console.error(e);
+          this.ready();
+        });
+      })
 
       this.initialize()
     })
@@ -70,15 +85,11 @@ class AudioPrefetch {
             this.prefetch(Object.assign({0: cur}, next));
         }
         return Promise.resolve(data);
-      }).then(a => q.wait.call(q, a)).then(data => {
-        this.src(data["cur"]);
-        // TODO: canplaythrough
-        // https://developer.mozilla.org/en-US/docs/Web/HTML/Element/audio
-        // using the prefetch url to stream on load ends up choppy as is
-        //this.src(this.#prefetching[0]);
+      }).then(this.loadq.wait).then(data => {
+        this.src(this.#prefetching[0]);
         return Promise.resolve(data)
       }).then(data => this.load.call(this, data)));
-    q.add(this.sync_result)
+    this.loadq.add(this.sync_result)
   }
 
   // prefetching keeps either the remote URL or blob URL for each
@@ -133,17 +144,13 @@ class AudioPrefetch {
     if (url === "") {
       this.sync_result().then(() => window.location.href = "/jnd/done.html");
     } else {
-      this.playback_debug(url); // TODO?: comment out for prod?
+      this.playback_debug(url);
+      this.loading()
       this.audio.src = url;
-      this.audio.play().catch(e => {
-        console.error(e);
-        this.ready();
-      });
     }
   }
 
   playback_debug(url) {
-    const debug = document.querySelector(this.debugQuery);
     this.debug(this.get_real_url(url));
   }
 
@@ -177,7 +184,7 @@ class AudioPrefetch {
   require_retry(f) {
     let that = this;
     return f().catch(async function(e) {
-      console.error(e)
+      //console.error(e)
       that.failed.call(that)
       await new Promise((resolve, reject) => {
         that.retrying.call(that, false)
@@ -193,7 +200,7 @@ class AudioPrefetch {
         }
         that.retries.call(that, call_retry)
       })
-      that.redeemed()
+      that.recovered()
     });
   }
 
@@ -210,16 +217,18 @@ class AudioPrefetch {
     this.src(url);
   }
 
-  start() { throw new Error("unimplemented") }
-  submit(key) { throw new Error("unimplemented") }
-  initialize() {}
-  load(data) {}
-  waiting() {}
-  waited() {}
-  failed() {}
-  retries(f) {}
-  retrying(still) {}
-  redeemed() {}
-  ready() {}
-  debug(url) {}
+  start() { throw new Error("unimplemented") } // get 3 URLs from API
+  submit(key) { throw new Error("unimplemented") } // submit results
+  initialize() {} // called after page load
+  load(data) {} // called after data from start() is returned
+  loading() {} // called while audio is buffering
+  loaded() {} // called once audio starts playing
+  waiting() {} // user is waiting for server response to results
+  waited() {} // server responded with results
+  failed() {} // results query to the server failed
+  retries(f) {} // the user's next interaction should be f
+  retrying(still) {} // retrying results submission or not, based on still
+  recovered() {} // results successfully uploaded after failing
+  ready() {} // audio loaded but autoplay prevented; requires interaction
+  debug(url) {} // called with the currently playing URL on audio src change
 }
