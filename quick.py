@@ -1,7 +1,7 @@
 import os, os.path, json, random, functools
 from flask import Blueprint, request, session, abort, redirect, Response
 from utils import Database, relpath, DatabaseBP
-from matplotlib import pyplot
+from plot import scatter_png, logistic_png
 
 quick_levels = 6
 quick_files = relpath("all_spin_index.csv")
@@ -28,6 +28,21 @@ class QuickDB(Database):
         # levels 1 indexed
         assert quick_levels <= self.queryone(
             "SELECT MAX(level_number) FROM quick_trials WHERE active=1")[0]
+
+def saved_png(path):
+    def decorator(f):
+        def load_path(*a, **kw):
+            f(*a, **kw)
+            with open(path, 'rb') as fp:
+                return fp.read()
+        return functools.wraps(f)(bytes_png(load_path))
+    return decorator
+
+def bytes_png(f):
+    @functools.wraps(f)
+    def flask_response(*a, **kw):
+        return Response(f(*a, **kw), mimetype='image/png')
+    return flask_response
 
 class QuickBP(DatabaseBP):
     quick_keys = (
@@ -129,21 +144,6 @@ class QuickBP(DatabaseBP):
             *score)) for snr, *score in results]
         return self.flask_png(*zip(*results))
 
-    @classmethod
-    def saved_png(cls, f, path):
-        def load_path(*a, **kw):
-            f(*a, **kw)
-            with open(path, 'rb') as fp:
-                return fp.read()
-        return cls.bytes_png(load_path)
-
-    @staticmethod
-    def bytes_png(f):
-        @functools.wraps(f)
-        def flask_response(*a, **kw):
-            return Response(f(*a, **kw), mimetype='image/png')
-        return flask_response
-
     @staticmethod
     def asr(path):
         raise NotImplementedError()
@@ -152,22 +152,25 @@ class QuickBP(DatabaseBP):
     def flask_png(x, y):
         raise NotImplementedError()
 
+class QuickScatterBP:
+    @staticmethod
+    @bytes_png
+    def flask_png(x, y):
+        return scatter_png(x, y)
+
+class QuickLogisticBP:
+    @staticmethod
+    @bytes_png
+    def flask_png(x, y):
+        return logistic_png(x, y)
+
 class QuickWhisperBP(QuickBP):
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
         # don't want to import (loads model) if BP isn't constructed
-        from asr import asr, results_png
-        self.asr, self.flask_png = asr, self.bytes_png(results_png)
-
-class QuickLogisticWhisperBP(QuickBP):
-    def __init__(self, *a, **kw):
-        super().__init__(*a, **kw)
-        from asr import asr, fig_bytes
-        from logistic import logistic_results
+        from asr import asr
         self.asr = asr
-        self.fig_bytes, self.logistic = fig_bytes, logistic_results
 
-    @QuickBP.bytes_png
-    def flask_png(self, x, y):
-        return self.fig_bytes(self.logistic(x, y))
+class QuickLogisticWhisperBP(QuickLogisticBP, QuickWhisperBP):
+    pass
 

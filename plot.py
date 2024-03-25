@@ -1,3 +1,22 @@
+# https://stackoverflow.com/a/50728936/3476782
+import io
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from matplotlib.figure import Figure
+
+def fig_bytes(fig):
+    output = io.BytesIO()
+    FigureCanvas(fig).print_png(output)
+    return output.getvalue()
+
+def scatter_fig(x, y):
+    fig = Figure()
+    axis = fig.add_subplot(1, 1, 1)
+    axis.scatter(x, y)
+    return fig
+
+def scatter_png(x, y):
+    return fig_bytes(scatter_fig(x, y))
+
 # https://github.com/MalcolmSlaney/GoogleSIN/blob/main/google_asr_sin.py
 import numpy as np
 from scipy.optimize import curve_fit
@@ -42,4 +61,7 @@ def logistic_results(spin_snrs, scores):
     plt.ylabel('Fraction recognized correctly')
     plt.title('Logistic Regression for QuickSIN Data')
     return fig
+
+def logistic_png(x, y):
+    return fig_bytes(logistic_results(x, y))
 
