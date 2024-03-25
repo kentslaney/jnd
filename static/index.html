@@ -2,6 +2,7 @@
 <html lang="en-US">
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto">
   <script type="text/javascript">
     // https://en.wikipedia.org/wiki/Unicode_character_property#General_Category
     // valid username characters: letters, number digits, number letters, 
@@ -104,19 +105,23 @@
   </script>
   <div id="content">
     <div id="instructions">
-      <!--TODO-->
-      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam
-      condimentum sodales turpis, congue congue felis condimentum in. Nam nec
-      bibendum nunc. Quisque placerat dui justo, id placerat nunc consectetur
-      vel. Nulla luctus ligula id dictum viverra. Curabitur volutpat dui non
-      ipsum tristique, ac tincidunt sem fringilla.  Praesent in leo at nibh
-      ultricies ultrices in eu velit. Donec ullamcorper condimentum nulla, et
-      rhoncus nunc euismod ac. Donec molestie porttitor posuere. Nulla pretium
-      turpis vitae felis molestie tristique. Vivamus eget sollicitudin magna.
-      Morbi tincidunt tortor ultricies purus bibendum, non iaculis tellus
-      tincidunt.  Maecenas porta nulla ex, vel varius elit porttitor sed. Proin
-      luctus, nunc fermentum auctor rhoncus, erat magna malesuada lorem, eu
-      fermentum risus ex sit amet odio.
+      Below, enter the username given to you. Before pressing the button to
+      start, make sure that you are ready to listen to sound from the device.
+      The audio may start immediately and you can only listen to it once.
+      Otherwise, you may need to press the play button to start the test.
+      <!-- depending on whether autoplay is disabled -->
+      <br><br>
+      The test will consist of listening to a sentence spoken above background
+      noise which needs to be separated out. After the audio clip finishes,
+      the microphone will turn green and remove the cross, indicating that you
+      should say the sentence that you heard in the clip. Green volume bars
+      above the microphone indicate the input volume.
+      <br><br>
+      When you are done recording, press the "Next Audio" button to play the
+      next clip. If you want a break, you can press the check mark to finish
+      recording before continuing. The check mark will turn into a record
+      symbol, which you can use to redo your response if there was a problem
+      with the first one.
     </div>
     <form action="javascript:;" onsubmit="claim_username()" class="userbox"
           autocomplete="off">
@@ -125,10 +130,10 @@
              placeholder="Enter a username" data-lpignore="true" /><!--
       --><!--<input type="submit" id="submit" value="start pitch test"
                 disabled />
-      --><input type="submit" id="submit" value="start hearing test"
-                disabled />
+      --><input type="submit" id="submit" value="start hearing test" disabled />
       <span id="username-status"></span>
     </form>
+    <img src="https://upload.wikimedia.org/wikipedia/commons/4/4b/Stanford_Cardinal_logo.svg" />
   </div>
   <style>
     #instructions {
@@ -143,28 +148,41 @@
       display: block;
       margin-top: 0.5rem;
     }
+    #submit, #username {
+      border-color: #ABABA9;
+      border-style: solid;
+      border-width: 0.15rem;
+      padding: 0.3rem;
+    }
     #submit {
-      border-radius: 0px 3px 3px 0px;
-      border: 1px solid #c4c4cc;
-      padding: 4px;
+      border-radius: 0px 0.4rem 0.4rem 0px;
     }
     #username {
-      border-radius: 3px 0px 0px 3px;
-      border: 1px solid #c4c4cc;
-      border-width: 1px 0px 1px 1px;
+      border-radius: 0.4rem 0px 0px 0.4rem;
+      border: 2px solid #aaa;
+      border-right-width: 0;
       outline: 0px;
-      padding: 4px;
     }
     #username:focus {
-      border-color: #007aff;
+      border-color: #67AFD2;
     }
     #content {
       /* 33% of the div is positioned at 33% of the viewport height */
       transform: translateY(max(0px, calc(33vh - 33%)));
       color: rgba(0, 0, 0, 0.87);
     }
+    #content, input {
+      font-family: 'Roboto', sans-serif;
+    }
     #username-status:empty::before {
       content: "\a0";
+    }
+    img {
+      display: inline-block;
+      margin-top: 2rem;
+      margin-left: 50%;
+      transform: translateX(-50%);
+      height: 10rem;
     }
   </style>
 </html>

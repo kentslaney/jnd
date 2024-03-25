@@ -2,7 +2,38 @@
 <html lang="en-US">
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  That's all we need, thanks for your help
-  <!--TODO-->
+  <div id="content">
+    That's all we need, thanks for your help
+    <br>
+    <a href="index.html">Restart</a>
+    <img src="https://upload.wikimedia.org/wikipedia/commons/4/4b/Stanford_Cardinal_logo.svg" />
+  </div>
+  <style>
+    #content {
+      /* 33% of the div is positioned at 33% of the viewport height */
+      transform: translateY(max(0px, calc(33vh - 33%)));
+      color: rgba(0, 0, 0, 0.87);
+    }
+    #content {
+      text-align: center;
+      font-family: 'Roboto', sans-serif;
+    }
+    a {
+      display: inline-block;
+      border: 0.15rem solid #ABABA9;
+      padding: 0.3rem;
+      border-radius: 0.4rem;
+      color: white;
+      text-decoration: none;
+      margin-top: 1rem;
+      background: #67AFD2;
+    }
+    img {
+      display: block;
+      margin: 0 auto;
+      margin-top: 3rem;
+      height: 10rem;
+    }
+  </style>
 </html>
 

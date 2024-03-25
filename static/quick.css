@@ -34,9 +34,6 @@
   --compact: 'Roboto', sans-serif;
 }
 
-/* TODO: media queries for `:root font-size` */
-/* TODO: maximum content/results width for large screens */
-
 :root {
   --padding-value: calc(var(--playback-padding-scale) * var(--symbol-height));
   --border-value: calc(var(--playback-border-scale) * var(--symbol-height));
@@ -128,7 +125,10 @@ body {
 #next-wrapper {
   display: flex;
 }
-.next-mid-spacer { flex-grow: 3; }
+.next-mid-spacer {
+  flex-grow: 3;
+  max-width: 60rem;
+}
 .next-outer-spacer { flex-grow: 1; }
 .base-button {
   font-family: var(--compact);
@@ -139,7 +139,7 @@ body {
   border-radius: var(--next-audio-padding);
   display: inline-block;
   cursor: pointer;
-  border-width: 0;
+  border: 0.15rem solid var(--soft-grey);
 }
 .base-button[disabled] {
   background: var(--disabled);
