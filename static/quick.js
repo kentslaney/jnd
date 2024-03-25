@@ -112,6 +112,10 @@ class Audio extends AudioPrefetch {
     this.play()
   }
 
+  debug(url) {
+    console.info("Now playing " + (new URL(url, document.baseURI).href))
+  }
+
   #playing = true;
   play() {
     this.#playing = true;

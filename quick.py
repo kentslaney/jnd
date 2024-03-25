@@ -1,4 +1,4 @@
-import os, os.path, json, random
+import os, os.path, json, random, functools
 from flask import Blueprint, request, session, abort, redirect, Response
 from utils import Database, relpath, DatabaseBP
 from matplotlib import pyplot
@@ -50,14 +50,14 @@ class QuickBP(DatabaseBP):
     def quick_next(self, db, cur, done = False):
         left = json.loads(session["left"])
         session["left"] = json.dumps(left - 1)
-        if left == 0 or done:
+        if left == 1 or done:
             q = self.quick_done
         else:
             q = db.queryall(
                 "SELECT * FROM quick_trials WHERE active=1 AND level_number=?",
                 (cur["level_number"] + 1,))
             if len(q) == 0:
-                abort(Reponse("out of levels", code=400))
+                abort(Response("out of levels", code=400))
             q = random.choice(q)
         q = self.quick_trial_dict(q)
         session["q"] = json.dumps(q)
@@ -131,16 +131,17 @@ class QuickBP(DatabaseBP):
 
     @classmethod
     def saved_png(cls, f, path):
-        def load_path(x, y):
-            f(x, y)
+        def load_path(*a, **kw):
+            f(*a, **kw)
             with open(path, 'rb') as fp:
                 return fp.read()
         return cls.bytes_png(load_path)
 
     @staticmethod
     def bytes_png(f):
-        def flask_response(x, y):
-            return Response(f(x, y), mimetype='image/png')
+        @functools.wraps(f)
+        def flask_response(*a, **kw):
+            return Response(f(*a, **kw), mimetype='image/png')
         return flask_response
 
     @staticmethod
@@ -157,4 +158,16 @@ class QuickWhisperBP(QuickBP):
         # don't want to import (loads model) if BP isn't constructed
         from asr import asr, results_png
         self.asr, self.flask_png = asr, self.bytes_png(results_png)
+
+class QuickLogisticWhisperBP(QuickBP):
+    def __init__(self, *a, **kw):
+        super().__init__(*a, **kw)
+        from asr import asr, fig_bytes
+        from logistic import logistic_results
+        self.asr = asr
+        self.fig_bytes, self.logistic = fig_bytes, logistic_results
+
+    @QuickBP.bytes_png
+    def flask_png(self, x, y):
+        return self.fig_bytes(self.logistic(x, y))
 
