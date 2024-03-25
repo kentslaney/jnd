@@ -2,7 +2,7 @@ import json, sqlite3, unicodedata, uuid
 from flask import request, session
 from utils import relpath, DatabaseBP
 from pitch import PitchDB, PitchBP
-from quick import QuickDB, QuickBP
+from quick import QuickDB, QuickWhisperBP
 
 # use multiple inheritance to add other DB hooks
 class ExperimentDB(PitchDB, QuickDB):
@@ -16,7 +16,7 @@ class APIBlueprint(DatabaseBP):
         super().__init__(db_path, schema_path, name, url_prefix)
         db = lambda: self._blueprint_db
         self.register_blueprint(PitchBP(db))
-        self.register_blueprint(QuickBP(db))
+        self.register_blueprint(QuickWhisperBP(db))
         self._route_db("/username-available")(username_available)
         self._route_db("/set-username")(set_username)
         self._route_db("/authorized", methods=["POST"])(authorized)
