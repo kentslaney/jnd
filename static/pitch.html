@@ -17,6 +17,14 @@
         return fetch(`/jnd/api/pitch/result?sign=${key}`)
       }
 
+      done() {
+        window.location.href = "/jnd/done.html"
+      }
+
+      restart() {
+        window.location.href = "/jnd"
+      }
+
       initialize(data) {
         this.waiter = document.getElementById("waiting");
         this.answers = document.getElementsByClassName("answer");

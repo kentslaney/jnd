@@ -2,10 +2,21 @@
 <html lang="en-US">
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script>
+    window.addEventListener("load", e => {
+      const showing = new URL(document.baseURI).searchParams.get("show")
+      if (showing !== null) {
+        const link = document.getElementById("results")
+        link.href = showing
+        link.classList.remove("hidden")
+      }
+    }, { passive: true })
+  </script>
   <div id="content">
     That's all we need, thanks for your help
     <br>
     <a href="index.html">Restart</a>
+    <a id="results" class="hidden">Results</a>
     <img src="https://upload.wikimedia.org/wikipedia/commons/4/4b/Stanford_Cardinal_logo.svg" />
   </div>
   <style>
@@ -25,6 +36,7 @@
       border-radius: 0.4rem;
       color: white;
       text-decoration: none;
+      margin: 0 0.5rem;
       margin-top: 1rem;
       background: #67AFD2;
     }
@@ -33,6 +45,9 @@
       margin: 0 auto;
       margin-top: 3rem;
       height: 10rem;
+    }
+    .hidden {
+      display: none;
     }
   </style>
 </html>

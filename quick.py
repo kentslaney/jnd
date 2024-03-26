@@ -1,7 +1,7 @@
 import os, os.path, json, random, functools
 from flask import Blueprint, request, session, abort, redirect, Response
 from utils import Database, relpath, DatabaseBP
-from plot import scatter_png, logistic_png
+from plot import scatter_results, logistic_results
 
 quick_levels = 6
 quick_files = relpath("all_spin_index.csv")
@@ -156,13 +156,13 @@ class QuickScatterBP:
     @staticmethod
     @bytes_png
     def flask_png(x, y):
-        return scatter_png(x, y)
+        return scatter_results(x, y)
 
 class QuickLogisticBP:
     @staticmethod
     @bytes_png
     def flask_png(x, y):
-        return logistic_png(x, y)
+        return logistic_results(x, y) if len(x) > 1 else scatter_results(x, y)
 
 class QuickWhisperBP(QuickBP):
     def __init__(self, *a, **kw):

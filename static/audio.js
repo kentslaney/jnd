@@ -74,13 +74,13 @@ class AudioPrefetch {
     this.#result_promise = this.require_retry(() => this.start()
       .then(response => {
         if (response.status == 400) { // landed without cookies
-          window.location.href = "/jnd";
+          this.restart()
         }
         return response;
       }).then(apijson).then(data => {
         let { cur, next } = data;
         if (cur === "") { // clicked back after done.html
-          window.location.href = "/jnd";
+          this.restart()
         } else {
             this.prefetch(Object.assign({0: cur}, next));
         }
@@ -142,7 +142,7 @@ class AudioPrefetch {
 
   src(url) {
     if (url === "") {
-      this.sync_result().then(() => window.location.href = "/jnd/done.html");
+      this.sync_result().then(this.done);
     } else {
       this.playback_debug(url);
       this.loading()
@@ -219,6 +219,8 @@ class AudioPrefetch {
 
   start() { throw new Error("unimplemented") } // get 3 URLs from API
   submit(key) { throw new Error("unimplemented") } // submit results
+  done() {} // done with test
+  restart() {} // send user to start
   initialize() {} // called after page load
   load(data) {} // called after data from start() is returned
   loading() {} // called while audio is buffering
@@ -231,5 +233,136 @@ class AudioPrefetch {
   recovered() {} // results successfully uploaded after failing
   ready() {} // audio loaded but autoplay prevented; requires interaction
   debug(url) {} // called with the currently playing URL on audio src change
+}
+
+class Recording {
+  #chunks = [];
+
+  #mediaRecorder
+  constructor(mediaRecorder) {
+    this.#mediaRecorder = mediaRecorder
+  }
+
+  recieve(e) {
+    this.#chunks.push(e.data)
+  }
+
+  blob() {
+    return new Blob(this.#chunks, { type: this.#mediaRecorder.mimeType });
+  }
+}
+
+class Recorder {
+  constructor() {
+    if (!navigator.mediaDevices.getUserMedia) {
+      console.error("media devices API unsupported")
+    }
+
+    const constraints = { audio: true };
+    navigator.mediaDevices.getUserMedia(constraints)
+      .then(stream => this.onSuccess(stream))
+      .catch(e => {
+        const err = new DOMException("user denied mic permissions", {cause: e});
+        console.error(err)
+        this.debug(err.message);
+      });
+  }
+
+  #mediaRecorder
+  onSuccess(stream) {
+    this.#mediaRecorder = new MediaRecorder(stream);
+    this.#mediaRecorder.onstop = () => this.#stopped.call(this)
+    this.#mediaRecorder.ondataavailable = e => this.recieve(e)
+  }
+
+  #recording
+  create() {
+    this.#recording = new Recording(this.#mediaRecorder)
+  }
+
+  start() {
+    this.#stopnt()
+    try {
+      this.#mediaRecorder.start();
+    } catch(e) {
+      this.debug(e.message);
+      throw e
+    }
+  }
+
+  #stopping
+  #stopped() { if (this.#stopping !== undefined) this.#stopping(true); }
+  #stopnt() { if (this.#stopping !== undefined) this.#stopping(false); }
+
+  stop() {
+    this.#stopnt()
+    this.#mediaRecorder.stop();
+    return new Promise((resolve, reject) => {
+      this.#stopping = worked => {
+        (worked ? resolve : reject).call(this);
+        this.#stopping = undefined;
+      }
+    })
+  }
+
+  recieve(e) {
+    this.#recording.recieve(e);
+  }
+
+  upload(url) {
+    var data = new FormData()
+    data.append('file', this.#recording.blob(), 'file')
+    return fetch(url, {method: "POST", body: data})
+  }
+
+  get state() {
+    return this.#mediaRecorder.state
+  }
+
+  debug(v) {}
+}
+
+// https://github.com/mdn/webaudio-examples
+class MeteredRecorder extends Recorder {
+  #audioCtx
+  #analyser
+  #bins
+  #buffer
+  initialize() {
+    this.#audioCtx = new AudioContext();
+    this.#analyser = this.#audioCtx.createAnalyser();
+    this.#analyser.minDecibels = -90;
+    this.#analyser.maxDecibels = -10;
+    this.#analyser.smoothingTimeConstant = 0.85;
+    this.#analyser.fftSize = 256;
+    this.#bins = this.#analyser.frequencyBinCount;
+    this.#buffer = new Uint8Array(this.#bins);
+  }
+
+  onSuccess(stream) {
+    this.initialize()
+    super.onSuccess(stream)
+    const source = this.#audioCtx.createMediaStreamSource(stream);
+    source.connect(this.#analyser)
+    this.visualize()
+    // echo playback:
+    //this.#analyser.connect(this.#audioCtx.destination);
+  }
+
+  rms() {
+    let total = 0;
+    for (let i of this.#buffer) {
+      total += Math.sqrt(i / 255)
+    }
+    return Math.pow(total / this.#bins, 2)
+  }
+
+  visualize() {
+    requestAnimationFrame(() => this.visualize())
+    this.#analyser.getByteFrequencyData(this.#buffer);
+    this.volume(Math.log(this.rms()));
+  }
+
+  volume(v) {}
 }
 

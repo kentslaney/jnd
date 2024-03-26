@@ -46,6 +46,14 @@ class Audio extends AudioPrefetch {
     return fetch("/jnd/api/quick/start")
   }
 
+  done() {
+    window.location.href = "/jnd/done.html"
+  }
+
+  restart() {
+    window.location.href = "/jnd"
+  }
+
   load(data) {
     let { name } = data;
     document.getElementById("username").firstElementChild.innerText = name;
@@ -166,6 +174,12 @@ class AudioResults extends Audio {
     this.#overlayEnabled ^= immediately
     // matches (enabled) immediately if first, inverts it if not
     this.#overlayButton.disabled = !(this.#overlayEnabled & 1);
+    this.done = this.finishedResults
+  }
+
+  finishedResults() {
+    window.location.href = "/jnd/done.html?show=" + encodeURIComponent(
+      this.overlayURL)
   }
 
   loaded() {
@@ -192,120 +206,15 @@ class AudioResults extends Audio {
   }
 }
 
-class Recording {
-  #chunks = [];
-
-  #mediaRecorder
-  constructor(mediaRecorder) {
-    this.#mediaRecorder = mediaRecorder
-  }
-
-  recieve(e) {
-    this.#chunks.push(e.data)
-  }
-
-  blob() {
-    return new Blob(this.#chunks, { type: this.#mediaRecorder.mimeType });
-  }
-}
-
-class Recorder {
-  constructor() {
-    if (!navigator.mediaDevices.getUserMedia) {
-      console.error("media devices API unsupported")
-    }
-
-    const constraints = { audio: true };
-    navigator.mediaDevices.getUserMedia(constraints)
-      .then(stream => this.onSuccess(stream))
-      .catch(e => {
-        const err = new DOMException("user denied mic permissions", {cause: e});
-        console.error(err)
-        this.debug(err.message);
-      });
-  }
-
-  #mediaRecorder
-  onSuccess(stream) {
-    this.#mediaRecorder = new MediaRecorder(stream);
-    this.#mediaRecorder.onstop = () => this.#stopped.call(this)
-    this.#mediaRecorder.ondataavailable = e => this.recieve(e)
-  }
-
-  #recording
-  create() {
-    this.#recording = new Recording(this.#mediaRecorder)
-  }
-
-  start() {
-    this.#stopnt()
-    try {
-      this.#mediaRecorder.start();
-    } catch(e) {
-      this.debug(e.message);
-      throw e
-    }
-  }
-
-  #stopping
-  #stopped() { if (this.#stopping !== undefined) this.#stopping(true); }
-  #stopnt() { if (this.#stopping !== undefined) this.#stopping(false); }
-
-  stop() {
-    this.#stopnt()
-    this.#mediaRecorder.stop();
-    return new Promise((resolve, reject) => {
-      this.#stopping = worked => {
-        (worked ? resolve : reject).call(this);
-        this.#stopping = undefined;
+class TunedRecorder extends MeteredRecorder {
+  #cutoffs = [-8, -6, -4]
+  volume(v) {
+    for (var i = 0; i < this.#cutoffs.length; i++) {
+      if (v < this.#cutoffs[i]){
+        break
       }
-    })
-  }
-
-  recieve(e) {
-    this.#recording.recieve(e);
-  }
-
-  upload(url) {
-    var data = new FormData()
-    data.append('file', this.#recording.blob(), 'file')
-    return fetch(url, {method: "POST", body: data})
-  }
-
-  get state() {
-    return this.#mediaRecorder.state
-  }
-
-  debug(v) {
-    document.getElementById("footer").innerText = v;
-  }
-}
-
-// https://github.com/mdn/webaudio-examples
-class MeteredRecorder extends Recorder {
-  #audioCtx
-  #analyser
-  #bins
-  #buffer
-  initialize() {
-    this.#audioCtx = new AudioContext();
-    this.#analyser = this.#audioCtx.createAnalyser();
-    this.#analyser.minDecibels = -90;
-    this.#analyser.maxDecibels = -10;
-    this.#analyser.smoothingTimeConstant = 0.85;
-    this.#analyser.fftSize = 256;
-    this.#bins = this.#analyser.frequencyBinCount;
-    this.#buffer = new Uint8Array(this.#bins);
-  }
-
-  onSuccess(stream) {
-    this.initialize()
-    super.onSuccess(stream)
-    const source = this.#audioCtx.createMediaStreamSource(stream);
-    source.connect(this.#analyser)
-    this.visualize()
-    // echo playback:
-    //this.#analyser.connect(this.#audioCtx.destination);
+    }
+    this.volumeBars(i)
   }
 
   #soundBars = ".sound-bar"
@@ -327,33 +236,9 @@ class MeteredRecorder extends Recorder {
       }
     }
   }
-
-  rms() {
-    let total = 0;
-    for (let i of this.#buffer) {
-      total += Math.sqrt(i / 255)
-    }
-    return Math.pow(total / this.#bins, 2)
-  }
-
-  visualize() {
-    requestAnimationFrame(() => this.visualize())
-    this.#analyser.getByteFrequencyData(this.#buffer);
-    this.volume(Math.log(this.rms()));
-  }
-
-  #cutoffs = [-8, -6, -4]
-  volume(v) {
-    for (var i = 0; i < this.#cutoffs.length; i++) {
-      if (v < this.#cutoffs[i]){
-        break
-      }
-    }
-    this.volumeBars(i)
-  }
 }
 
-class InteractiveRecorder extends MeteredRecorder {
+class InteractiveRecorder extends TunedRecorder {
   #audio
   #mic
   #steps = "#playback-wrapper, #recording-wrapper";
@@ -435,6 +320,10 @@ class InteractiveRecorder extends MeteredRecorder {
       resetPlaybackButton(this.playbackButton, "record");
       this.playbackButton.onclick = () => this.activate()
     }
+  }
+
+  debug(v) {
+    document.getElementById("footer").innerText = v;
   }
 }
 
