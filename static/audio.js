@@ -84,10 +84,11 @@ class AudioPrefetch {
             this.prefetch(Object.assign({0: cur}, next));
         }
         return Promise.resolve(data);
-      }).then(this.loadq.wait).then(data => {
+      }).then(this.loadq.wait)
+      .then(data => this.load.call(this, data))).then(data => {
         this.src(this.#prefetching[0]);
         return Promise.resolve(data)
-      }).then(data => this.load.call(this, data)));
+      });
     this.loadq.add(this.sync_result)
   }
 

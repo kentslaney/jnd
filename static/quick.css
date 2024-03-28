@@ -351,3 +351,8 @@ body.overlaying #results-overlay {
   transform: translateY(-50%);
 }
 
+#playing {
+  margin-top: calc(var(--container-size) / 2 + var(--border-value));
+  transform: translateY(-50%);
+}
+

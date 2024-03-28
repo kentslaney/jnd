@@ -281,7 +281,7 @@ class InteractiveRecorder extends TunedRecorder {
     }
     audio.overlayResults = () => {
       if (g !== undefined) {
-        if (this.state === "recording") this.done()
+        if (this.recording) this.done()
         g.call(audio)
       }
     }
@@ -304,8 +304,12 @@ class InteractiveRecorder extends TunedRecorder {
     return super.stop()
   }
 
+  get recording() {
+    return this.state === "recording"
+  }
+
   async complete() {
-    if (this.state === "recording") {
+    if (this.recording) {
       await this.stop().then(() => this.complete())
       return
     }
@@ -364,6 +368,28 @@ class InteractiveRecorder extends TunedRecorder {
   }
 }
 
+class AutoEndingRecorder extends InteractiveRecorder {
+  #silence = -8
+  #timing = 1000 * 2
+  #minimum = 1000 * 0.2
+  #lastNoise
+  #starting
+  volume(v) {
+    super.volume(v)
+    if (!this.recording) return this.#lastNoise = undefined
+    const now = Date.now()
+    if (this.#lastNoise == undefined || v > this.#silence) {
+      this.#lastNoise = now
+      this.#starting = now
+    } else if (now - this.#lastNoise > this.#timing) {
+      this.done()
+      if (this.#lastNoise - this.#starting < this.#minimum) {
+        this.nextButton.disabled = true
+      }
+    }
+  }
+}
+
 let audio = new AudioResults();
-let recorder = new InteractiveRecorder(audio);
+let recorder = new AutoEndingRecorder(audio);
 
