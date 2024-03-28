@@ -60,14 +60,7 @@ class AudioPrefetch {
       if (typeof this.audio === 'string') {
         this.audio = document.querySelector(audio);
       }
-      this.audio.addEventListener("canplaythrough", e => {
-        this.loaded()
-        this.audio.play().catch(e => {
-          console.error(e);
-          this.ready();
-        });
-      })
-
+      this.audio.addEventListener("canplaythrough", e => this.loaded())
       this.initialize()
     })
 
@@ -217,6 +210,19 @@ class AudioPrefetch {
     this.src(url);
   }
 
+  // called once audio can start playing
+  // attempts to autoplay by default
+  loaded() {
+    this.audio.play().catch(e => {
+      if (e.name === "NotAllowedError") {
+        console.error(e);
+        this.ready();
+      } else {
+        Promise.reject(e)
+      }
+    });
+  }
+
   start() { throw new Error("unimplemented") } // get 3 URLs from API
   submit(key) { throw new Error("unimplemented") } // submit results
   done() {} // done with test
@@ -224,7 +230,6 @@ class AudioPrefetch {
   initialize() {} // called after page load
   load(data) {} // called after data from start() is returned
   loading() {} // called while audio is buffering
-  loaded() {} // called once audio starts playing
   waiting() {} // user is waiting for server response to results
   waited() {} // server responded with results
   failed() {} // results query to the server failed

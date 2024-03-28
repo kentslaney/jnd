@@ -65,7 +65,7 @@ class Audio extends AudioPrefetch {
   }
 
   loaded() {
-    this.play()
+    this.pause()
   }
 
   initialize() {
@@ -117,7 +117,7 @@ class Audio extends AudioPrefetch {
   }
 
   recovered() {
-    this.play()
+    this.pause()
   }
 
   debug(url) {
@@ -291,7 +291,7 @@ class InteractiveRecorder extends TunedRecorder {
       })
     })
     this.highlight(0)
-    this.#audio.play()
+    this.#audio.pause()
   }
 
   autostart() { return true; }
