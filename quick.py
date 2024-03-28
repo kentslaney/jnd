@@ -20,10 +20,14 @@ class QuickDB(Database):
                            for line in f]
         con = self.get()
         cur = con.cursor()
+        cur.execute(
+            "INSERT INTO quick_trials "
+            "(trial_number, level_number, snr, filename, answer, active) "
+            "VALUES (1, -1, 0, 'invalid', 'invalid', 0)")
         cur.executemany(
-            ("INSERT INTO quick_trials "
-             "(trial_number, level_number, snr, filename, answer, active) "
-             "values (?, ?, ?, ?, ?, 1)"), experiments)
+            "INSERT INTO quick_trials "
+            "(trial_number, level_number, snr, filename, answer, active) "
+            "VALUES (?, ?, ?, ?, ?, 1)", experiments)
         con.commit()
         # levels 1 indexed
         assert quick_levels <= self.queryone(
@@ -49,7 +53,7 @@ class QuickBP(DatabaseBP):
         "id", "snr", "level_number", "trial_number", "filename", "answer")
     quick_trial_dict = staticmethod(lambda v: dict(zip(QuickBP.quick_keys, v)))
     quick_url = staticmethod(lambda v: v and "/jnd/quick/" + v)
-    quick_done = [0, 0, 0, 1, "", 1]
+    quick_done = [1, 0, 0, 1, "", 1]
 
     def __init__(self, db, name="quick", url_prefix="/quick"):
         Blueprint.__init__(self, name, __name__, url_prefix=url_prefix)

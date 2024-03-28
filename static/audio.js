@@ -29,12 +29,18 @@ class LoadQueue {
     for (let j of this.#v) j();
   }
 
-  add(f, arr) {
-    const g = r => r.call(this.#that, f.call(this.#that))
+  add(f, other, arr) {
+    const that = other === undefined ? this.#that : other
+    if (that === undefined) {
+      var g = r => r(f())
+    } else {
+      var g = r => r.call(that, f.call(that))
+    }
+
     arr = arr === undefined ? this.#q : arr;
     const preloaded = this.loaded
     if (preloaded) {
-      var res = f.call(this.#that)
+      var res = g(x => x)
     }
     return new Promise(((resolve, reject) => {
       if (preloaded) resolve(res)
@@ -45,7 +51,7 @@ class LoadQueue {
 
   // wait resolves after functions in q from add
   async wait(arg) {
-    return this.add(() => arg, this.#v)
+    return this.add(() => arg, undefined, this.#v)
   }
 }
 
@@ -135,7 +141,7 @@ class AudioPrefetch {
 
   src(url) {
     if (url === "") {
-      this.sync_result().then(this.done);
+      this.sync_result().then(this.done.bind(this));
     } else {
       this.playback_debug(url);
       this.loading()
@@ -175,26 +181,25 @@ class AudioPrefetch {
   // asks the user to rety f until it returns a promise that resolves
   #retry = pass;
   require_retry(f) {
-    let that = this;
-    return f().catch(async function(e) {
+    return f().catch((async function(e) {
       //console.error(e)
-      that.failed.call(that)
-      await new Promise((resolve, reject) => {
-        that.retrying.call(that, false)
-        const call_retry = that.#retry = () => {
-          that.retrying.call(that, true)
-          that.#retry = pass;
+      this.failed.call(this)
+      await new Promise(((resolve, reject) => {
+        this.retrying.call(this, false)
+        const call_retry = this.#retry = (() => {
+          this.retrying.call(this, true)
+          this.#retry = pass;
           f().then(() => {
             resolve();
           }).catch(e => {
-            that.retrying.call(that, false)
-            that.#retry = call_retry;
+            this.retrying.call(this, false)
+            this.#retry = call_retry;
           })
-        }
-        that.retries.call(that, call_retry)
-      })
-      that.recovered()
-    });
+        }).bind(this)
+        this.retries.call(this, call_retry)
+      }).bind(this))
+      this.recovered()
+    }).bind(this));
   }
 
   async result(key, f=undefined) {

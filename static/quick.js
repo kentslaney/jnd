@@ -98,7 +98,7 @@ class Audio extends AudioPrefetch {
   retries(f) {
     this.loadq.add(() => {
       this.nextButton.onclick = f
-    })
+    }, this)
   }
 
   retrying(still) {
@@ -124,7 +124,7 @@ class Audio extends AudioPrefetch {
     console.info("Now playing " + (new URL(url, document.baseURI).href))
   }
 
-  #playing = true;
+  #playing = false;
   play() {
     this.#playing = true;
     resetPlaybackButton(this.playbackButton, "pause");
@@ -158,8 +158,11 @@ class AudioResults extends Audio {
   #overlayEle = "#results-overlay"
   #overlayImg = "#results-overlay img"
   #resultsClickable = "#results-clickable"
-  #overlayEnabled = 1
+  #overlaid = false
+  #overlayEnabled
   #enableOverlay(immediately) {
+    this.#overlaid = true
+    this.#overlayEnabled = immediately
     this.#overlayButton = document.querySelector(this.#overlayButton)
     this.#overlayEle = document.querySelector(this.#overlayEle)
     this.#overlayImg = document.querySelector(this.#overlayImg)
@@ -171,24 +174,41 @@ class AudioResults extends Audio {
       "click", e => document.body.classList.remove("overlaying"));
     this.#resultsClickable.addEventListener(
       "click", e => e.stopPropagation());
-    this.#overlayEnabled ^= immediately
-    // matches (enabled) immediately if first, inverts it if not
-    this.#overlayButton.disabled = !(this.#overlayEnabled & 1);
-    this.done = this.finishedResults
   }
 
-  finishedResults() {
-    window.location.href = "/jnd/done.html?show=" + encodeURIComponent(
-      this.overlayURL)
+  done() {
+    if (this.#overlaid) {
+      window.location.href = "/jnd/done.html?show=" + encodeURIComponent(
+        this.#overlayURL)
+    } else {
+      super.done()
+    }
+  }
+
+  initialize() {
+    super.initialize()
+    this.showNowPlaying()
+  }
+
+  playbackDebug = "#playback-debug"
+  showNowPlaying() {
+    this.playbackDebug = document.querySelector(this.playbackDebug)
+    if (window.location.hostname === "localhost") {
+      //this.audio.setAttribute("controls", "")
+    }
+  }
+
+  debug(url) {
+    super.debug(url);
+    if (this.#overlaid) this.playbackDebug.innerText = url
   }
 
   loaded() {
     super.loaded()
-    this.#overlayEnabled ^= 1
-    // first call: matches (enabled) immediately if first, inverts it if not
-    // subsequent calls: always false
-    this.#overlayButton.disabled = !this.#overlayEnabled;
-    this.#overlayEnabled |= 2
+    if (this.#overlaid) {
+      this.#overlayButton.disabled = !this.#overlayEnabled;
+      this.#overlayEnabled = true
+    }
   }
 
   #overlayResults(e) {
@@ -322,8 +342,15 @@ class InteractiveRecorder extends TunedRecorder {
     }
   }
 
+  exceptionsView = "#exceptions-view"
   debug(v) {
-    document.getElementById("footer").innerText = v;
+    new LoadQueue(this).add(() => {
+      this.exceptionsView = document.querySelector(this.exceptionsView)
+      this.debug = (v => {
+        this.exceptionsView.innerText = v
+      }).bind(this);
+      this.debug(v)
+    })
   }
 }
 
