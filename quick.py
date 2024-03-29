@@ -130,10 +130,11 @@ class QuickBP(DatabaseBP):
         reply = set(reply.split(" "))
         correct, total = 0, 0
         for options in answer.split(","):
+            total += 1
             for option in options.split("/"):
-                total += 1
                 if option in reply:
                     correct += 1
+                    break
         return correct / max(total, 1)
 
     @staticmethod
