@@ -195,6 +195,21 @@ class AudioResults extends Audio {
     this.#playbackDebug = document.querySelector(this.#playbackDebug)
     if (window.location.host === "localhost:8088") {
       this.audio.setAttribute("controls", "")
+      this.loadq.add(() => {
+        const f = recorder.onSuccess, g = this.loaded, h = () => {
+          recorder.ready.call(recorder)
+          recorder.done.call(recorder)
+        }
+
+        recorder.onSuccess = stream => {
+          f.call(recorder, stream)
+          h()
+          this.loaded = () => {
+            g.call(this)
+            h()
+          }
+        }
+      }, this)
     }
   }
 

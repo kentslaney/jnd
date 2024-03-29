@@ -66,7 +66,7 @@ class QuickBP(DatabaseBP):
     def _blueprint_db(self):
         return self._bind_db()
 
-    def quick_next(self, db, cur, done = False):
+    def quick_next(self, db, cur, done=False):
         left = json.loads(session["left"])
         session["left"] = json.dumps(left - 1)
         if left == 1 or done:
@@ -136,6 +136,15 @@ class QuickBP(DatabaseBP):
                     correct += 1
         return correct / max(total, 1)
 
+    @staticmethod
+    def map_answer(f, answer, delimitors=",/"):
+        sep = ([len(s) for s in answer.split(d)] for d in delimitors)
+        sep = sorted((sum(i[:j + 1]) + j, d) for i, d in zip(
+            sep, delimitors) for j in range(len(i)))
+        sep = zip([(0, '')] + [(i + 1, d) for i, d in sep[:-1]], (
+            i[0] for i in sep[:-1]))
+        return "".join(j + f(answer[i:k]) for (i, j), k in sep)
+
     def quick_plot(self, db):
         results = db.queryall(
             "SELECT quick_trials.snr, quick_results.reply_asr, "
@@ -148,12 +157,10 @@ class QuickBP(DatabaseBP):
             *score)) for snr, *score in results]
         return self.flask_png(*zip(*results))
 
-    @staticmethod
-    def asr(path):
+    def asr(self, path):
         raise NotImplementedError()
 
-    @staticmethod
-    def flask_png(x, y):
+    def flask_png(self, x, y):
         raise NotImplementedError()
 
 class QuickScatterBP:
@@ -172,9 +179,27 @@ class QuickWhisperBP(QuickBP):
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
         # don't want to import (loads model) if BP isn't constructed
-        from asr import asr
-        self.asr = asr
+        from asr import asr, normalizer
+        self.whisper_asr, self.normalizer = asr, normalizer
 
-class QuickLogisticWhisperBP(QuickLogisticBP, QuickWhisperBP):
+    def proportion_correct(self, reply, answer):
+        return super().proportion_correct(
+            self.normalizer(reply), self.map_answer(self.normalizer, answer))
+
+    def asr(self, path):
+        return self.whisper_asr(path)
+
+class QuickWhisperDebugBP(QuickWhisperBP):
+    def quick_next(self, db, cur, done=False):
+        print(f'answer is "{cur["answer"]}"')
+        return super().quick_next(db, cur, done)
+
+    def proportion_correct(self, reply, answer):
+        res = super().proportion_correct(reply, answer)
+        print(f'heard "{reply}": {res}')
+        return res
+
+class QuickLogisticWhisperBP(QuickLogisticBP, QuickWhisperDebugBP):
+#class QuickLogisticWhisperBP(QuickLogisticBP, QuickWhisperBP):
     pass
 

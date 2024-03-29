@@ -5,9 +5,9 @@ from matplotlib import pyplot as plt
 assert not subprocess.run(
     ["which", "ffmpeg"], stdout=subprocess.PIPE).returncode
 
-model = whisper.load_model("base.en")
+model = whisper.load_model("small.en")
 normalizer = EnglishTextNormalizer()
 
 def asr(path):
-    return normalizer(model.transcribe(path)["text"])
+    return model.transcribe(path)["text"]
 
