@@ -66,10 +66,10 @@ class QuickBP(DatabaseBP):
     def _blueprint_db(self):
         return self._bind_db()
 
-    def quick_next(self, db, cur, done=False):
+    def quick_next(self, db, cur, done=None):
         left = json.loads(session["left"])
         session["left"] = json.dumps(left - 1)
-        if left == 1 or done:
+        if left <= 1 or done and done():
             q = self.quick_done
         else:
             q = db.queryall(
@@ -102,6 +102,15 @@ class QuickBP(DatabaseBP):
             "cur": self.quick_url(cur["filename"]), "has_results": False,
             "next": {1: self.quick_next(db, cur)}, "name": session["username"]})
 
+    def quick_parse(self, db, rowid, fpath, answer):
+        def wrapped():
+            reply = self.asr(fpath)
+            db.execute(
+                "UPDATE quick_results SET reply_asr=? WHERE rowid=?",
+                (reply, rowid))
+            return self.completion_condition(reply, aswer)
+        return wrapped
+
     def quick_result(self, db):
         if "user" not in session or "file" not in request.files:
             abort(400)
@@ -109,18 +118,17 @@ class QuickBP(DatabaseBP):
         if file.filename == "":
             abort(400)
         cur = json.loads(session["cur"])
-        fname = f"sin_{session['user']}_{cur['id']}"
+        fname = f"sin_{session['user']}_{cur['id']}_{uuid.uuid4()}"
         fpath = os.path.join(upload_location, fname)
         file.save(fpath)
-        reply = self.asr(fpath)
-        db.execute(
+        rowid = db.execute(
             "INSERT INTO quick_results "
-            "(subject, trial, reply_filename, reply_asr) VALUES (?, ?, ?, ?)",
-            (session["user"], cur["id"], fname, reply))
+            "(subject, trial, reply_filename) VALUES (?, ?, ?)",
+            (session["user"], cur["id"], fname))
         session["cur"] = session["q"]
         return json.dumps({1: self.quick_next(
             db, json.loads(session["cur"]),
-            self.completion_condition(reply, cur["answer"]))})
+            self.quick_parse(db, rowid, fpath, cur["answer"]))})
 
     # delayed by one level because of preloading
     def completion_condition(self, reply, answer):
