@@ -5,7 +5,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto">
   <script type="text/javascript">
     // https://en.wikipedia.org/wiki/Unicode_character_property#General_Category
-    // valid username characters: letters, number digits, number letters, 
+    // valid username characters: letters, number digits, number letters,
     //                            punctuation connectors, punctuation dashes
     const username_re = /[^\p{L}\p{Nd}\p{Nl}\p{Pc}\p{Pd}\p{Zs}]/u;
     // time to wait before checking API for username availibility
@@ -108,10 +108,11 @@
       Below, enter the username given to you. Before pressing the button to
       start, make sure that you are ready to listen to sound from the device.
       To begin listening, press the play button to start the test. You may only
-      listen to the playback once
+      listen to the playback once.
       <br><br>
       The test will consist of listening to a sentence spoken above background
-      noise which needs to be separated out. After the audio clip finishes,
+      noise you might hear in a restaurant. The goal is to understand the
+      sentence said by the main person speaking. After the audio clip finishes,
       the microphone will turn green and remove the cross, indicating that you
       should say the sentence that you heard in the clip. Green volume bars
       above the microphone indicate the input volume.
@@ -119,7 +120,17 @@
       When you are done recording, press the "Next Audio" button to play the
       next clip. You can also press the check mark to finish recording before
       continuing. The check mark will turn into a record symbol, which you can
-      use to redo your response if there was a problem with the first one.
+      use to redo your response if there was a problem with the first one. The
+      recording will end automatically after 2 seconds of silence.
+      <br><br>
+      Examples of the audio have been included below.
+    </div>
+    <div id="samples">
+      <audio controlslist="nodownload noplaybackrate" controls preload=""
+        src="/jnd/quick/List01Sentence01.wav"></audio>
+      <br>
+      <audio controlslist="nodownload noplaybackrate" controls preload=""
+        src="/jnd/quick/List01Sentence05.wav"></audio>
     </div>
     <form action="javascript:;" onsubmit="claim_username()" class="userbox"
           autocomplete="off">
@@ -157,7 +168,7 @@
     }
     #username {
       border-radius: 0.4rem 0px 0px 0.4rem;
-      border: 2px solid #aaa;
+      border: 0.15rem solid #aaa;
       border-right-width: 0;
       outline: 0px;
     }
@@ -181,6 +192,10 @@
       margin-left: 50%;
       transform: translateX(-50%);
       height: 10rem;
+    }
+    #samples {
+      margin-bottom: 2rem;
+      text-align: center;
     }
   </style>
 </html>

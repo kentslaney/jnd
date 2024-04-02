@@ -250,23 +250,123 @@ class AudioPrefetch {
 
 class Recording {
   #chunks = [];
-
+  #streaming
+  #chunkID = 0
+  #blockID = -1
+  #queue = 0
+  #_semaphore = 0
+  #block = undefined
+  #blocking = false
+  #resolve = () => {}
+  #total = 0
   #mediaRecorder
-  constructor(mediaRecorder) {
-    this.#mediaRecorder = mediaRecorder
+
+  // streaming is WS URL, messageHandler recieves WS events
+  constructor(mediaRecorder, streaming, messageHandler) {
+    this.#mediaRecorder = mediaRecorder;
+    if (streaming !== undefined) {
+      let ready;
+      this.#blocking = true
+      this.#block = new Promise((resolve, reject) => { ready = resolve })
+      this.#streaming = new WebSocket(streaming);
+      this.#streaming.addEventListener("open", () => {
+        ready()
+        this.#blocking = false
+      })
+      this.#streaming.addEventListener("message", messageHandler)
+      mediaRecorder.addEventListener("start", this.reset.bind(this))
+      mediaRecorder.addEventListener("stop", this.wait.bind(this))
+    }
+    mediaRecorder.addEventListener("start", this.clear.bind(this))
+    mediaRecorder.addEventListener("dataavailable", this.recieve.bind(this))
   }
 
-  recieve(e) {
+  get #semaphore() {
+    return this.#_semaphore
+  }
+
+  set #semaphore(v) {
+    this.#_semaphore = v
+    if (v === 0) this.#resolve()
+  }
+
+  async recieve(e) {
     this.#chunks.push(e.data)
+    this.#total = e.data.size
+    if (this.#streaming) this.stream(e)
   }
 
   blob() {
     return new Blob(this.#chunks, { type: this.#mediaRecorder.mimeType });
   }
+
+  clear() {
+    this.chunks = []
+  }
+
+  async reset(e) {
+    if (this.#block !== undefined) {
+      this.#blocking = true
+      await this.#block
+    }
+    this.#chunkID = this.#queue;
+    this.#queue = 0;
+    this.#blockID += 1;
+    this.#total = 0
+  }
+
+  async wait(e) {
+    if (this.#blocking) await this.#block
+    let ready
+    this.#block = new Promise((resolve, reject) => {
+      ready = resolve
+    })
+    this.#resolve = () => {
+      ready()
+      this.#resolve = () => {}
+      this.#blocking = false
+    }
+  }
+
+  async stream(e) {
+    let chunk
+    if (this.#blocking) {
+      chunk = this.#queue++
+      await this.#block
+    } else {
+      chunk = this.#chunkID++
+    }
+    const block = this.#blockID
+    this.#semaphore += 1
+    // timecode isn't guaranteed to start at 0 so chunk is needed
+    const data = new Blob([Uint32Array.of(block, chunk, e.timecode), e.data])
+    return new Promise(() => {
+      // shouldn't be able to fail
+      this.#streaming.send(data)
+    }).finally(() => {
+      this.#semaphore -= 1
+    })
+  }
+
+  // resolution based on timeslice param of MediaRecorder.start
+  get progress() {
+    const lastsEnd = this.#total / this.#mediaRecorder.audioBitsPerSecond
+    if (!this.#streaming) return lastsEnd
+    return [
+      lastsEnd - this.#streaming.bufferedAmount / this.#total,
+      lastsEnd
+    ]
+  }
 }
 
 class Recorder {
-  constructor() {
+  #timeslice
+  #streaming
+  #recording
+  // timeslice is frequency of data events in ms, streaming is WS URL
+  constructor(timeslice, streaming) {
+    this.#timeslice = timeslice
+    this.#streaming = streaming
     if (!navigator.mediaDevices.getUserMedia) {
       console.error("media devices API unsupported")
     }
@@ -284,19 +384,17 @@ class Recorder {
   #mediaRecorder
   onSuccess(stream) {
     this.#mediaRecorder = new MediaRecorder(stream);
-    this.#mediaRecorder.onstop = () => this.#stopped.call(this)
-    this.#mediaRecorder.ondataavailable = e => this.recieve(e)
+    this.#mediaRecorder.addEventListener("stop", this.#stopped.bind(this))
+    this.#recording = new Recording(
+      this.#mediaRecorder, this.#streaming, this.messaged.bind(this))
   }
 
-  #recording
-  create() {
-    this.#recording = new Recording(this.#mediaRecorder)
-  }
+  messaged(e) {}
 
   start() {
     this.#stopnt()
     try {
-      this.#mediaRecorder.start();
+      this.#mediaRecorder.start(this.#timeslice);
     } catch(e) {
       this.debug(e.message);
       throw e
@@ -316,10 +414,6 @@ class Recorder {
         this.#stopping = undefined;
       }
     })
-  }
-
-  recieve(e) {
-    this.#recording.recieve(e);
   }
 
   upload(url) {

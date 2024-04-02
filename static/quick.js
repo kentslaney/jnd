@@ -346,7 +346,6 @@ class InteractiveRecorder extends TunedRecorder {
   autostart() { return true; }
 
   activate() {
-    this.create()
     this.start()
     resetPlaybackButton(this.playbackButton, "done");
     this.playbackButton.onclick = () => this.done()
