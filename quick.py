@@ -123,7 +123,7 @@ class QuickBP(DatabaseBP):
         if file.filename == "":
             abort(400)
         cur = json.loads(session["cur"])
-        fname = f"sin_{session['user']}_{cur['id']}_{uuid.uuid4()}.wav"
+        fname = f"sin_{session['user']}_{cur['id']}_{uuid.uuid4()}"
         fpath = os.path.join(upload_location, fname)
         file.save(fpath)
         rowid = db.execute(
