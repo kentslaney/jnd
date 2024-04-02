@@ -62,6 +62,7 @@ class Database:
 from flask import Blueprint
 import functools
 
+# TODO?: redo? document?
 class DatabaseBP(Blueprint):
     def __init__(self, db_path, schema_path, name, url_prefix=None):
         super().__init__(name, __name__, url_prefix=url_prefix)
@@ -71,8 +72,8 @@ class DatabaseBP(Blueprint):
     def _route_db(self, *a, **kw):
         def wrapper(f):
             @functools.wraps(f)
-            def wrapped():
-                return f(self._blueprint_db)
+            def wrapped(*ra, **kra):
+                return f(self._blueprint_db, *ra, **kra)
             return self.route(*a, **kw)(wrapped)
         return wrapper
 

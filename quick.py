@@ -1,5 +1,6 @@
 import os, os.path, json, random, functools
-from flask import Blueprint, request, session, abort, redirect, Response
+from flask import (
+    Blueprint, request, session, abort, redirect, Response, send_from_directory)
 from utils import Database, relpath, DatabaseBP
 from plot import scatter_results, logistic_results
 
@@ -60,6 +61,7 @@ class QuickBP(DatabaseBP):
         self._route_db("/start")(self.quick_start)
         self._route_db("/result", methods=["POST"])(self.quick_result)
         self._route_db("/plot")(self.quick_plot)
+        self._route_db("/recognized")(self.quick_recognized)
         self._bind_db = db
 
     @property
@@ -71,6 +73,9 @@ class QuickBP(DatabaseBP):
         session["left"] = json.dumps(left - 1)
         if left <= 1 or done and done():
             q = self.quick_done
+            if left <= 1:
+                # TODO: delegate to separate thread
+                ...
         else:
             q = db.queryall(
                 "SELECT * FROM quick_trials WHERE active=1 AND level_number=?",
@@ -118,7 +123,7 @@ class QuickBP(DatabaseBP):
         if file.filename == "":
             abort(400)
         cur = json.loads(session["cur"])
-        fname = f"sin_{session['user']}_{cur['id']}_{uuid.uuid4()}"
+        fname = f"sin_{session['user']}_{cur['id']}_{uuid.uuid4()}.wav"
         fpath = os.path.join(upload_location, fname)
         file.save(fpath)
         rowid = db.execute(
@@ -166,6 +171,15 @@ class QuickBP(DatabaseBP):
             *score)) for snr, *score in results]
         return self.flask_png(*zip(*results))
 
+    def quick_recognized(self, db):
+        transcription = db.queryall(
+            "SELECT quick_results.reply_filename, quick_results.reply_asr, "
+            "quick_trials.filename, quick_trials.answer FROM quick_results "
+            "LEFT JOIN quick_trials ON quick_results.trial=quick_trials.id "
+            "WHERE quick_results.subject=?", (session["user"],))
+        keys = ("upload", "transcript", "prompt", "answer")
+        return json.dumps([dict(zip(keys, i)) for i in transcription])
+
     def asr(self, path):
         raise NotImplementedError()
 
@@ -199,6 +213,10 @@ class QuickWhisperBP(QuickBP):
         return self.whisper_asr(path)
 
 class QuickWhisperDebugBP(QuickWhisperBP):
+    def __init__(self, *a, **kw):
+        super().__init__(*a, **kw)
+        self._route_db("/upload/<fname>")(self.upload)
+
     def quick_next(self, db, cur, done=False):
         print(f'answer is "{cur["answer"]}"')
         return super().quick_next(db, cur, done)
@@ -207,6 +225,9 @@ class QuickWhisperDebugBP(QuickWhisperBP):
         res = super().proportion_correct(reply, answer)
         print(f'heard "{reply}": {res}')
         return res
+
+    def upload(self, db, fname):
+        return send_from_directory(upload_location, fname)
 
 class QuickLogisticWhisperBP(QuickLogisticBP, QuickWhisperDebugBP):
 #class QuickLogisticWhisperBP(QuickLogisticBP, QuickWhisperBP):

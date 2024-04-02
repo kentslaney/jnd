@@ -178,7 +178,7 @@ class AudioResults extends Audio {
 
   done() {
     if (this.overlaid) {
-      window.location.href = "/jnd/done.html?show=" + encodeURIComponent(
+      window.location.href = "/jnd/done.html?debug=" + encodeURIComponent(
         this.#overlayURL)
     } else {
       super.done()

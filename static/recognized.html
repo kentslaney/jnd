@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+<script type="text/javascript">
+fetch("/jnd/api/quick/recognized")
+  .then(response => response.json())
+  .then(data => {
+    for (let row of data) {
+      row["prompt"] = "/jnd/quick/" + row["prompt"]
+      row["upload"] = "/jnd/api/quick/upload/" + row["upload"]
+    }
+    return data
+  }).then(data => {
+    const template = document.querySelector("thead + tbody")
+    const parent = template.parentElement
+    for (const row of data) {
+      el = parent.appendChild(template.cloneNode(true))
+      el.querySelector(".prompt").src = row["prompt"]
+      el.querySelector(".response").src = row["upload"]
+      el.querySelector(".answer").innerText = row["transcript"]
+      el.querySelector(".reply").innerText = row["answer"]
+    }
+  })
+</script>
+  <table border=1>
+    <thead>
+      <th>Prompt</th><th>Response</th><th>Transcripts (answer/reply)</th>
+    </thead>
+    <tbody>
+      <tr>
+        <td rowspan="2">
+          <audio controlslist="nodownload noplaybackrate" controls
+            class="prompt"></audio>
+        </td>
+        <td rowspan="2">
+          <audio controlslist="nodownload noplaybackrate" controls
+            class="response"></audio>
+        </td>
+        <td class="answer"></td>
+      </tr>
+      <tr><td class="reply"></td></tr>
+    </tbody>
+  </table>
+<style>
+thead + tbody {
+  display: none;
+}
+.answer:empty::before {
+  content: "[pending]";
+  color: red;
+}
+</style>
+</html>
