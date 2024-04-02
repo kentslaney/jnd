@@ -301,7 +301,7 @@ class Recording {
   }
 
   clear() {
-    this.chunks = []
+    this.#chunks = []
   }
 
   async reset(e) {
