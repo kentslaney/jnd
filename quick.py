@@ -16,8 +16,8 @@ class QuickDB(Database):
         super().db_init_hook()
         assert os.path.exists(quick_files)
         with open(quick_files, "r") as f:
-            experiments = [[part.strip() for part in line.split(",", 4)]
-                           for line in f]
+            experiments = [
+                [part.strip() for part in line.split(",", 4)] for line in f]
         con = self.get()
         cur = con.cursor()
         cur.execute(

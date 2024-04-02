@@ -2,7 +2,7 @@ nohup.out
 /secret_key
 /static/pitches
 /static/quick
-/pitch_jnd_files.tsv
+/pitch_jnd_files.csv
 /all_spin_index.csv
 /experiments.db
 /uploads

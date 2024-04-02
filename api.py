@@ -5,7 +5,8 @@ from pitch import PitchDB, PitchBP
 from quick import QuickDB, QuickLogisticWhisperBP
 
 # use multiple inheritance to add other DB hooks
-class ExperimentDB(PitchDB, QuickDB):
+# class ExperimentDB(PitchDB, QuickDB):
+class ExperimentDB(QuickDB):
     pass
 
 class APIBlueprint(DatabaseBP):
@@ -15,7 +16,7 @@ class APIBlueprint(DatabaseBP):
                  name="api", url_prefix=None):
         super().__init__(db_path, schema_path, name, url_prefix)
         db = lambda: self._blueprint_db
-        self.register_blueprint(PitchBP(db))
+        # self.register_blueprint(PitchBP(db))
         self.register_blueprint(QuickLogisticWhisperBP(db))
         self._route_db("/username-available")(username_available)
         self._route_db("/set-username")(set_username)

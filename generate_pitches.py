@@ -54,7 +54,7 @@ f0_list = [220, 440, 880, 2760]
 from utils import relpath
 metadir, basedir = relpath(), relpath("static", "pitches")
 
-metadata = 'pitch_jnd_files.tsv'
+metadata = 'pitch_jnd_files.csv'
 metapath = os.path.join(metadir, metadata)
 if os.path.exists(metapath):
     while True:
@@ -79,7 +79,7 @@ with open(metapath, 'w') as fp:
 
                 filename = f'pitch_jnd_{f0}_{i}_{t}.wav'
                 path = os.path.join(basedir, filename)
-                fp.write(f'{f0}\t{i}\t{t}\t{filename}\t{sign}\n')
+                fp.write(', '.join((f0, i, t, filename, sign)) + '\n')
                 # wav files written by scipy break web audio playback
                 try:
                     subprocess.run(

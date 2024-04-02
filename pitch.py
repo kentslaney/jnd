@@ -3,14 +3,15 @@ from flask import Blueprint, request, session, abort
 from utils import Database, relpath, DatabaseBP
 
 pitch_levels = 8
-pitch_files = relpath("pitch_jnd_files.tsv")
+pitch_files = relpath("pitch_jnd_files.csv")
 
 class PitchDB(Database):
     def db_init_hook(self):
         super().db_init_hook()
-        assert os.path.exists(pitch_files)
+        assert os.path.exists(pitch_files), "please run generate_pitches.py"
         with open(pitch_files, "r") as f:
-            experiments = [line.strip().split("\t") for line in f]
+            experiments = [
+                [part.strip() for part in line.split(",")] for line in f]
         con = self.get()
         cur = con.cursor()
         cur.executemany(
