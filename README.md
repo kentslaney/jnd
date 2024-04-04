@@ -6,7 +6,7 @@ nohup sh server.sh & tail -f nohup.out
 kill server and uwsgi processes
 ```bash
 ps x | grep [s]erver | sed 's/^ \+\([0-9]\+\).*/\1/g' | xargs kill && \
-killall uwsgi && watch -g 'ps x'
+killall uwsgi && watch 'ps x'
 ```
 staging server that skips audio in favor of logged answers
 ```bash
