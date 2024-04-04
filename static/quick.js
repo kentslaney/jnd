@@ -392,9 +392,11 @@ class AutoEndingRecorder extends InteractiveRecorder {
     super.volume(v)
     if (!this.recording) return this.#lastNoise = undefined
     const now = Date.now()
-    if (this.#lastNoise == undefined || v > this.#silence) {
-      this.#lastNoise = now
+    if (this.#lastNoise == undefined) {
       this.#starting = now
+      this.#lastNoise = now
+    } else if (v > this.#silence) {
+      this.#lastNoise = now
     } else if (now - this.#lastNoise > this.#timing) {
       this.done()
       if (this.#lastNoise - this.#starting < this.#minimum) {
