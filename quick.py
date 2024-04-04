@@ -113,7 +113,7 @@ class QuickBP(DatabaseBP):
             db.execute(
                 "UPDATE quick_results SET reply_asr=? WHERE rowid=?",
                 (reply, rowid))
-            return self.completion_condition(reply, aswer)
+            return self.completion_condition(reply, answer)
         return wrapped
 
     def quick_result(self, db):
