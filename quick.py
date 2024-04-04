@@ -1,4 +1,4 @@
-import os, os.path, json, random, functools
+import os, os.path, json, random, functools, uuid
 from flask import (
     Blueprint, request, session, abort, redirect, Response, send_from_directory)
 from utils import Database, relpath, DatabaseBP
