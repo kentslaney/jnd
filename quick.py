@@ -3,7 +3,6 @@ from flask import (
     Blueprint, request, session, abort, redirect, Response, send_from_directory)
 from utils import Database, relpath, DatabaseBP
 from plot import scatter_results, logistic_results
-from asr import WhisperASR, PromptedWhisperASR, whisper_normalizer
 
 quick_levels = 6
 quick_files = relpath("all_spin_index.csv")
@@ -207,7 +206,8 @@ class QuickNormalizedBP(QuickBP):
 
     def proportion_correct(self, reply, answer):
         return super().proportion_correct(
-            self.normalizer(reply), self.map_answer(self.normalizer, answer))
+            self.normalizer(reply["text"]),
+            self.map_answer(self.normalizer, answer))
 
 class QuickWhisperBP(QuickNormalizedBP):
     def __init__(self, *a, **kw):

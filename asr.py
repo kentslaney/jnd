@@ -12,7 +12,7 @@ class WhisperASR:
         self.model = whisper.load_model("small.en")
 
     def __call__(self, path):
-        return self.model.transcribe(path)["text"]
+        return self.model.transcribe(path)
 
 # can be overly generous
 class PromptedWhisperASR:
@@ -20,5 +20,5 @@ class PromptedWhisperASR:
         self.model = whisper.load_model("base.en")
 
     def __call__(self, path, answer):
-        return self.model.transcribe(path, initial_prompt=answer)["text"]
+        return self.model.transcribe(path, initial_prompt=answer)
 
