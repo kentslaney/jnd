@@ -202,6 +202,7 @@ class QuickLogisticBP:
 class QuickNormalizedBP(QuickBP):
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
+        from asr import whisper_normalizer
         self.normalizer = whisper_normalizer
 
     def proportion_correct(self, reply, answer):
@@ -211,6 +212,7 @@ class QuickNormalizedBP(QuickBP):
 class QuickWhisperBP(QuickNormalizedBP):
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
+        from asr import WhisperASR
         self.whisper_asr = WhisperASR()
 
     def asr(self, path, answer):
@@ -219,6 +221,7 @@ class QuickWhisperBP(QuickNormalizedBP):
 class QuickPromptedWhisperBP(QuickNormalizedBP):
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
+        from asr import PromptedWhisperASR
         self.prompted_whisper_asr = PromptedWhisperASR()
 
     def asr(self, path, answer):
