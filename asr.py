@@ -5,9 +5,20 @@ from matplotlib import pyplot as plt
 assert not subprocess.run(
     ["which", "ffmpeg"], stdout=subprocess.DEVNULL).returncode
 
-model = whisper.load_model("small.en")
-normalizer = EnglishTextNormalizer()
+whisper_normalizer = EnglishTextNormalizer()
 
-def asr(path):
-    return model.transcribe(path)["text"]
+class WhisperASR:
+    def __init__(self):
+        self.model = whisper.load_model("small.en")
+
+    def __call__(self, path):
+        return self.model.transcribe(path)["text"]
+
+# can be overly generous
+class PromptedWhisperASR:
+    def __init__(self):
+        self.model = whisper.load_model("base.en")
+
+    def __call__(self, path, answer):
+        return self.model.transcribe(path, initial_prompt=answer)["text"]
 

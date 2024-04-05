@@ -3,6 +3,7 @@ from flask import (
     Blueprint, request, session, abort, redirect, Response, send_from_directory)
 from utils import Database, relpath, DatabaseBP
 from plot import scatter_results, logistic_results
+from asr import WhisperASR, PromptedWhisperASR, whisper_normalizer
 
 quick_levels = 6
 quick_files = relpath("all_spin_index.csv")
@@ -109,10 +110,10 @@ class QuickBP(DatabaseBP):
 
     def quick_parse(self, db, rowid, fpath, answer):
         def wrapped():
-            reply = self.asr(fpath)
+            reply = self.asr(fpath, answer)
             db.execute(
                 "UPDATE quick_results SET reply_asr=? WHERE rowid=?",
-                (reply, rowid))
+                (json.dumps(reply), rowid))
             return self.completion_condition(reply, answer)
         return wrapped
 
@@ -198,21 +199,34 @@ class QuickLogisticBP:
     def flask_png(x, y):
         return logistic_results(x, y) if len(x) > 1 else scatter_results(x, y)
 
-class QuickWhisperBP(QuickBP):
+class QuickNormalizedBP(QuickBP):
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
-        # don't want to import (loads model) if BP isn't constructed
-        from asr import asr, normalizer
-        self.whisper_asr, self.normalizer = asr, normalizer
+        self.normalizer = whisper_normalizer
 
     def proportion_correct(self, reply, answer):
         return super().proportion_correct(
             self.normalizer(reply), self.map_answer(self.normalizer, answer))
 
-    def asr(self, path):
+class QuickWhisperBP(QuickNormalizedBP):
+    def __init__(self, *a, **kw):
+        super().__init__(*a, **kw)
+        self.whisper_asr = WhisperASR()
+
+    def asr(self, path, answer):
         return self.whisper_asr(path)
 
-class QuickWhisperDebugBP(QuickWhisperBP):
+class QuickPromptedWhisperBP(QuickNormalizedBP):
+    def __init__(self, *a, **kw):
+        super().__init__(*a, **kw)
+        self.prompted_whisper_asr = PromptedWhisperASR()
+
+    def asr(self, path, answer):
+        return self.prompted_whisper_asr(
+            path, answer.replace(",", " ").replace("/", " "))
+
+# class QuickWhisperDebugBP(QuickWhisperBP):
+class QuickWhisperDebugBP(QuickPromptedWhisperBP):
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
         self._route_db("/upload/<fname>")(self.upload)
@@ -230,6 +244,6 @@ class QuickWhisperDebugBP(QuickWhisperBP):
         return send_from_directory(upload_location, fname)
 
 class QuickLogisticWhisperBP(QuickLogisticBP, QuickWhisperDebugBP):
-#class QuickLogisticWhisperBP(QuickLogisticBP, QuickWhisperBP):
+# class QuickLogisticWhisperBP(QuickLogisticBP, QuickWhisperBP):
     pass
 
