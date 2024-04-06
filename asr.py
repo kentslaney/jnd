@@ -1,6 +1,5 @@
 import whisper, subprocess
 from whisper.normalizers import EnglishTextNormalizer
-from matplotlib import pyplot as plt
 
 assert not subprocess.run(
     ["which", "ffmpeg"], stdout=subprocess.DEVNULL).returncode

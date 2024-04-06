@@ -1,0 +1,65 @@
+:root {
+  --symbol-height: 3rem !important;
+}
+
+#instructions {
+  max-width: 32rem;
+  margin: auto;
+  margin-bottom: 2rem;
+}
+.userbox {
+  text-align: center;
+}
+#username-status {
+  display: block;
+  margin-top: 0.5rem;
+}
+#submit, #username {
+  border-color: #ABABA9;
+  border-style: solid;
+  border-width: 0.15rem;
+  padding: 0.3rem;
+}
+#submit {
+  border-radius: 0px 0.4rem 0.4rem 0px;
+}
+#username {
+  border-radius: 0.4rem 0px 0px 0.4rem;
+  border: 0.15rem solid #aaa;
+  border-right-width: 0;
+  outline: 0px;
+}
+#username:focus {
+  border-color: #67AFD2;
+}
+#content {
+  /* 33% of the div is positioned at 33% of the viewport height */
+  transform: translateY(max(0px, calc(33vh - 33%)));
+  color: rgba(0, 0, 0, 0.87);
+}
+#content, input {
+  font-family: 'Roboto', sans-serif;
+}
+#username-status:empty::before {
+  content: "\a0";
+}
+img {
+  display: inline-block;
+  margin-top: 2rem;
+  margin-left: 50%;
+  transform: translateX(-50%);
+  height: 10rem;
+}
+#samples {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+#samples > div {
+  display: inline-block;
+}
+.playback-interface {
+  display: block !important;
+  margin: 1rem;
+  margin-bottom: 0;
+}
+

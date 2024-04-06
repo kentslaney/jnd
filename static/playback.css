@@ -1,0 +1,127 @@
+/* element size config */
+:root {
+  --symbol-height: 4rem;
+  --playback-padding-scale: 0.4;
+  --playback-border-scale: 0.1;
+  --stop-scale: 0.8;
+}
+/* end of element size config */
+
+/* https://identity.stanford.edu/design-elements */
+:root {
+  --soft-grey: #ABABA9;
+  --active: #008566;
+  --interact: #67AFD2;
+  --record: #E50808;
+}
+
+:root {
+  --padding-value: calc(var(--playback-padding-scale) * var(--symbol-height));
+  --border-value: calc(var(--playback-border-scale) * var(--symbol-height));
+  --container-size: calc(var(--padding-value) * 2 + var(--symbol-height));
+}
+
+/* playback icon CSS */
+:root { --playback-color: var(--soft-grey); }
+/* .playback-interface.playable { --playback-color: var(--active); } */
+.playback-interface.play { --playback-color: var(--interact); }
+
+.playback-interface {
+  display: inline-block;
+  border-radius: 100%;
+  border: var(--border-value) solid var(--playback-color);
+  cursor: pointer;
+  width: calc(var(--container-size) + var(--border-value) * 2);
+  height: calc(var(--container-size) + var(--border-value) * 2);
+  background: transparent;
+  padding: 0;
+  overflow: hidden;
+}
+.playback-interface::before, .playback-interface::after {
+  content: "";
+  display: block;
+}
+.playback-interface.play::before, .playback-interface.playable::before {
+  --h: calc(var(--symbol-height) / 2);
+  --w: calc(var(--symbol-height) * sqrt(3) / 2);
+  border-color: transparent var(--playback-color);
+  border-style: solid;
+  border-width: var(--h) 0px var(--h) var(--w);
+
+  --tri-offset: calc((sqrt(3) - 3 / 2) * var(--symbol-height) / 2);
+  margin-top: var(--padding-value);
+  margin-bottom: var(--padding-value);
+  margin-left: calc(var(--padding-value) + var(--symbol-height) / 4);
+  margin-right: calc(var(--padding-value) - var(--tri-offset));
+}
+
+.playback-interface.pause::before {
+  --w: calc(var(--symbol-height) / 3);
+  width: var(--w);
+  height: var(--symbol-height);
+  border-width: 0 var(--w);
+  border-color: var(--playback-color);
+  border-style: solid;
+  margin: var(--padding-value) auto;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.playback-interface.load::before, .playback-interface.load::after {
+  --w: calc(var(--padding-value) + var(--symbol-height) * 1 / 3);
+  width: calc(var(--symbol-height) / 3);
+  height: calc(var(--symbol-height) / 3);
+  border-radius: 100%;
+  background: var(--playback-color);
+  margin: calc(var(--symbol-height) / 3) var(--w);
+  animation: 2s infinite linear rotate;
+}
+.playback-interface.load::before {
+  margin-top: var(--padding-value);
+  transform-origin: center calc(var(--symbol-height) / 2);
+}
+.playback-interface.load::after {
+  margin-bottom: var(--padding-value);
+  transform-origin: center calc(var(--symbol-height) / -6);
+}
+
+.playback-interface.record { --playback-color: var(--record); }
+.playback-interface.stop::before, .playback-interface.record::before {
+  --size: calc(var(--symbol-height) * var(--stop-scale));
+  --inset: calc((var(--symbol-height) - var(--size)) / 2);
+  --top: calc(var(--padding-value) + var(--inset));
+  width: var(--size);
+  height: var(--size);
+  background: var(--playback-color);
+  margin: var(--top) auto;
+}
+.playback-interface.record::before { border-radius: 100%; }
+
+.playback-interface.done::before {
+  --size: calc(var(--symbol-height) - var(--border-value) / 2);
+  --inset: var(--border-value);
+  --top: calc(var(--padding-value) + var(--inset) - var(--size) * 1.2);
+  width: calc(var(--size) / 2);
+  height: var(--size);
+  margin: var(--top) auto;
+  transform: rotate(45deg);
+  border-color: var(--playback-color);
+  border-style: solid;
+  border-width: 0 var(--inset) var(--inset) 0;
+}
+
+.playback-interface.error::before {
+  --size: calc(var(--symbol-height) * var(--stop-scale));
+  --inset: calc((var(--symbol-height) - var(--size)) / 2);
+  --top: calc(var(--padding-value) + var(--inset));
+  --line: calc(var(--size) - 3 * var(--border-value));
+  --v: calc(var(--border-value) * 1.5);
+  width: var(--border-value);
+  height: var(--v);
+  margin: var(--top) auto;
+  border-color: var(--playback-color);
+  border-style: solid;
+  border-width: var(--line) 0 var(--v) 0;
+}
