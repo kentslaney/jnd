@@ -106,7 +106,7 @@ window.addEventListener("load", () => {
     const src = el.getAttribute("data-src")
     if (src === null) continue
     let audio = document.createElement("audio")
-    audio.addEventListener("canplaythrough", ((el, audio) => {
+    audio.addEventListener("canplaythrough", ((el, audio) => () => {
       el.classList.remove("load")
       el.classList.add("play")
       let playing = false
