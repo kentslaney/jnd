@@ -22,18 +22,18 @@
 
 /* https://identity.stanford.edu/design-elements */
 :root {
+  /* duplicated in playback.css */
+  --soft-grey: #DAD7CB;
+  --interact: #006CB8;
+  --record: #E50808;
+  /* end */
+
   --primary: #8C1515;
   --light: #CBA8A6;
   --dark: #820000;
   --secondary: #53565A;
-
-  /* duplicated in playback.css */
-  --soft-grey: #ABABA9;
   --active: #008566;
   --disabled: var(--soft-grey);
-  --interact: #67AFD2;
-  --record: #E50808;
-  /* end */
 
   --title: 'Source Sans 3', sans-serif;
   --compact: 'Roboto', sans-serif;

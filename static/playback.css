@@ -9,9 +9,8 @@
 
 /* https://identity.stanford.edu/design-elements */
 :root {
-  --soft-grey: #ABABA9;
-  --active: #008566;
-  --interact: #67AFD2;
+  --soft-grey: #DAD7CB;
+  --interact: #006CB8;
   --record: #E50808;
 }
 
@@ -23,7 +22,6 @@
 
 /* playback icon CSS */
 :root { --playback-color: var(--soft-grey); }
-/* .playback-interface.playable { --playback-color: var(--active); } */
 .playback-interface.play { --playback-color: var(--interact); }
 
 .playback-interface {
@@ -41,7 +39,7 @@
   content: "";
   display: block;
 }
-.playback-interface.play::before, .playback-interface.playable::before {
+.playback-interface.play::before {
   --h: calc(var(--symbol-height) / 2);
   --w: calc(var(--symbol-height) * sqrt(3) / 2);
   border-color: transparent var(--playback-color);
