@@ -9,6 +9,7 @@ fetch("/jnd/api/quick/recognized")
     for (let row of data) {
       row["prompt"] = "/jnd/quick/" + row["prompt"]
       row["upload"] = "/jnd/api/quick/upload/" + row["upload"]
+      row["transcript"] = JSON.parse(row["transcript"])["text"]
     }
     return data
   }).then(data => {
@@ -18,8 +19,8 @@ fetch("/jnd/api/quick/recognized")
       el = parent.appendChild(template.cloneNode(true))
       el.querySelector(".prompt").src = row["prompt"]
       el.querySelector(".response").src = row["upload"]
-      el.querySelector(".answer").innerText = row["transcript"]
-      el.querySelector(".reply").innerText = row["answer"]
+      el.querySelector(".transcript").innerText = row["transcript"]
+      el.querySelector(".answer").innerText = row["answer"]
     }
   })
 </script>
@@ -37,9 +38,9 @@ fetch("/jnd/api/quick/recognized")
           <audio controlslist="nodownload noplaybackrate" controls
             class="response"></audio>
         </td>
-        <td class="answer"></td>
+        <td class="transcript"></td>
       </tr>
-      <tr><td class="reply"></td></tr>
+      <tr><td class="answer"></td></tr>
     </tbody>
   </table>
 <style>
