@@ -9,7 +9,9 @@ fetch("/jnd/api/quick/recognized")
     for (let row of data) {
       row["prompt"] = "/jnd/quick/" + row["prompt"]
       row["upload"] = "/jnd/api/quick/upload/" + row["upload"]
-      row["transcript"] = JSON.parse(row["transcript"])["text"]
+      row["transcript"] = (
+          row["transcript"] === null ? null :
+          JSON.parse(row["transcript"])["text"])
     }
     return data
   }).then(data => {
