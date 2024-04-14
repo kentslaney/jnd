@@ -62,7 +62,6 @@ class QuickBP(DatabaseBP):
         self._route_db("/result", methods=["POST"])(self.quick_result)
         self._route_db("/plot")(self.quick_plot)
         self._route_db("/recognized")(self.quick_recognized)
-        self._route_db("/alldata")(self.quick_recognize)
         self._bind_db = db
 
     @property
@@ -238,6 +237,7 @@ class QuickWhisperDebugBP(QuickPromptedWhisperBP):
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
         self._route_db("/upload/<fname>")(self.upload)
+        self._route_db("/alldata")(self.quick_recognize)
 
     def quick_next(self, db, cur, done=False):
         print(f'answer is "{cur["answer"]}"')
