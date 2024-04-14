@@ -100,6 +100,7 @@ fetch("/jnd/api/authorized", { method: "POST" }).then(apijson).catch(e => {
   }
 })
 
+let recorder
 window.addEventListener("load", () => {
   let samples = document.getElementById("samples")
   for (const el of document.getElementsByClassName("playback-interface")) {
@@ -124,5 +125,6 @@ window.addEventListener("load", () => {
     audio.setAttribute("preload", "")
     samples.appendChild(audio)
   }
+  recorder = new DiscretelyTunedRecorder(".sound-dot")
 })
 

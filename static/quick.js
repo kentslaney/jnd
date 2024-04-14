@@ -245,44 +245,12 @@ class AudioResults extends Audio {
   }
 }
 
-class TunedRecorder extends MeteredRecorder {
-  #cutoffs = [-8, -6, -4]
-  volume(v) {
-    for (var i = 0; i < this.#cutoffs.length; i++) {
-      if (v < this.#cutoffs[i]){
-        break
-      }
-    }
-    this.volumeBars(i)
-  }
-
-  #soundBars = ".sound-bar"
-  volumeBars(v) {
-    if (document.readyState !== "complete") {
-      window.addEventListener("load", e => this.volumeBars(v), {passive: true});
-      return
-    }
-
-    this.#soundBars = document.querySelectorAll(this.#soundBars)
-    this.volumeBars = v => { // v in {0, 1, 2, 3}
-      console.assert(0 <= v && v <= this.#soundBars.length
-        && v == Math.trunc(v));
-      for(var i = 0; i < v; i++) {
-        this.#soundBars[i].classList.add("active")
-      }
-      for(; i < this.#soundBars.length; i++) {
-        this.#soundBars[i].classList.remove("active")
-      }
-    }
-  }
-}
-
-class InteractiveRecorder extends TunedRecorder {
+class InteractiveRecorder extends DiscretelyTunedRecorder {
   #audio
   #mic
   #steps = "#playback-wrapper, #recording-wrapper";
-  constructor(audio) {
-    super()
+  constructor(audio, timeslice, streaming) {
+    super(".sound-bar", timeslice, streaming)
     new LoadQueue().add(() => {
       findButtons(this)
       this.#mic = document.getElementById("sound-wrapper")
@@ -348,7 +316,8 @@ class InteractiveRecorder extends TunedRecorder {
   activate() {
     this.start()
     resetPlaybackButton(this.playbackButton, "done");
-    this.playbackButton.onclick = () => this.done()
+    // this.playbackButton.onclick = () => this.done()
+    this.playbackButton.onclick = () => {}
     this.nextButton.onclick = () => this.complete()
     this.nextButton.disabled = false;
   }
@@ -384,7 +353,7 @@ class InteractiveRecorder extends TunedRecorder {
 
 class AutoEndingRecorder extends InteractiveRecorder {
   #silence = -8
-  #timing = 1000 * 2
+  #timing = 1000 * 5
   #minimum = 1000 * 0.2
   #lastNoise
   #starting
@@ -398,7 +367,8 @@ class AutoEndingRecorder extends InteractiveRecorder {
     } else if (v > this.#silence) {
       this.#lastNoise = now
     } else if (now - this.#lastNoise > this.#timing) {
-      this.done()
+      // this.done()
+      this.stop()
       if (this.#lastNoise - this.#starting < this.#minimum) {
         this.nextButton.disabled = true
       }

@@ -1,5 +1,7 @@
 :root {
   --symbol-height: 3rem !important;
+  --soft-grey: #DAD7CB;
+  --active: #008566;
 }
 
 #instructions {
@@ -61,5 +63,21 @@ img {
   display: block !important;
   margin: 1rem;
   margin-bottom: 0;
+}
+
+.mic-test {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+.sound-dot {
+  width: 1rem;
+  height: 1rem;
+  margin-top: 1rem;
+  border-radius: 100%;
+  display: inline-block;
+  background-color: var(--soft-grey);
+}
+.sound-dot.active {
+  background-color: var(--active);
 }
 

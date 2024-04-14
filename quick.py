@@ -62,6 +62,7 @@ class QuickBP(DatabaseBP):
         self._route_db("/result", methods=["POST"])(self.quick_result)
         self._route_db("/plot")(self.quick_plot)
         self._route_db("/recognized")(self.quick_recognized)
+        self._route_db("/alldata")(self.quick_recognize)
         self._bind_db = db
 
     @property
@@ -172,11 +173,15 @@ class QuickBP(DatabaseBP):
         return self.flask_png(*zip(*results))
 
     def quick_recognized(self, db):
+        return self.quick_recognize(
+            db, "WHERE quick_results.subject=?", (session["user"],))
+
+    def quick_recognize(self, db, query="", args=()):
         transcription = db.queryall(
             "SELECT quick_results.reply_filename, quick_results.reply_asr, "
             "quick_trials.filename, quick_trials.answer FROM quick_results "
             "LEFT JOIN quick_trials ON quick_results.trial=quick_trials.id "
-            "WHERE quick_results.subject=?", (session["user"],))
+            f"{query and ' ' + query}", args)
         keys = ("upload", "transcript", "prompt", "answer")
         return json.dumps([dict(zip(keys, i)) for i in transcription])
 

@@ -22,17 +22,20 @@
 
 /* https://identity.stanford.edu/design-elements */
 :root {
-  /* duplicated in playback.css */
+  /* duplicated in playback.css, index.css */
   --soft-grey: #DAD7CB;
   --interact: #006CB8;
   --record: #E50808;
+  /* end */
+
+  /* duplicated in index.css */
+  --active: #008566;
   /* end */
 
   --primary: #8C1515;
   --light: #CBA8A6;
   --dark: #820000;
   --secondary: #53565A;
-  --active: #008566;
   --disabled: var(--soft-grey);
 
   --title: 'Source Sans 3', sans-serif;

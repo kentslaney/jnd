@@ -473,3 +473,41 @@ class MeteredRecorder extends Recorder {
   volume(v) {}
 }
 
+class DiscretelyTunedRecorder extends MeteredRecorder {
+  #soundBars
+  constructor(soundBars, timeslice, streaming) {
+    super(timeslice, streaming)
+    this.#soundBars = soundBars
+  }
+
+  #cutoffs = [-8, -6, -4]
+  volume(v) {
+    for (var i = 0; i < this.#cutoffs.length; i++) {
+      if (v < this.#cutoffs[i]){
+        break
+      }
+    }
+    this.volumeBars(i)
+  }
+
+  volumeBars(v) {
+    if (document.readyState !== "complete") {
+      window.addEventListener("load", e => this.volumeBars(v), {passive: true});
+      return
+    }
+
+    this.#soundBars = document.querySelectorAll(this.#soundBars)
+    console.assert(this.#soundBars.length <= this.#cutoffs.length)
+    this.volumeBars = v => { // v in {0, 1, 2, 3}
+      console.assert(0 <= v && v <= this.#soundBars.length
+        && v == Math.trunc(v));
+      for(var i = 0; i < v; i++) {
+        this.#soundBars[i].classList.add("active")
+      }
+      for(; i < this.#soundBars.length; i++) {
+        this.#soundBars[i].classList.remove("active")
+      }
+    }
+  }
+}
+

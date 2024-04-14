@@ -5,6 +5,7 @@
   <link rel="stylesheet" href="index.css">
   <link rel="stylesheet" href="playback.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto">
+  <script type="text/javascript" src="audio.js"></script>
   <script type="text/javascript" src="index.js"></script>
   <div id="content">
     <div id="instructions">
@@ -24,7 +25,7 @@
       next clip. You can also press the check mark to finish recording before
       continuing. The check mark will turn into a record symbol, which you can
       use to redo your response if there was a problem with the first one. The
-      recording will end automatically after 2 seconds of silence.
+      recording will end automatically after 5 seconds of silence.
       <br><br>
       Examples of the audio have been included below.
     </div>
@@ -39,6 +40,12 @@
         <button class="playback-interface load"
             data-src="/jnd/quick/List01Sentence05.wav"></button>
       </div>
+    </div>
+    <div class="mic-test">
+        Mic input level:<br>
+        <div class="sound-dot"></div>
+        <div class="sound-dot"></div>
+        <div class="sound-dot"></div>
     </div>
     <form action="javascript:;" onsubmit="claim_username()" class="userbox"
           autocomplete="off">
