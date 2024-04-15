@@ -68,14 +68,16 @@ class QuickBP(DatabaseBP):
     def _blueprint_db(self):
         return self._bind_db()
 
+    def quick_async(self, db, rowid, fpath, answer):
+        raise NotImplementedError()
+
     def quick_next(self, db, cur, done=None):
         left = json.loads(session["left"])
         session["left"] = json.dumps(left - 1)
         if left <= 1 or done and done():
             q = self.quick_done
             if left <= 1:
-                # TODO: delegate to separate thread
-                ...
+                self.quick_async(*done(True))
         else:
             q = db.queryall(
                 "SELECT * FROM quick_trials WHERE active=1 AND level_number=?",
@@ -107,13 +109,17 @@ class QuickBP(DatabaseBP):
             "cur": self.quick_url(cur["filename"]), "has_results": False,
             "next": {1: self.quick_next(db, cur)}, "name": session["username"]})
 
-    def quick_parse(self, db, rowid, fpath, answer):
-        def wrapped():
+    def quick_parse(self, db, rowid, fpath, answer, dump=False):
+        def wrapped(dump=False):
+            if dump:
+                return (db, rowid, fpath, answer)
             reply = self.asr(fpath, answer)
             db.execute(
                 "UPDATE quick_results SET reply_asr=? WHERE rowid=?",
                 (json.dumps(reply), rowid))
             return self.completion_condition(reply, answer)
+        if dump:
+            return wrapped()
         return wrapped
 
     def quick_result(self, db):
@@ -274,8 +280,11 @@ class QuickWhisperDebugBP(QuickWhisperResultsBP):
         print(f'heard "{reply}": {res}')
         return res
 
-# class QuickLogisticWhisperBP(QuickLogisticBP, QuickWhisperDebugBP):
+    def quick_async(self, db, rowid, fpath, answer):
+        return self.quick_parse(db, rowid, fpath, answer, True)
+
+class QuickLogisticWhisperBP(QuickLogisticBP, QuickWhisperDebugBP):
 # class QuickLogisticWhisperBP(QuickLogisticBP, QuickWhisperBP):
-class QuickLogisticWhisperBP(QuickLogisticBP, QuickWhisperResultsBP):
+# class QuickLogisticWhisperBP(QuickLogisticBP, QuickWhisperResultsBP):
     pass
 
