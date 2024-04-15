@@ -74,7 +74,8 @@ function claim_username() {
   const signal = request_controller.signal;
   submit.disabled = true;
   const query = encodeURIComponent(input);
-  request = fetch(`/jnd/api/set-username?v=${query}`, { signal })
+  const lists = document.getElementById("lists").value;
+  request = fetch(`/jnd/api/set-username?v=${query}&l=${lists}`, { signal })
     .then(apijson).then((data) => {
       if (data) {
         // window.location.href = "/jnd/pitch.html";

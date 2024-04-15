@@ -79,9 +79,11 @@ class QuickBP(DatabaseBP):
             if left <= 1:
                 self.quick_async(*done(True))
         else:
+            lists = json.loads(session["lists"])
+            level = quick_levels - (left - 2) // lists
             q = db.queryall(
                 "SELECT * FROM quick_trials WHERE active=1 AND level_number=?",
-                (cur["level_number"] + 1,))
+                (level,))
             if len(q) == 0:
                 abort(Response("out of levels", code=400))
             q = random.choice(q)
@@ -104,7 +106,12 @@ class QuickBP(DatabaseBP):
             abort(400)
         cur = self.quick_trial_dict(random.choice(cur))
         session["cur"] = json.dumps(cur)
-        session["left"] = json.dumps(quick_levels)
+        try:
+            lists = int(json.loads(session["meta"]).get("l", "1"))
+        except ValueError:
+            abort(400)
+        session["lists"] = json.dumps(lists)
+        session["left"] = json.dumps(quick_levels * lists)
         return json.dumps({
             "cur": self.quick_url(cur["filename"]), "has_results": False,
             "next": {1: self.quick_next(db, cur)}, "name": session["username"]})
