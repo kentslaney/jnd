@@ -80,4 +80,8 @@ img {
 .sound-dot.active {
   background-color: var(--active);
 }
+#results {
+  display: block;
+  text-align: center;
+}
 

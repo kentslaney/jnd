@@ -3,34 +3,80 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 <script type="text/javascript">
-fetch("/jnd/api/quick/recognized")
+fetch("/jnd/api/quick/recognized" + window.location.search)
   .then(response => response.json())
   .then(data => {
-    for (let row of data) {
-      row["prompt"] = "/jnd/quick/" + row["prompt"]
-      row["upload"] = "/jnd/api/quick/upload/" + row["upload"]
-      row["transcript"] = (
-          row["transcript"] === null ? null :
-          JSON.parse(row["transcript"])["text"])
-    }
-    return data
-  }).then(data => {
-    const template = document.querySelector("thead + tbody")
-    const parent = template.parentElement
+    let users = {}
     for (const row of data) {
-      el = parent.appendChild(template.cloneNode(true))
-      el.querySelector(".prompt").src = row["prompt"]
-      el.querySelector(".response").src = row["upload"]
-      el.querySelector(".transcript").innerText = row["transcript"]
-      el.querySelector(".answer").innerText = row["answer"]
+      if (!(row["subject"] in users)) {
+        users[row["subject"]] = {
+          "id": row["subject"],
+          "time": new Date(row["time"] + " UTC"),
+          "username": row["username"],
+          "results": []
+        };
+      }
+      asr_data = row["transcript"] === null ? null :
+        JSON.parse(row["transcript"]);
+      users[row["subject"]]["results"].push({
+        "prompt": "/jnd/quick/" + row["prompt"],
+        "upload": "/jnd/api/quick/upload/" + row["upload"],
+        "transcript": row["transcript"] === null ? null : asr_data["text"],
+        "asr_data": asr_data,
+        "answer": row["answer"]
+      });
+    }
+    let entries = Object.entries(users)
+      .sort(([a,], [b,]) => a - b).map(([,k]) => k);
+
+    const [head, body] = Array.prototype.map.call(
+      document.querySelectorAll(".template"), x => {
+        let copy = x.cloneNode(true)
+        copy.classList.remove("template")
+        return copy
+      })
+    const parent = document.querySelector(".template").parentElement
+
+    for (const user of entries) {
+      user_head = parent.appendChild(head.cloneNode(true))
+      let plot = document.createElement("a")
+      plot.href = "/jnd/api/quick/plot?user=" + user["id"]
+      plot.innerText = user["username"]
+      // plot.setAttribute("target", "_blank")
+      user_head.querySelector(".username").appendChild(plot)
+      user_head.querySelector(".time").innerText = user["time"].toISOString()
+
+      for (const trial of user["results"]) {
+        el = parent.appendChild(body.cloneNode(true))
+        el.querySelector(".prompt").src = trial["prompt"]
+        el.querySelector(".response").src = trial["upload"]
+        el.querySelector(".transcript").innerText = trial["transcript"]
+        el.querySelector(".answer").innerText = trial["answer"]
+      }
+    }
+
+    if((new URLSearchParams(window.location.search)).get("user") == "all") {
+      let a = document.querySelector("#showall");
+      a.href = "/jnd/api/quick/plot?user=all"
+      // a.setAttribute("target", "_blank")
     }
   })
 </script>
   <table border=1>
     <thead>
-      <th>Prompt</th><th>Response</th><th>Transcripts (reply/answer)</th>
+      <th>Prompt</th>
+      <th>Response</th>
+      <th>Transcripts <a id="showall">(reply/answer)</a></th>
     </thead>
-    <tbody>
+    <tbody class="template userinfo">
+      <tr>
+        <th colspan=3>
+          <span class="username"></span>
+          <span class="time"></span>
+        </th>
+      </tr>
+    </tbody>
+    <tbody class="template">
       <tr>
         <td rowspan="2">
           <audio controlslist="nodownload noplaybackrate" controls
@@ -46,12 +92,27 @@ fetch("/jnd/api/quick/recognized")
     </tbody>
   </table>
 <style>
-thead + tbody {
+.template {
   display: none;
 }
 .transcript:empty::before {
-  content: "[pending]";
+  content: "[empty]";
   color: red;
+}
+thead {
+  background: cornflowerblue;
+}
+.userinfo {
+  background: lightblue;
+}
+.username {
+  float: left;
+}
+.time {
+  float: right;
+}
+#showall {
+  color: black;
 }
 </style>
 </html>

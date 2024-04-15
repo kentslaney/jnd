@@ -1,7 +1,8 @@
 CREATE TABLE users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT NOT NULL UNIQUE,
-  ip TEXT /* probably superfluous spam mitigation */
+  ip TEXT,
+  t TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE TABLE pitch_trials (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -34,6 +35,7 @@ CREATE TABLE quick_results (
   trial INTEGER,
   reply_filename TEXT,
   reply_asr TEXT,
+  t TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY(subject) REFERENCES users(id),
   FOREIGN KEY(trial) REFERENCES quick_trials(id)
 );

@@ -159,16 +159,16 @@ class QuickBP(DatabaseBP):
             i[0] for i in sep[:-1]))
         return "".join(j + f(answer[i:k]) for (i, j), k in sep)
 
-    def quick_plot(self, db):
+    def quick_plotter(self, db, query="", args=()):
         results = db.queryall(
             "SELECT quick_trials.snr, quick_results.reply_asr, "
             "quick_trials.answer FROM quick_results LEFT JOIN quick_trials "
-            "ON quick_results.trial=quick_trials.id "
-            "WHERE quick_results.subject=?", (session["user"],))
+            "ON quick_results.trial=quick_trials.id WHERE reply_asr IS NOT NULL"
+            f"{query and ' AND ' + query}", args)
         if len(results) == 0:
             abort(400)
         results = [(snr, self.proportion_correct(
-            *score)) for snr, *score in results]
+            json.loads(reply), answer)) for snr, reply, answer in results]
         return self.flask_png(*zip(*results))
 
     def quick_recognized(self, db):
@@ -177,11 +177,21 @@ class QuickBP(DatabaseBP):
 
     def quick_recognize(self, db, query="", args=()):
         transcription = db.queryall(
-            "SELECT quick_results.reply_filename, quick_results.reply_asr, "
-            "quick_trials.filename, quick_trials.answer FROM quick_results "
-            "LEFT JOIN quick_trials ON quick_results.trial=quick_trials.id "
-            f"{query and ' ' + query}", args)
-        keys = ("upload", "transcript", "prompt", "answer")
+            "SELECT "
+                "users.t, "
+                "quick_results.subject, "
+                "users.username, "
+                "quick_results.reply_filename, "
+                "quick_results.reply_asr, "
+                "quick_trials.filename, "
+                "quick_trials.answer "
+            "FROM quick_results "
+                "LEFT JOIN quick_trials ON quick_results.trial=quick_trials.id "
+                "LEFT JOIN users ON subject=users.id"
+            f"{query and ' WHERE ' + query}", args)
+        keys = (
+            "time", "subject", "username", "upload", "transcript", "prompt",
+            "answer")
         return json.dumps([dict(zip(keys, i)) for i in transcription])
 
     def asr(self, path):
@@ -232,13 +242,29 @@ class QuickPromptedWhisperBP(QuickNormalizedBP):
         return self.prompted_whisper_asr(
             path, answer.replace(",", " ").replace("/", " "))
 
-# class QuickWhisperDebugBP(QuickWhisperBP):
-class QuickWhisperDebugBP(QuickPromptedWhisperBP):
+# class QuickWhisperResultsBP(QuickWhisperBP):
+class QuickWhisperResultsBP(QuickPromptedWhisperBP):
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
         self._route_db("/upload/<fname>")(self.upload)
-        self._route_db("/alldata")(self.quick_recognize)
 
+    def quick_recognized(self, db):
+        user = request.args.get("user", session["user"])
+        if user == "all":
+            return self.quick_recognize(db)
+        return self.quick_recognize(
+            db, "quick_results.subject=?", (user,))
+
+    def quick_plot(self, db):
+        user = request.args.get("user", session["user"])
+        if user == "all":
+            return self.quick_plotter(db)
+        return self.quick_plotter(db, "quick_results.subject=?", (user,))
+
+    def upload(self, db, fname):
+        return send_from_directory(upload_location, fname)
+
+class QuickWhisperDebugBP(QuickWhisperResultsBP):
     def quick_next(self, db, cur, done=False):
         print(f'answer is "{cur["answer"]}"')
         return super().quick_next(db, cur, done)
@@ -248,10 +274,8 @@ class QuickWhisperDebugBP(QuickPromptedWhisperBP):
         print(f'heard "{reply}": {res}')
         return res
 
-    def upload(self, db, fname):
-        return send_from_directory(upload_location, fname)
-
-class QuickLogisticWhisperBP(QuickLogisticBP, QuickWhisperDebugBP):
+# class QuickLogisticWhisperBP(QuickLogisticBP, QuickWhisperDebugBP):
 # class QuickLogisticWhisperBP(QuickLogisticBP, QuickWhisperBP):
+class QuickLogisticWhisperBP(QuickLogisticBP, QuickWhisperResultsBP):
     pass
 
