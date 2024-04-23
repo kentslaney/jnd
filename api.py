@@ -47,14 +47,14 @@ def username_rules(value: str):
             return False
     return True
 
-always_accept = {"test"}
+always_accept = lambda x: "test-".startswith(x[:5]) and len(x) >= 4
 
 def username_available(db):
     checking = request.args.get("v")
     if checking is None or not username_rules(checking):
         return json.dumps(False)
 
-    if checking in always_accept:
+    if always_accept(checking):
         return json.dumps(True)
 
     return json.dumps(not db.queryone(
