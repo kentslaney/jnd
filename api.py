@@ -66,7 +66,7 @@ def set_username(db):
     if name is None or not username_rules(name):
         return json.dumps(False)
 
-    if name in always_accept:
+    if always_accept(name):
         name = f"{name}-{uuid.uuid4()}"
 
     try:
