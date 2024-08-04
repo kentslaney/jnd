@@ -17,6 +17,15 @@ window.addEventListener("load", () => {
   orgObserver.observe(org)
   const usernameObserver = new ResizeObserver(resize)
   usernameObserver.observe(username)
+
+  document.querySelector("#quick-all").addEventListener("click", () => {
+    Array.from(document.querySelectorAll(".annotation")).forEach(
+      x => { x.checked = true })
+  })
+  document.querySelector("#quick-none").addEventListener("click", () => {
+    Array.from(document.querySelectorAll(".annotation")).forEach(
+      x => { x.checked = false })
+  })
 }, {passive: true})
 
 function findButtons(that) {
@@ -376,6 +385,74 @@ class AutoEndingRecorder extends InteractiveRecorder {
   }
 }
 
-let audio = new AudioResults();
-let recorder = new AutoEndingRecorder(audio);
+class AnnotatedRecorder extends AutoEndingRecorder {
+  upload(url) {
+    url = URL.parse(url, window.location.href)
+    url.searchParams.set("annotations", JSON.stringify(this.aux_data()))
+    return super.upload(url.href)
+  }
+
+  aux_data() {
+    return Array.from(document.querySelectorAll(".annotation")).map(
+      x => x.checked)
+  }
+}
+
+class AnnotatedAudio extends Audio {
+  #holding
+  #holder = "#aux-data"
+  options(answer) {
+    if (typeof this.#holder === "string")
+      this.#holder = document.querySelector(this.#holder)
+    const existing = this.#holder.querySelector(".options-case")
+    if (existing !== null) this.#holder.removeChild(existing)
+    const container = this.#holder.appendChild(document.createElement("div"))
+    container.classList.add("options-case")
+    answer.split(",").forEach((x, i) => {
+      const name = `option-${i}`
+      const wrapper = container.appendChild(document.createElement("div"))
+      const check = wrapper.appendChild(document.createElement("input"))
+      const label = wrapper.appendChild(document.createElement("label"))
+      check.setAttribute("type", "checkbox")
+      check.setAttribute("id", name)
+      check.classList.add("annotation")
+      label.setAttribute("for", name)
+      label.classList.add("option", "base-button")
+      label.innerText = x
+      return wrapper
+    })
+  }
+
+  prefetch(next) {
+    const { answer, ...others } = next
+    if (answer !== undefined) this.#holding.push(answer)
+    return super.prefetch(others)
+  }
+
+  load(data) {
+    let { answer } = data
+    this.options(answer[0])
+    this.#holding = [answer[1]]
+    return super.load(data)
+  }
+
+  result(key, f=undefined) {
+    super.result(key, k => f(k).then(response => {
+      if (response.ok) this.options(this.#holding.pop())
+      return response
+    }));
+  }
+
+  #playbackProgress = "#playback-debug"
+  debug(url) {
+    if (typeof this.#playbackProgress === "string")
+      this.#playbackProgress = document.querySelector(this.#playbackProgress)
+    const [ list, seq ] = url.match(/[0-9]+/g).map(x => parseInt(x))
+    this.#playbackProgress.innerText = `List ${list} sentence ${seq} / 6`
+    return super.debug(url)
+  }
+}
+
+let audio = new AnnotatedAudio();
+let recorder = new AnnotatedRecorder(audio);
 

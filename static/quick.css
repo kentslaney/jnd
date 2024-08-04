@@ -56,8 +56,6 @@
 .hidden {
   display: none !important;
 }
-#filename-debug:not(:empty)::before {
-}
 .answer {
   display: none;
 }
@@ -257,5 +255,65 @@ body.overlaying #results-overlay {
 #playing {
   margin-top: calc(var(--container-size) / 2 + var(--border-value));
   transform: translateY(-50%);
+}
+
+#interactive {
+    flex-direction: row;
+    display: flex;
+    flex-grow: 2;
+    justify-content: space-around;
+}
+
+#audio-controls {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    flex-grow: 2;
+}
+
+#next-wrapper {
+    flex-grow: 1;
+}
+
+#next-audio {
+    align-self: flex-start;
+}
+
+#aux-data {
+    padding: 5% 5% 5% 0;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.options-case {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    height: 100%;
+    align-items: stretch;
+}
+
+.annotation {
+    display: none;
+}
+
+.option {
+    display: block;
+    text-align: center;
+}
+
+.annotation:checked + .option {
+    background: green;
+}
+
+.annotation:not(:checked) + .option {
+    background: red;
+}
+
+#quick-options {
+    order: 1;
+    text-align: center;
 }
 

@@ -60,7 +60,6 @@ class QuickBP(DatabaseBP):
         Blueprint.__init__(self, name, __name__, url_prefix=url_prefix)
         self._route_db("/start")(self.quick_start)
         self._route_db("/result", methods=["POST"])(self.quick_result)
-        self._route_db("/plot")(self.quick_plot)
         self._route_db("/recognized")(self.quick_recognized)
         self._bind_db = db
 
@@ -122,7 +121,7 @@ class QuickBP(DatabaseBP):
                 return (db, rowid, fpath, answer)
             reply = self.asr(fpath, answer)
             db.execute(
-                "UPDATE quick_results SET reply_asr=? WHERE rowid=?",
+                "UPDATE quick_results SET reply_asr=? WHERE id=?",
                 (json.dumps(reply), rowid))
             return self.completion_condition(reply, answer)
         if dump:
@@ -213,6 +212,37 @@ class QuickBP(DatabaseBP):
     def flask_png(self, x, y):
         raise NotImplementedError()
 
+class QuickAnnotatedBP(QuickBP):
+    def quick_parse(self, db, rowid, fpath, answer, dump=False, data=None):
+        def wrapped(dump=False):
+            nonlocal data
+            data = data or request.args["annotations"]
+            if dump:
+                return (db, rowid, fpath, answer, True, data)
+            db.execute(
+                "INSERT INTO quick_annotations (ref, data) VALUES (?, ?)",
+                (rowid, data))
+            return False # audiologist can end test when they want to
+        if dump:
+            return wrapped()
+        return wrapped
+
+    def quick_start(self, db):
+        res = json.loads(super().quick_start(db))
+        res["answer"] = [
+                json.loads(session[i])["answer"] for i in ("cur", "q")]
+        return json.dumps(res)
+
+    def quick_result(self, db):
+        if "annotations" not in request.args:
+            abort(400)
+        res = json.loads(super().quick_result(db))
+        res["answer"] = json.loads(session["q"])["answer"]
+        return json.dumps(res)
+
+    def quick_async(self, *args):
+        return self.quick_parse(*args)
+
 class QuickScatterBP:
     @staticmethod
     @bytes_png
@@ -259,6 +289,7 @@ class QuickPromptedWhisperBP(QuickNormalizedBP):
 class QuickWhisperResultsBP(QuickPromptedWhisperBP):
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
+        self._route_db("/plot")(self.quick_plot)
         self._route_db("/upload/<fname>")(self.upload)
 
     def quick_recognized(self, db):

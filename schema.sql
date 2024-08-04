@@ -31,6 +31,7 @@ CREATE TABLE quick_trials (
   active BOOLEAN NOT NULL CHECK(active IN(0,1)) /* version control */
 );
 CREATE TABLE quick_results (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
   subject INTEGER,
   trial INTEGER,
   reply_filename TEXT,
@@ -39,4 +40,9 @@ CREATE TABLE quick_results (
   FOREIGN KEY(subject) REFERENCES users(id),
   FOREIGN KEY(trial) REFERENCES quick_trials(id)
 );
+CREATE TABLE quick_annotations (
+  ref INTEGER,
+  data TEXT,
+  FOREIGN KEY(ref) REFERENCES quick_results(id)
+)
 
