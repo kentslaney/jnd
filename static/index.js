@@ -64,6 +64,19 @@ function check_username() {
 }
 
 function claim_username() {
+  const storage = document.getElementById("storage");
+  if (!storage.checked) {
+    if (window.confirm(
+        "audio data has to be stored until there's a reliable GPU source " +
+        "behind the project")){
+      storage.checked = true;
+      storage.previousSibling.textContent =
+        "I agree to the terms and conditions";
+    } else {
+      window.location.href = "https://cloud.google.com/contact"
+    }
+    return
+  }
   const input = document.getElementById("username").value;
   const output = document.getElementById("username-status");
   const submit = document.getElementById("submit");
