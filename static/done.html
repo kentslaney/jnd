@@ -8,18 +8,37 @@
       if (showing !== null) {
         const results = document.getElementById("results")
         results.href = showing
-        results.classList.remove("hidden")
-        const recognized = document.getElementById("recognized")
-        recognized.classList.remove("hidden")
+        for (const el of document.getElementsByClassName("debug")) {
+          el.classList.remove("hidden")
+        }
       }
     }, { passive: true })
+
+    function reset(e) {
+      const api = new URL("reset", document.querySelector("#results").href).href
+      const el = e.target
+      e.target.classList.add("loading")
+      fetch(api, {method: "POST" }).then(response => {
+        if (response.ok) {
+          window.location.href = "quick.html"
+        } else {
+          return Promise.reject(response)
+        }
+      }).catch(e => {
+        el.classList.remove("loading")
+        el.classList.add("failed")
+      })
+    }
   </script>
   <div id="content">
     That's all we need, thanks for your help
     <br>
     <a href="index.html">Restart</a>
-    <a id="results" class="hidden">Results</a>
-    <a id="recognized" class="hidden" href="recognized.html">Recognized</a>
+    <a id="results" class="hidden debug">Results</a>
+    <a id="recognized" class="hidden debug" href="recognized.html">
+      Recognized
+    </a>
+    <a id="reset" class="hidden debug" onclick="reset(event)" href="#">Retry</a>
     <img src="https://upload.wikimedia.org/wikipedia/commons/4/4b/Stanford_Cardinal_logo.svg" />
   </div>
   <style>
@@ -51,6 +70,12 @@
     }
     .hidden {
       display: none;
+    }
+    .loading::after {
+      content: "...";
+    }
+    .failed:not(.loading)::after {
+      content: "...\27F3";
     }
   </style>
 </html>

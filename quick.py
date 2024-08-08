@@ -221,6 +221,7 @@ class QuickAnnotatedBP(QuickBP):
         fields["annotations"] = "quick_annotations.data"
         self.result_fields = lambda: fields
         super().__init__(*a, **kw)
+        self._route_db("/reset", methods=["POST"])(self.quick_reset)
 
     def quick_parse(self, db, rowid, fpath, answer, dump=False, data=None):
         def wrapped(dump=False):
@@ -260,6 +261,10 @@ class QuickAnnotatedBP(QuickBP):
 
     def quick_async(self, *args):
         return self.quick_parse(*args)
+
+    def quick_reset(self, db):
+        session.pop("cur", None)
+        return ""
 
 class QuickScatterBP:
     @staticmethod
@@ -343,6 +348,6 @@ class QuickWhisperDebugBP(QuickResultsBP):
 # class QuickLogisticWhisperBP(QuickLogisticBP, QuickWhisperDebugBP):
 # class QuickLogisticWhisperBP(QuickLogisticBP, QuickWhisperBP):
 # class QuickLogisticWhisperBP(QuickLogisticBP, QuickResultsBP):
-class QuickOutputBP(QuickLogisticBP, QuickResultsBP):
+class QuickOutputBP(QuickResultsBP):
     pass
 

@@ -23,7 +23,8 @@ fetch("/jnd/api/quick/recognized" + window.location.search)
         "upload": "/jnd/api/quick/upload/" + row["upload"],
         "transcript": row["transcript"] === null ? null : asr_data["text"],
         "asr_data": asr_data,
-        "answer": row["answer"]
+        "answer": row["answer"].split(","),
+        "annotations": row["annotations"]
       });
     }
     let entries = Object.entries(users)
@@ -44,14 +45,27 @@ fetch("/jnd/api/quick/recognized" + window.location.search)
       plot.innerText = user["username"]
       // plot.setAttribute("target", "_blank")
       user_head.querySelector(".username").appendChild(plot)
-      user_head.querySelector(".time").innerText = user["time"].toISOString()
+      const datestr = user["time"].toLocaleTimeString("en-US", {
+        hour12: false, year: "numeric", month: "2-digit", day: "2-digit",
+        timeZoneName: "short" });
+      user_head.querySelector(".time").innerText = datestr
 
       for (const trial of user["results"]) {
         el = parent.appendChild(body.cloneNode(true))
         el.querySelector(".prompt").src = trial["prompt"]
         el.querySelector(".response").src = trial["upload"]
         el.querySelector(".transcript").innerText = trial["transcript"]
-        el.querySelector(".answer").innerText = trial["answer"]
+        const ans = el.querySelector(".answer")
+        if (trial["annotations"] === undefined) {
+          ans.innerText = trial["answer"].join(",")
+        } else {
+          for (let i = 0; i < trial["answer"].length; i++) {
+            const container = ans.appendChild(document.createElement("span"))
+            container.innerText = trial["answer"][i]
+            const result = trial["annotations"][i]
+            container.classList.add(result ? "correct": "incorrect")
+          }
+        }
       }
     }
 
@@ -113,6 +127,24 @@ thead {
 }
 #showall {
   color: black;
+}
+.answer > span:not(:first-child)::before {
+  content: ", ";
+}
+.answer > span::after {
+  display: block;
+  text-align: center;
+  font-family: monospace;
+}
+.answer > span {
+  position: relative;
+  display: inline-block;
+}
+.correct::after {
+  content: "\2714";
+}
+.incorrect::after {
+  content: "\10102";
 }
 </style>
 </html>
