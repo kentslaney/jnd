@@ -305,15 +305,31 @@ body.overlaying #results-overlay {
 }
 
 .annotation:checked + .option {
-    background: green;
+    display: none;
 }
 
 .annotation:not(:checked) + .option {
-    background: red;
+    display: block;
 }
+
+.annotation:invalid + .option {
+  background: var(--soft-grey);
+}
+
+.annotation:not(:checked) ~ .annotation:not(:checked) + .option {
+  display: none;
+}
+
+.option-on, #quick-none { background: var(--record); }
 
 #quick-options {
     order: 1;
     text-align: center;
+}
+
+form:invalid + #next-wrapper #next-audio {
+  background: var(--disabled);
+  cursor: inherit;
+  pointer-events: none;
 }
 

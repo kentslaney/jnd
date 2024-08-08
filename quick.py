@@ -62,6 +62,7 @@ class QuickBP(DatabaseBP):
         self._route_db("/result", methods=["POST"])(self.quick_result)
         self._route_db("/recognized")(self.quick_recognized)
         self._bind_db = db
+        self.result_fields = tuple(zip(*sorted(self.result_fields().items())))
 
     @property
     def _blueprint_db(self):
@@ -185,25 +186,27 @@ class QuickBP(DatabaseBP):
 
     def quick_recognized(self, db):
         return self.quick_recognize(
-            db, "WHERE quick_results.subject=?", (session["user"],))
+            db, " WHERE quick_results.subject=?", (session["user"],))
+
+    result_fields = staticmethod(lambda: {
+            "time": "users.t",
+            "subject": "quick_results.subject",
+            "username": "users.username",
+            "upload": "quick_results.reply_filename",
+            "transcript": "quick_results.reply_asr",
+            "prompt": "quick_trials.filename",
+            "answer": "quick_trials.answer",
+        })
 
     def quick_recognize(self, db, query="", args=()):
         transcription = db.queryall(
             "SELECT "
-                "users.t, "
-                "quick_results.subject, "
-                "users.username, "
-                "quick_results.reply_filename, "
-                "quick_results.reply_asr, "
-                "quick_trials.filename, "
-                "quick_trials.answer "
+                f"{','.join(self.result_fields[1])} "
             "FROM quick_results "
                 "LEFT JOIN quick_trials ON quick_results.trial=quick_trials.id "
                 "LEFT JOIN users ON subject=users.id"
-            f"{query and ' WHERE ' + query}", args)
-        keys = (
-            "time", "subject", "username", "upload", "transcript", "prompt",
-            "answer")
+            f"{query}", args)
+        keys = self.result_fields[0]
         return json.dumps([dict(zip(keys, i)) for i in transcription])
 
     def asr(self, path):
@@ -213,6 +216,12 @@ class QuickBP(DatabaseBP):
         raise NotImplementedError()
 
 class QuickAnnotatedBP(QuickBP):
+    def __init__(self, *a, **kw):
+        fields = self.result_fields()
+        fields["annotations"] = "quick_annotations.data"
+        self.result_fields = lambda: fields
+        super().__init__(*a, **kw)
+
     def quick_parse(self, db, rowid, fpath, answer, dump=False, data=None):
         def wrapped(dump=False):
             nonlocal data
@@ -238,6 +247,15 @@ class QuickAnnotatedBP(QuickBP):
             abort(400)
         res = json.loads(super().quick_result(db))
         res["answer"] = json.loads(session["q"])["answer"]
+        return json.dumps(res)
+
+    def quick_recognize(self, db, query="", args=()):
+        res = super().quick_recognize(db, (
+            " LEFT JOIN quick_annotations ON "
+                "quick_results.id = quick_annotations.ref"
+            f"{query}"), args)
+        res = json.loads(res)
+        res = [{**i, "annotations": json.loads(i["annotations"])} for i in res]
         return json.dumps(res)
 
     def quick_async(self, *args):
@@ -285,8 +303,9 @@ class QuickPromptedWhisperBP(QuickNormalizedBP):
         return self.prompted_whisper_asr(
             path, answer.replace(",", " ").replace("/", " "))
 
-# class QuickWhisperResultsBP(QuickWhisperBP):
-class QuickWhisperResultsBP(QuickPromptedWhisperBP):
+# class QuickResultsBP(QuickWhisperBP):
+# class QuickResultsBP(QuickPromptedWhisperBP):
+class QuickResultsBP(QuickAnnotatedBP):
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
         self._route_db("/plot")(self.quick_plot)
@@ -297,7 +316,7 @@ class QuickWhisperResultsBP(QuickPromptedWhisperBP):
         if user == "all":
             return self.quick_recognize(db)
         return self.quick_recognize(
-            db, "quick_results.subject=?", (user,))
+            db, "WHERE quick_results.subject=?", (user,))
 
     def quick_plot(self, db):
         user = request.args.get("user", session["user"])
@@ -308,7 +327,7 @@ class QuickWhisperResultsBP(QuickPromptedWhisperBP):
     def upload(self, db, fname):
         return send_from_directory(upload_location, fname)
 
-class QuickWhisperDebugBP(QuickWhisperResultsBP):
+class QuickWhisperDebugBP(QuickResultsBP):
     def quick_next(self, db, cur, done=False):
         print(f'answer is "{cur["answer"]}"')
         return super().quick_next(db, cur, done)
@@ -321,8 +340,9 @@ class QuickWhisperDebugBP(QuickWhisperResultsBP):
     def quick_async(self, db, rowid, fpath, answer):
         return self.quick_parse(db, rowid, fpath, answer, True)
 
-class QuickLogisticWhisperBP(QuickLogisticBP, QuickWhisperDebugBP):
+# class QuickLogisticWhisperBP(QuickLogisticBP, QuickWhisperDebugBP):
 # class QuickLogisticWhisperBP(QuickLogisticBP, QuickWhisperBP):
-# class QuickLogisticWhisperBP(QuickLogisticBP, QuickWhisperResultsBP):
+# class QuickLogisticWhisperBP(QuickLogisticBP, QuickResultsBP):
+class QuickOutputBP(QuickLogisticBP, QuickResultsBP):
     pass
 

@@ -18,14 +18,16 @@
         <div id="project">QuickSIN</div>
         <div id="username"><span></span></div>
       </div>
-      <div id="interactive">
+      <form id="interactive" action="javascript:void(0)"
+          onsubmit="return false">
         <div id="audio-controls">
           <div class="center-wrapper active" id="playback-wrapper">
             <div id="audio-description" class="offset-description">
               Play Sentence
             </div>
             <div>
-              <button id="playback" class="playback-interface pause"></button>
+              <button id="playback" class="playback-interface pause"
+                  type="button"></button>
             </div>
             <div class="spacer">
               <audio id="playing" controlslist="nodownload noplaybackrate">
@@ -47,18 +49,22 @@
         </div>
         <div id="aux-data">
           <div id="quick-options">
-            <button class="base-button" id="quick-all">All</button>
-            <button class="base-button" id="quick-none">None</button>
+            <button class="base-button" id="quick-all" type="button">
+              All
+            </button>
+            <button class="base-button" id="quick-none" type="button">
+              None
+            </button>
           </div>
         </div>
-      </div>
+      </form>
       <div id="next-wrapper">
         <div class="next-outer-spacer"></div>
-        <button id="overlay-results" class="base-button hidden">
+        <button id="overlay-results" class="base-button hidden" type="button">
           Results
         </button>
         <div class="next-mid-spacer"></div>
-        <button id="next-audio" class="base-button" disabled>
+        <button id="next-audio" class="base-button" disabled type="button">
           <span>Next Audio</span>
           <span class="material-symbols-outlined">arrow_right_alt</span>
         </button>

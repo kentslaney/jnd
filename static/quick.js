@@ -17,14 +17,16 @@ window.addEventListener("load", () => {
   orgObserver.observe(org)
   const usernameObserver = new ResizeObserver(resize)
   usernameObserver.observe(username)
+}, {passive: true})
 
+window.addEventListener("load", () => {
   document.querySelector("#quick-all").addEventListener("click", () => {
-    Array.from(document.querySelectorAll(".annotation")).forEach(
+    Array.from(document.querySelectorAll(".annotation-on")).forEach(
       x => { x.checked = true })
   })
   document.querySelector("#quick-none").addEventListener("click", () => {
-    Array.from(document.querySelectorAll(".annotation")).forEach(
-      x => { x.checked = false })
+    Array.from(document.querySelectorAll(".annotation-off")).forEach(
+      x => { x.checked = true })
   })
 }, {passive: true})
 
@@ -79,6 +81,24 @@ class Audio extends AudioPrefetch {
 
   initialize() {
     findButtons(this)
+    if (window.location.host === "localhost:8088") {
+      this.audio.setAttribute("controls", "")
+      this.loadq.add(() => {
+        const f = recorder.onSuccess, g = this.loaded, h = () => {
+          recorder.ready.call(recorder)
+          recorder.done.call(recorder)
+        }
+
+        recorder.onSuccess = stream => {
+          f.call(recorder, stream)
+          h()
+          this.loaded = () => {
+            g.call(this)
+            h()
+          }
+        }
+      }, this)
+    }
   }
 
   waiting() {
@@ -94,11 +114,11 @@ class Audio extends AudioPrefetch {
     this.pause()
   }
 
-  #backlogged = 0;
+  backlogged = 0;
   result(key, f=undefined) {
-    this.#backlogged += 1;
+    this.backlogged += 1;
     super.result(key, k => f(k).then(response => {
-      if (response.ok) this.#backlogged = 0;
+      if (response.ok) this.backlogged = 0;
       return response
     }));
   }
@@ -111,12 +131,12 @@ class Audio extends AudioPrefetch {
   }
 
   retrying(still) {
-    // this.#backlogged:
+    // this.backlogged:
     // 0 -> failed not on result fetch or recovering
     // 1 -> failed but has preloaded audio pending
     // 2 -> nothing queued to play; ask user to retry
     this.loadq.add(() => {
-      if (this.#backlogged >= 2) {
+      if (this.backlogged >= 2) {
         resetPlaybackButton(this.playbackButton, still ? "load" : "error");
         this.nextButton.disabled = still
         this.nextButton.firstElementChild.innerText = (
@@ -202,24 +222,6 @@ class AudioResults extends Audio {
   #playbackDebug = "#playback-debug"
   showNowPlaying() {
     this.#playbackDebug = document.querySelector(this.#playbackDebug)
-    if (window.location.host === "localhost:8088") {
-      this.audio.setAttribute("controls", "")
-      this.loadq.add(() => {
-        const f = recorder.onSuccess, g = this.loaded, h = () => {
-          recorder.ready.call(recorder)
-          recorder.done.call(recorder)
-        }
-
-        recorder.onSuccess = stream => {
-          f.call(recorder, stream)
-          h()
-          this.loaded = () => {
-            g.call(this)
-            h()
-          }
-        }
-      }, this)
-    }
   }
 
   debug(url) {
@@ -393,7 +395,7 @@ class AnnotatedRecorder extends AutoEndingRecorder {
   }
 
   aux_data() {
-    return Array.from(document.querySelectorAll(".annotation")).map(
+    return Array.from(document.querySelectorAll(".annotation-on")).map(
       x => x.checked)
   }
 }
@@ -402,8 +404,10 @@ class AnnotatedAudio extends Audio {
   #holding
   #holder = "#aux-data"
   options(answer) {
-    if (typeof this.#holder === "string")
+    if (typeof this.#holder === "string") {
       this.#holder = document.querySelector(this.#holder)
+    }
+    if (answer === undefined) { return }
     const existing = this.#holder.querySelector(".options-case")
     if (existing !== null) this.#holder.removeChild(existing)
     const container = this.#holder.appendChild(document.createElement("div"))
@@ -411,21 +415,25 @@ class AnnotatedAudio extends Audio {
     answer.split(",").forEach((x, i) => {
       const name = `option-${i}`
       const wrapper = container.appendChild(document.createElement("div"))
-      const check = wrapper.appendChild(document.createElement("input"))
-      const label = wrapper.appendChild(document.createElement("label"))
-      check.setAttribute("type", "checkbox")
-      check.setAttribute("id", name)
-      check.classList.add("annotation")
-      label.setAttribute("for", name)
-      label.classList.add("option", "base-button")
-      label.innerText = x
+      for (const j of ['on', 'off']) {
+        const check = wrapper.appendChild(document.createElement("input"))
+        const label = wrapper.appendChild(document.createElement("label"))
+        check.setAttribute("type", "radio")
+        check.setAttribute("id", `${name}-${j}`)
+        check.setAttribute("name", name)
+        check.classList.add("annotation", `annotation-${j}`)
+        check.setAttribute("required", "")
+        label.setAttribute("for", `${name}-${j}`)
+        label.classList.add("option", "base-button", `option-${j}`)
+        label.innerText = x
+      }
       return wrapper
     })
   }
 
   prefetch(next) {
     const { answer, ...others } = next
-    if (answer !== undefined) this.#holding.push(answer)
+    if (answer !== undefined && answer !== 1) this.#holding.push(answer)
     return super.prefetch(others)
   }
 
@@ -438,8 +446,10 @@ class AnnotatedAudio extends Audio {
 
   result(key, f=undefined) {
     super.result(key, k => f(k).then(response => {
-      if (response.ok) this.options(this.#holding.pop())
+      if (this.backlogged < 2) this.options(this.#holding.pop())
       return response
+    }).catch(e => {
+      console.error(e)
     }));
   }
 
@@ -450,6 +460,20 @@ class AnnotatedAudio extends Audio {
     const [ list, seq ] = url.match(/[0-9]+/g).map(x => parseInt(x))
     this.#playbackProgress.innerText = `List ${list} sentence ${seq} / 6`
     return super.debug(url)
+  }
+
+  initialize() {
+    super.initialize()
+    if (window.location.host === "localhost:8088") {
+      const f = this.options.bind(this)
+      this.options = (answer) => {
+        const res = f(answer)
+        document.querySelectorAll(".annotation").forEach(x => {
+          x.removeAttribute("required")
+        })
+        return res
+      }
+    }
   }
 }
 
