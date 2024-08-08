@@ -179,7 +179,7 @@ class AudioResults extends Audio {
     const { name, has_results } = data;
     // second clause checks that it ends with a UUID4
     if (name.startsWith('test-') && name.at(-22) === "4") {
-      this.#enableOverlay(has_results);
+      this.enableOverlay(has_results);
     }
   }
 
@@ -189,7 +189,7 @@ class AudioResults extends Audio {
   #resultsClickable = "#results-clickable"
   overlaid = false
   #overlayEnabled
-  #enableOverlay(immediately) {
+  enableOverlay(immediately) {
     this.overlaid = true
     this.#overlayEnabled = immediately
     this.#overlayButton = document.querySelector(this.#overlayButton)
@@ -400,7 +400,7 @@ class AnnotatedRecorder extends AutoEndingRecorder {
   }
 }
 
-class AnnotatedAudio extends Audio {
+class AnnotatedAudio extends AudioResults {
   #holding
   #holder = "#aux-data"
   options(answer) {
@@ -474,6 +474,14 @@ class AnnotatedAudio extends Audio {
         return res
       }
     }
+  }
+
+  enableOverlay(immediately) {
+  }
+
+  done() {
+    this.overlaid = true
+    super.done()
   }
 }
 

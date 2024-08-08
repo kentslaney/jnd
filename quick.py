@@ -316,7 +316,7 @@ class QuickResultsBP(QuickAnnotatedBP):
         if user == "all":
             return self.quick_recognize(db)
         return self.quick_recognize(
-            db, "WHERE quick_results.subject=?", (user,))
+            db, " WHERE quick_results.subject=?", (user,))
 
     def quick_plot(self, db):
         user = request.args.get("user", session["user"])
