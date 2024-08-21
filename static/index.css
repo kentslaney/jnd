@@ -24,6 +24,7 @@
 }
 #submit {
   border-radius: 0px 0.4rem 0.4rem 0px;
+  cursor: pointer;
 }
 #username {
   border-radius: 0.4rem 0px 0px 0.4rem;
@@ -87,5 +88,9 @@ img {
 #copy {
   text-align: center;
   color: var(--soft-grey);
+}
+
+#username::placeholder {
+  color: #000;
 }
 

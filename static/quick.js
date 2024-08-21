@@ -37,7 +37,9 @@ function findButtons(that) {
 
 function resetPlaybackButton(button, ...add) {
   const playbackButtonClasses = [
-    "play", "playable", "pause", "load", "stop", "record", "done", "error"];
+      "play", "playable", "pause", "load", "stop", "record", "done", "error",
+      "ing"
+    ];
 
   for (let i of playbackButtonClasses) {
     button.classList.remove(i)
@@ -156,7 +158,8 @@ class Audio extends AudioPrefetch {
   #playing = false;
   play() {
     this.#playing = true;
-    resetPlaybackButton(this.playbackButton, "pause");
+    // resetPlaybackButton(this.playbackButton, "pause");
+    resetPlaybackButton(this.playbackButton, "play", "ing");
     this.playbackButton.onclick = () => {
       this.audio.pause();
       this.pause();
@@ -207,8 +210,7 @@ class AudioResults extends Audio {
 
   done() {
     if (this.overlaid) {
-      window.location.href = "/jnd/done.html?debug=" + encodeURIComponent(
-        this.#overlayURL)
+      window.location.href = "/jnd/done.html?debug=true"
     } else {
       super.done()
     }

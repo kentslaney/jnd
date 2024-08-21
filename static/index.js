@@ -14,8 +14,20 @@ function apijson(response) {
   return response.json()
 }
 
+let distinctive = "347ADEFHLMNQRdefmr";
+function generateShortID(size=8, chars=distinctive) {
+  // console.info(1 / 2 + Math.sqrt(1 / 4 + 2 * Math.log(2) * Math.pow(
+  //     chars.length, size)))
+  res = ""
+  for (let i = 0; i < size; i++) {
+    res += chars[Math.trunc(Math.random() * chars.length)]
+  }
+  return res
+}
+
 function check_username() {
-  const input = document.getElementById("username").value;
+  const el = document.getElementById("username");
+  const input = el.value || el.getAttribute("placeholder");
   const output = document.getElementById("username-status");
   const submit = document.getElementById("submit");
   // avoids checking on key up for the shift key, for example
@@ -66,18 +78,16 @@ function check_username() {
 function claim_username() {
   const storage = document.getElementById("storage");
   if (!storage.checked) {
-    if (window.confirm(
+    window.alert(
         "audio data has to be stored until there's a reliable GPU source " +
-        "behind the project")){
-      storage.checked = true;
-      storage.previousSibling.textContent =
+        "behind the project")
+    storage.checked = true;
+    storage.previousSibling.textContent =
         "I agree to the terms and conditions";
-    } else {
-      window.location.href = "https://cloud.google.com/contact"
-    }
     return
   }
-  const input = document.getElementById("username").value;
+  const el = document.getElementById("username")
+  const input = el.value || el.getAttribute("placeholder");
   const output = document.getElementById("username-status");
   const submit = document.getElementById("submit");
   if (request_controller !== null) {
@@ -125,20 +135,24 @@ window.addEventListener("load", () => {
       el.classList.remove("load")
       el.classList.add("play")
       let playing = false
-      const f = () => {
+      const f = (actively) => () => {
         playing = !playing
-        el.classList.remove(playing ? "play" : "pause")
+        el.classList.remove("play")
+        el.classList.remove("pause")
         el.classList.add(playing ? "pause" : "play")
-        if (playing) audio.play()
+        if (!actively) audio.load()
+        else if (playing) audio.play()
         else audio.pause()
       }
-      el.addEventListener("click", f)
-      audio.addEventListener("ended", f)
+      el.addEventListener("click", f(true))
+      audio.addEventListener("ended", f(false))
     })(el, audio))
     audio.src = src
     audio.setAttribute("preload", "")
     samples.appendChild(audio)
   }
   recorder = new DiscretelyTunedRecorder(".sound-dot")
+  document.getElementById("username").setAttribute(
+    "placeholder", generateShortID())
 })
 

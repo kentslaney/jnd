@@ -23,6 +23,10 @@
 /* playback icon CSS */
 :root { --playback-color: var(--soft-grey); }
 .playback-interface.play { --playback-color: var(--interact); }
+.playback-interface.ing {
+  --playback-color: var(--soft-grey);
+  pointer-events: none;
+}
 
 .playback-interface {
   display: inline-block;

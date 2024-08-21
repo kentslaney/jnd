@@ -5,17 +5,32 @@
   <script type="text/javascript">
     window.addEventListener("load", e => {
       const showing = new URL(document.baseURI).searchParams.get("debug")
-      if (showing !== null) {
+      if (showing === "true") {
         const results = document.getElementById("results")
-        results.href = showing
+        results.href = "/jnd/api/quick/plot?t=" + Date.now();
         for (const el of document.getElementsByClassName("debug")) {
           el.classList.remove("hidden")
         }
       }
     }, { passive: true })
 
+    fetch("/jnd/api/quick/recognized")
+      .then(response => response.json())
+      .then(data => {
+        if (data.length === 0) return;
+        document.getElementById("username").innerText = data[0]["username"]
+        const [correct, total] = data.reduce((a, b) => {
+          return [
+                a[0] + b["annotations"].filter(x => x).length,
+                a[1] + b["annotations"].length
+              ]
+        }, [0, 0])
+        const score = 25.5 - correct / total * 30
+        document.getElementById("score").innerText = score.toString()
+      })
+
     function reset(e) {
-      const api = new URL("reset", document.querySelector("#results").href).href
+      const api = "/jnd/api/quick/reset"
       const el = e.target
       e.target.classList.add("loading")
       fetch(api, {method: "POST" }).then(response => {
@@ -33,12 +48,17 @@
   <div id="content">
     That's all we need, thanks for your help
     <br>
-    <a href="index.html">Restart</a>
+    <span id="username" class="ajax-data"></span> -
+    <span id="score" class="ajax-data"></span>
+    <br>
+    <a href="index.html">Start next patient</a>
     <a id="results" class="hidden">Results</a>
     <a id="recognized" class="hidden debug" href="recognized.html">
-      Recognized
+      Recognized speech
     </a>
-    <a id="reset" class="hidden debug" onclick="reset(event)" href="#">Retry</a>
+    <a id="reset" class="hidden debug" onclick="reset(event)" href="#">
+      Try next list
+    </a>
     <img src="https://upload.wikimedia.org/wikipedia/commons/4/4b/Stanford_Cardinal_logo.svg" />
   </div>
   <style>
@@ -76,6 +96,9 @@
     }
     .failed:not(.loading)::after {
       content: "...\27F3";
+    }
+    .ajax-data:empty::before {
+      content: "...";
     }
   </style>
 </html>
