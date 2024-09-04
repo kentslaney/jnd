@@ -26,7 +26,11 @@
               ]
         }, [0, 0])
         const score = 25.5 - correct / total * 30
-        document.getElementById("score").innerText = score.toString()
+        document.getElementById("correct").innerText = correct
+        document.getElementById("total").setAttribute(
+            "data-total", total === 30 ? "" : total)
+        const scale = 1e1, round = Math.round(score * scale) / scale
+        document.getElementById("score").innerText = round.toString()
       })
 
     function reset(e) {
@@ -47,10 +51,16 @@
   </script>
   <div id="content">
     That's all we need, thanks for your help
-    <br>
-    <span id="username" class="ajax-data"></span> -
-    <span id="score" class="ajax-data"></span>
-    <br>
+    <div id="output">
+      Subject ID:
+      <span id="username" class="ajax-data"></span>
+      <br>
+      25.5 -
+      <span id="correct" class="ajax-data"></span>
+      <span id="total"></span>
+      =
+      <span id="score" class="ajax-data"></span>
+    </div>
     <a href="index.html">Start next patient</a>
     <a id="results" class="hidden">Results</a>
     <a id="recognized" class="hidden debug" href="recognized.html">
@@ -99,6 +109,19 @@
     }
     .ajax-data:empty::before {
       content: "...";
+    }
+    #total::after {
+      content: attr(data-total);
+    }
+    #total:not(*[data-total=""])::before {
+      content: " * 30 / "
+    }
+    #score {
+      font-weight: bold;
+    }
+    #output {
+      font-size: 2em;
+      padding: 0.5em 0;
     }
   </style>
 </html>

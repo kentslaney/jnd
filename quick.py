@@ -185,6 +185,8 @@ class QuickBP(DatabaseBP):
         return self.flask_png(*zip(*results))
 
     def quick_recognized(self, db):
+        if "user" not in session:
+            abort(400)
         return self.quick_recognize(
             db, " WHERE quick_results.subject=?", (session["user"],))
 
@@ -317,6 +319,8 @@ class QuickResultsBP(QuickAnnotatedBP):
         self._route_db("/upload/<fname>")(self.upload)
 
     def quick_recognized(self, db):
+        if "user" not in session:
+            abort(400)
         user = request.args.get("user", session["user"])
         if user == "all":
             return self.quick_recognize(db)
