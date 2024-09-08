@@ -390,7 +390,7 @@ class AutoEndingRecorder extends InteractiveRecorder {
 }
 
 class AnnotatedRecorder extends AutoEndingRecorder {
-  upload(url) {
+  async upload(url) {
     url = URL.parse(url, window.location.href)
     url.searchParams.set("annotations", JSON.stringify(this.aux_data()))
     return super.upload(url.href)

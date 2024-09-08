@@ -249,7 +249,7 @@ class AudioPrefetch {
 }
 
 class Recording {
-  #chunks = [];
+  chunks = [];
   #streaming
   #chunkID = 0
   #blockID = -1
@@ -291,17 +291,17 @@ class Recording {
   }
 
   async recieve(e) {
-    this.#chunks.push(e.data)
+    this.chunks.push(e.data)
     this.#total = e.data.size
     if (this.#streaming) this.stream(e)
   }
 
-  blob() {
-    return new Blob(this.#chunks, { type: this.#mediaRecorder.mimeType });
+  async blob() {
+    return new Blob(this.chunks, { type: this.#mediaRecorder.mimeType });
   }
 
   clear() {
-    this.#chunks = []
+    this.chunks = []
   }
 
   async reset(e) {
@@ -359,6 +359,103 @@ class Recording {
   }
 }
 
+class SecureRecording extends Recording {
+  #key
+  constructor(...args) {
+    super(...args)
+    this.#key = this.public().then(apijson).then(key => {
+      return window.crypto.subtle.importKey(
+        "jwk",
+        key,
+        {
+          name: "RSA-OAEP",
+          hash: "SHA-256",
+        },
+        true,
+        ["encrypt"],
+      );
+    })
+  }
+
+  public() {
+    throw new Exception("unimplemented")
+  }
+
+  // TODO: stream encrypted chunks with single header
+  async encrypt(bytes) {
+    const salt = window.crypto.getRandomValues(new Uint8Array(16))
+    const shared = window.crypto.getRandomValues(new Uint8Array(16))
+    const secret = await window.crypto.subtle.importKey(
+      "raw",
+      shared,
+      "PBKDF2",
+      false,
+      ["deriveBits", "deriveKey"],
+    )
+    const secure = await window.crypto.subtle.deriveKey(
+      {
+        name: "PBKDF2",
+        salt,
+        iterations: 100000,
+        hash: "SHA-256",
+      },
+      secret,
+      { name: "AES-GCM", length: 256 },
+      true,
+      ["encrypt", "decrypt"],
+    );
+
+    const handshake = new Uint8Array(await window.crypto.subtle.encrypt(
+      {
+        name: "RSA-OAEP"
+      },
+      await this.#key,
+      shared
+    ));
+
+    const cyphertext = new Uint8Array(await window.crypto.subtle.encrypt(
+      {
+        name: "AES-GCM",
+        iv: window.crypto.getRandomValues(new Uint8Array(12))
+      },
+      secure,
+      bytes
+    ));
+
+    return new Uint8Array([...salt, ...handshake, ...cyphertext]);
+  }
+
+  async blob() {
+    return new Blob(
+      [await this.encrypt(await super.blob().then(x => x.arrayBuffer()))])
+  }
+}
+
+class SecureRecordingMock extends SecureRecording {
+  asymmetric
+  public() {
+    if (this.asymmetric === undefined) {
+      this.asymmetric = window.crypto.subtle.generateKey(
+        {
+          name: "RSA-OAEP",
+          modulusLength: 4096,
+          publicExponent: new Uint8Array([1, 0, 1]),
+          hash: "SHA-256",
+        },
+        true,
+        ["encrypt", "decrypt"]
+      );
+    }
+    return this.asymmetric.then(key =>
+      window.crypto.subtle.exportKey("jwk", key.publicKey)).then(key => {
+        return {
+          "ok": true,
+          "json": () => new Promise((resolve, reject) => resolve(key))
+        }
+      })
+  }
+}
+
 class Recorder {
   #timeslice
   #streaming
@@ -381,11 +478,12 @@ class Recorder {
       });
   }
 
+  storage = Recording
   #mediaRecorder
   onSuccess(stream) {
     this.#mediaRecorder = new MediaRecorder(stream);
     this.#mediaRecorder.addEventListener("stop", this.#stopped.bind(this))
-    this.#recording = new Recording(
+    this.#recording = new this.storage(
       this.#mediaRecorder, this.#streaming, this.messaged.bind(this))
   }
 
@@ -416,9 +514,9 @@ class Recorder {
     })
   }
 
-  upload(url) {
+  async upload(url) {
     var data = new FormData()
-    data.append('file', this.#recording.blob(), 'file')
+    data.append('file', await this.#recording.blob(), 'file')
     return fetch(url, {method: "POST", body: data})
   }
 
