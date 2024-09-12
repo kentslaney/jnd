@@ -8,7 +8,8 @@ whisper_normalizer = EnglishTextNormalizer()
 
 class WhisperASR:
     def __init__(self):
-        self.model = whisper.load_model("small.en")
+        # Valid options are small, large
+        self.model = whisper.load_model("large.en")
 
     def __call__(self, path):
         return self.model.transcribe(path)
