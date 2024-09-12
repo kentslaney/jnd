@@ -7,16 +7,16 @@ assert not subprocess.run(
 whisper_normalizer = EnglishTextNormalizer()
 
 class WhisperASR:
-    def __init__(self):
-        self.model = whisper.load_model("small.en")
+    def __init__(self, model="small.en"):
+        self.model = whisper.load_model(model)
 
     def __call__(self, path):
         return self.model.transcribe(path)
 
 # can be overly generous
 class PromptedWhisperASR:
-    def __init__(self):
-        self.model = whisper.load_model("base.en")
+    def __init__(self, model="base.en"):
+        self.model = whisper.load_model(model)
 
     def __call__(self, path, answer):
         return self.model.transcribe(path, initial_prompt=answer)
