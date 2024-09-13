@@ -35,10 +35,14 @@ CREATE TABLE quick_results (
   subject INTEGER,
   trial INTEGER,
   reply_filename TEXT,
-  reply_asr TEXT,
   t TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY(subject) REFERENCES users(id),
   FOREIGN KEY(trial) REFERENCES quick_trials(id)
+);
+CREATE TABLE quick_asr (
+  ref INTEGER,
+  data TEXT,
+  FOREIGN KEY(ref) REFERENCES quick_results(id)
 );
 CREATE TABLE quick_annotations (
   ref INTEGER,

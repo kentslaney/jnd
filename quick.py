@@ -122,8 +122,8 @@ class QuickBP(DatabaseBP):
                 return (db, rowid, fpath, answer)
             reply = self.asr(fpath, answer)
             db.execute(
-                "UPDATE quick_results SET reply_asr=? WHERE id=?",
-                (json.dumps(reply), rowid))
+                "INSERT INTO quick_asr (ref, data) VALUES (?, ?)",
+                (rowid, json.dumps(reply)))
             return self.completion_condition(reply, answer)
         if dump:
             return wrapped()
@@ -174,9 +174,11 @@ class QuickBP(DatabaseBP):
 
     def quick_plotter(self, db, query="", args=()):
         results = db.queryall(
-            "SELECT quick_trials.snr, quick_results.reply_asr, "
-            "quick_trials.answer FROM quick_results LEFT JOIN quick_trials "
-            "ON quick_results.trial=quick_trials.id WHERE reply_asr IS NOT NULL"
+            "SELECT quick_trials.snr, quick_asr.data, "
+            "quick_trials.answer FROM quick_results "
+            "LEFT JOIN quick_trials ON quick_results.trial=quick_trials.id "
+            "LEFT JOIN quick_asr ON quick_results.id=quick_asr.ref "
+            "WHERE quick_asr.data IS NOT NULL"
             f"{query and ' AND ' + query}", args)
         if len(results) == 0:
             abort(400)
@@ -195,7 +197,7 @@ class QuickBP(DatabaseBP):
             "subject": "quick_results.subject",
             "username": "users.username",
             "upload": "quick_results.reply_filename",
-            "transcript": "quick_results.reply_asr",
+            "transcript": "quick_asr.data",
             "prompt": "quick_trials.filename",
             "answer": "quick_trials.answer",
         })
@@ -206,7 +208,8 @@ class QuickBP(DatabaseBP):
                 f"{','.join(self.result_fields[1])} "
             "FROM quick_results "
                 "LEFT JOIN quick_trials ON quick_results.trial=quick_trials.id "
-                "LEFT JOIN users ON subject=users.id"
+                "LEFT JOIN users ON subject=users.id "
+                "LEFT JOIN quick_asr ON quick_results.id=quick_asr.ref"
             f"{query}", args)
         keys = self.result_fields[0]
         return json.dumps([dict(zip(keys, i)) for i in transcription])

@@ -9,15 +9,19 @@ whisper_normalizer = EnglishTextNormalizer()
 class WhisperASR:
     def __init__(self, model="small.en"):
         self.model = whisper.load_model(model)
+        self.meta = {"model_name": model, "model_type": "default"}
 
     def __call__(self, path):
-        return self.model.transcribe(path)
+        res = self.model.transcribe(path)
+        return {**res, **self.meta}
 
 # can be overly generous
 class PromptedWhisperASR:
     def __init__(self, model="base.en"):
         self.model = whisper.load_model(model)
+        self.meta = {"model_name": model, "model_type": "prompted"}
 
     def __call__(self, path, answer):
-        return self.model.transcribe(path, initial_prompt=answer)
+        res = self.model.transcribe(path, initial_prompt=answer)
+        return {**res, **self.meta}
 

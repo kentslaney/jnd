@@ -8,9 +8,10 @@ con = sqlite3.connect(str(basename / "experiments.db"))
 def quick_queue():
     cur = con.execute(
             "SELECT quick_results.id, reply_filename, answer "
-            "FROM quick_results LEFT JOIN quick_trials "
-            "ON quick_results.trial = quick_trials.id "
-            "WHERE reply_asr IS NULL OR reply_asr = ''")
+            "FROM quick_results "
+            "LEFT JOIN quick_trials ON quick_results.trial = quick_trials.id "
+            "LEFT JOIN quick_asr ON quick_results.id=quick_asr.ref "
+            "WHERE quick_asr.data IS NULL OR quick_asr.data = ''")
     q = cur.fetchall()
     cur.close()
     return q
@@ -18,7 +19,7 @@ def quick_queue():
 def update(rowid, res):
     res = json.dumps(res)
     cur = con.cursor()
-    cur.execute("UPDATE quick_results SET reply_asr=? WHERE id=?", (res, rowid))
+    cur.execute("INSERT INTO quick_asr (ref, data) VALUES (?, ?)", (rowid, res))
     con.commit()
     cur.close()
 
