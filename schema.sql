@@ -61,9 +61,10 @@ CREATE TABLE quick_asr (
   FOREIGN KEY(ref) REFERENCES quick_results(id)
 );
 
-/* Table that describes which words were correctly found in the user's vocal
- * response.  True indicates that the word was spoken and recognized correctly.
- * Keyed to result table above.
+/* Table that describes which words that the audiologist identified as being
+ * correctly spoken by the patient.  (We want to compare these results to the
+ * ASR results in the quick_asr table.) Entries in this table are tied to the
+ * quick_results table above.
  */
 CREATE TABLE quick_annotations (
   ref INTEGER,
