@@ -1,4 +1,6 @@
-CREATE TABLE users (
+/* Table that describes one user.
+ */
+ CREATE TABLE users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT NOT NULL UNIQUE,
   ip TEXT,
@@ -21,6 +23,11 @@ CREATE TABLE pitch_results (
   FOREIGN KEY(subject) REFERENCES users(id),
   FOREIGN KEY(trial) REFERENCES pitch_trials(id)
 );
+
+/* Table that describes all QuickSIN stimuli, lists the stimulus wave
+ * file, and contains the expected keywords (comma separated, with homonyms
+ * separated by /).
+ */
 CREATE TABLE quick_trials (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   snr INTEGER,
@@ -30,6 +37,11 @@ CREATE TABLE quick_trials (
   answer TEXT,
   active BOOLEAN NOT NULL CHECK(active IN(0,1)) /* version control */
 );
+
+/* Table that describes one trial (play one sound, get one response.)
+ * points to user name and trial information (above).  The ASR response
+ * links to entries in this table.
+ */
 CREATE TABLE quick_results (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   subject INTEGER,
@@ -39,11 +51,20 @@ CREATE TABLE quick_results (
   FOREIGN KEY(subject) REFERENCES users(id),
   FOREIGN KEY(trial) REFERENCES quick_trials(id)
 );
+
+/* Table that describes the ASR response for a user trial.  Contains the ASR
+ * response, and is keyed to the quick_results above.
+ */
 CREATE TABLE quick_asr (
   ref INTEGER,
   data TEXT,
   FOREIGN KEY(ref) REFERENCES quick_results(id)
 );
+
+/* Table that describes which words were correctly found in the user's vocal
+ * response.  True indicates that the word was spoken and recognized correctly.
+ * Keyed to result table above.
+ */
 CREATE TABLE quick_annotations (
   ref INTEGER,
   data TEXT,
