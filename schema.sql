@@ -1,3 +1,9 @@
+/* 
+ * Implement an online version of the QuickSIN test, to automate human 
+ * data collection ala this article.
+ * https://pubs.aip.org/asa/jel/article/4/9/095202/3311832/Comparing-human-and-machine-speech-recognition-in
+ */
+
 /* Table that describes one user.
  */
  CREATE TABLE users (
@@ -31,8 +37,8 @@ CREATE TABLE pitch_results (
 CREATE TABLE quick_trials (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   snr INTEGER,
-  level_number INTEGER, /* one indexed */
-  trial_number INTEGER, /* in the current level, which trial number */
+  level_number INTEGER, /* which sentence in this list */
+  trial_number INTEGER, /* which QuickSIN list */
   filename TEXT, /* basename, not path */
   answer TEXT,
   active BOOLEAN NOT NULL CHECK(active IN(0,1)) /* version control */

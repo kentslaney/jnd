@@ -13,3 +13,6 @@ staging server that skips audio in favor of logged answers
 FLASK_APP="debug:app" flask run -p 8088 --debug
 ```
 
+To run offline ASR on the collected utterances (From Kent's account):
+  python3 offline_asr.py --model tiny.en
+  
