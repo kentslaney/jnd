@@ -514,10 +514,10 @@ class Recorder {
     })
   }
 
-  async upload(url) {
-    var data = new FormData()
+  async result(url, headers) {
+    let data = new FormData()
     data.append('file', await this.#recording.blob(), 'file')
-    return fetch(url, {method: "POST", body: data})
+    return [url, {...headers, method: "POST", body: data}]
   }
 
   get state() {

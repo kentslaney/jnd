@@ -117,7 +117,7 @@ class Audio extends AudioPrefetch {
   }
 
   backlogged = 0;
-  result(key, f=undefined) {
+  async result(key, f=undefined) {
     this.backlogged += 1;
     super.result(key, k => f(k).then(response => {
       if (response.ok) this.backlogged = 0;
@@ -310,16 +310,18 @@ class InteractiveRecorder extends DiscretelyTunedRecorder {
       return
     }
     this.nextButton.disabled = true;
+    const data = await this.result(`/jnd/api/quick/result`, {})
     await this.#audio.result(1, k => {
-      return this.upload(`/jnd/api/quick/result`).then(response => {
-        if (!response.ok) this.debug(response.statusText);
-        return response
-      }).catch(e => {
-        this.debug(e.message)
-        console.error(e)
-        return Promise.reject(e)
-      })
-    })
+        return fetch(data[0], data[1]).then(response => {
+          if (!response.ok) this.debug(response.statusText);
+          return response
+        }).catch(e => {
+          this.debug(e.message)
+          console.error(e)
+          return Promise.reject(e)
+        })
+      }
+    )
     this.highlight(0)
     this.#audio.pause()
   }
@@ -390,10 +392,10 @@ class AutoEndingRecorder extends InteractiveRecorder {
 }
 
 class AnnotatedRecorder extends AutoEndingRecorder {
-  async upload(url) {
+  async result(url, headers) {
     url = URL.parse(url, window.location.href)
     url.searchParams.set("annotations", JSON.stringify(this.aux_data()))
-    return super.upload(url.href)
+    return super.result(url, headers)
   }
 
   aux_data() {
@@ -446,7 +448,7 @@ class AnnotatedAudio extends AudioResults {
     return super.load(data)
   }
 
-  result(key, f=undefined) {
+  async result(key, f=undefined) {
     super.result(key, k => f(k).then(response => {
       if (this.backlogged < 2) this.options(this.#holding.pop())
       return response
@@ -457,6 +459,7 @@ class AnnotatedAudio extends AudioResults {
 
   #playbackProgress = "#playback-debug"
   debug(url) {
+    if (url === undefined) return
     if (typeof this.#playbackProgress === "string")
       this.#playbackProgress = document.querySelector(this.#playbackProgress)
     const [ list, seq ] = url.match(/[0-9]+/g).map(x => parseInt(x))
