@@ -81,12 +81,38 @@ class QuickBP(DatabaseBP):
         else:
             lists = json.loads(session["lists"])
             level = quick_levels - (left - 2) // lists
-            q = db.queryall(
-                "SELECT * FROM quick_trials WHERE active=1 AND level_number=?",
-                (level,))
-            if len(q) == 0:
-                abort(Response("out of levels", code=400))
-            q = random.choice(q)
+            if level == 1:
+                q = db.queryall(
+                    "SELECT * FROM quick_trials WHERE level_number=1 AND "
+                    "active=1 AND trial_number NOT IN ("
+                        "SELECT trial_number FROM quick_results "
+                        "LEFT JOIN quick_trials "
+                        "ON quick_results.trial=quick_trials.id "
+                        "WHERE subject=?)",
+                    (session["user"],))
+                if len(q) == 0:
+                    abort(Response("out of levels", code=400))
+                q = random.choice(q)
+            else:
+                q = db.queryone(
+                    "SELECT * FROM quick_trials WHERE level_number=? AND "
+                    "active=1 AND trial_number IN ("
+                        "SELECT trial_number FROM quick_results "
+                        "LEFT JOIN quick_trials "
+                        "ON quick_results.trial=quick_trials.id "
+                        "WHERE subject=? AND level_number=1"
+                    ") AND trial_number NOT IN ("
+                        "SELECT trial_number FROM quick_results "
+                        "LEFT JOIN quick_trials "
+                        "ON quick_results.trial=quick_trials.id "
+                        "WHERE subject=? AND level_number=?)",
+                    (level, session["user"], session["user"], level))
+                if q is None: # preloading one, just has to match
+                    assert level == 2
+                    q = db.queryone(
+                        "SELECT * FROM quick_trials WHERE level_number=2 AND "
+                        "active=1 AND trial_number=?",
+                        (cur["trial_number"],))
         q = self.quick_trial_dict(q)
         session["q"] = json.dumps(q)
         return self.quick_url(q["filename"])
