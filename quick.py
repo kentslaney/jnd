@@ -266,6 +266,23 @@ class QuickAnnotatedBP(QuickBP):
         self.result_fields = lambda: fields
         super().__init__(*a, **kw)
         self._route_db("/reset", methods=["POST"])(self.quick_reset)
+        self._route_db("/effort", methods=["POST"])(self.quick_effort)
+
+    def quick_plotter(self, db, query="", args=()):
+        results = db.queryall(
+            "SELECT quick_trials.snr, quick_annotations.data "
+            "FROM quick_results "
+            "LEFT JOIN quick_trials ON quick_results.trial=quick_trials.id "
+            "LEFT JOIN quick_annotations ON "
+            "quick_results.id=quick_annotations.ref "
+            "WHERE quick_annotations.data IS NOT NULL "
+            "AND quick_annotations.data != ''"
+            f"{query and ' AND ' + query}", args)
+        if len(results) == 0:
+            abort(400)
+        results = [(snr, json.loads(data)) for snr, data in results]
+        results = [(snr, sum(data) / len(data)) for snr, data in results]
+        return self.flask_png(*zip(*results))
 
     def quick_parse(self, db, rowid, fpath, answer, dump=False, data=None):
         def wrapped(dump=False):
@@ -308,6 +325,19 @@ class QuickAnnotatedBP(QuickBP):
 
     def quick_reset(self, db):
         session.pop("cur", None)
+        return ""
+
+    def quick_effort(self, db):
+        if "user" not in session or "v" not in request.args:
+            abort(400)
+        try:
+            effort = int(effort).get("v")
+        except ValueError:
+            abort(400)
+        db.execute(
+            "INSERT INTO user_info (user, info_key, value) "
+            "VALUES (?, 'effort', ?)",
+            (int(session["user"]), effort))
         return ""
 
 class QuickScatterBP:
@@ -393,7 +423,6 @@ class QuickWhisperDebugBP(QuickResultsBP):
 
 # class QuickLogisticWhisperBP(QuickLogisticBP, QuickWhisperDebugBP):
 # class QuickLogisticWhisperBP(QuickLogisticBP, QuickWhisperBP):
-# class QuickLogisticWhisperBP(QuickLogisticBP, QuickResultsBP):
-class QuickOutputBP(QuickResultsBP):
+class QuickOutputBP(QuickLogisticBP, QuickResultsBP):
     pass
 

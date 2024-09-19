@@ -1,128 +1,42 @@
 <!DOCTYPE html>
 <html lang="en-US">
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <script type="text/javascript">
-    window.addEventListener("load", e => {
-      const showing = new URL(document.baseURI).searchParams.get("debug")
-      if (showing === "true") {
-        const results = document.getElementById("results")
-        results.href = "/jnd/api/quick/plot?t=" + Date.now();
-        for (const el of document.getElementsByClassName("debug")) {
-          el.classList.remove("hidden")
-        }
-      }
-    }, { passive: true })
-
-    fetch("/jnd/api/quick/recognized")
-      .then(response => response.json())
-      .then(data => {
-        if (data.length === 0) return;
-        document.getElementById("username").innerText = data[0]["username"]
-        const [correct, total] = data.reduce((a, b) => {
-          return [
-                a[0] + b["annotations"].filter(x => x).length,
-                a[1] + b["annotations"].length
-              ]
-        }, [0, 0])
-        const score = 25.5 - correct / total * 30
-        document.getElementById("correct").innerText = correct
-        document.getElementById("total").setAttribute(
-            "data-total", total === 30 ? "" : total)
-        const scale = 1e1, round = Math.round(score * scale) / scale
-        document.getElementById("score").innerText = round.toString()
-      })
-
-    function reset(e) {
-      const api = "/jnd/api/quick/reset"
-      const el = e.target
-      e.target.classList.add("loading")
-      fetch(api, {method: "POST" }).then(response => {
-        if (response.ok) {
-          window.location.href = "quick.html"
-        } else {
-          return Promise.reject(response)
-        }
-      }).catch(e => {
-        el.classList.remove("loading")
-        el.classList.add("failed")
-      })
-    }
-  </script>
-  <div id="content">
-    That's all we need, thanks for your help
-    <div id="output">
-      Subject ID:
-      <span id="username" class="ajax-data"></span>
-      <br>
-      25.5 -
-      <span id="correct" class="ajax-data"></span>
-      <span id="total"></span>
-      =
-      <span id="score" class="ajax-data"></span>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="done.css" />
+    <script type="text/javascript" src="done.js">
+    </script>
+  </head>
+  <body>
+    <div id="content">
+      That's all we need, thanks for your help
+      <form action="javascript:;" id="effort-case"
+          onsubmit="submit_effort()">
+        Subject Listening Effort (1-10):
+        <input type="number" id="effort" min="1" max="10" autofocus required />
+        <input type="submit" value="submit" />
+        <span id="effort-status"></span>
+      </form>
+      <div id="output">
+        Subject ID:
+        <span id="username" class="ajax-data"></span>
+        <br>
+        25.5 -
+        <span id="correct" class="ajax-data"></span>
+        <span id="total"></span>
+        =
+        <span id="score" class="ajax-data"></span>
+      </div>
+      <a href="index.html">Start next patient</a>
+      <a id="results" class="hidden">Results</a>
+      <a id="recognized" class="hidden debug" href="recognized.html">
+        Recognized speech
+      </a>
+      <a id="reset" class="hidden debug" onclick="reset(event)" href="#">
+        Try next list
+      </a>
+      <img src="https://upload.wikimedia.org/wikipedia/commons/4/4b/Stanford_Cardinal_logo.svg" />
     </div>
-    <a href="index.html">Start next patient</a>
-    <a id="results" class="hidden">Results</a>
-    <a id="recognized" class="hidden debug" href="recognized.html">
-      Recognized speech
-    </a>
-    <a id="reset" class="hidden debug" onclick="reset(event)" href="#">
-      Try next list
-    </a>
-    <img src="https://upload.wikimedia.org/wikipedia/commons/4/4b/Stanford_Cardinal_logo.svg" />
-  </div>
-  <style>
-    #content {
-      /* 33% of the div is positioned at 33% of the viewport height */
-      transform: translateY(max(0px, calc(33vh - 33%)));
-      color: rgba(0, 0, 0, 0.87);
-    }
-    #content {
-      text-align: center;
-      font-family: 'Roboto', sans-serif;
-    }
-    a {
-      display: inline-block;
-      border: 0.15rem solid #ABABA9;
-      padding: 0.3rem;
-      border-radius: 0.4rem;
-      color: white;
-      text-decoration: none;
-      margin: 0 0.5rem;
-      margin-top: 1rem;
-      background: #67AFD2;
-    }
-    img {
-      display: block;
-      margin: 0 auto;
-      margin-top: 3rem;
-      height: 10rem;
-    }
-    .hidden {
-      display: none;
-    }
-    .loading::after {
-      content: "...";
-    }
-    .failed:not(.loading)::after {
-      content: "...\27F3";
-    }
-    .ajax-data:empty::before {
-      content: "...";
-    }
-    #total::after {
-      content: attr(data-total);
-    }
-    #total:not(*[data-total=""])::before {
-      content: " * 30 / "
-    }
-    #score {
-      font-weight: bold;
-    }
-    #output {
-      font-size: 2em;
-      padding: 0.5em 0;
-    }
-  </style>
+  </body>
 </html>
 

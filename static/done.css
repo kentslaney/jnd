@@ -1,0 +1,54 @@
+#content {
+  /* 33% of the div is positioned at 33% of the viewport height */
+  transform: translateY(max(0px, calc(33vh - 33%)));
+  color: rgba(0, 0, 0, 0.87);
+}
+#content {
+  text-align: center;
+  font-family: 'Roboto', sans-serif;
+}
+a {
+  display: inline-block;
+  border: 0.15rem solid #ABABA9;
+  padding: 0.3rem;
+  border-radius: 0.4rem;
+  color: white;
+  text-decoration: none;
+  margin: 0 0.5rem;
+  margin-top: 1rem;
+  background: #67AFD2;
+}
+img {
+  display: block;
+  margin: 0 auto;
+  margin-top: 3rem;
+  height: 10rem;
+}
+.hidden {
+  display: none;
+}
+.loading::after {
+  content: "...";
+}
+.failed:not(.loading)::after {
+  content: "...\27F3";
+}
+.ajax-data:empty::before {
+  content: "...";
+}
+#total::after {
+  content: attr(data-total);
+}
+#total:not(*[data-total=""])::before {
+  content: " * 30 / "
+}
+#score {
+  font-weight: bold;
+}
+#output {
+  font-size: 2em;
+  padding: 0.5em 0;
+}
+#effort-case {
+  margin-top: 0.5rem;
+}
