@@ -33,7 +33,7 @@ class QuickDB(Database):
         # Python formatting alright since disabled_levels isn't user input
         cur.execute(
                 "UPDATE quick_trials SET active=0 WHERE trial_number IN "
-                f"({",".join(map(str, disabled_lists))})")
+                f"({','.join(map(str, disabled_lists))})")
         con.commit()
         # levels 1 indexed
         assert quick_levels <= self.queryone(
