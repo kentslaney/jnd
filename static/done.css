@@ -1,7 +1,6 @@
 #content {
   /* 33% of the div is positioned at 33% of the viewport height */
   transform: translateY(max(0px, calc(33vh - 33%)));
-  color: rgba(0, 0, 0, 0.87);
 }
 #content {
   text-align: center;
@@ -51,4 +50,11 @@ img {
 }
 #effort-case {
   margin-top: 0.5rem;
+}
+.org-icon {
+  content: var(--org-icon);
+}
+body {
+  background-color: var(--page-background-color);
+  color: var(--page-text-color);
 }

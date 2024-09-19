@@ -1,0 +1,55 @@
+:root {
+  
+}
+
+:root {
+  font-size: 1em; /* scales rem */
+
+  --title-size: 3rem;
+  --description-size: 2rem;
+  --info-size: 1rem;
+
+  --header-padding-scale: 0.3;
+  --description-padding-scale: 1;
+
+  --symbol-height: 4rem;
+  --playback-padding-scale: 0.4;
+  --playback-border-scale: 0.1;
+  --stop-scale: 0.8;
+
+  --next-audio-padding: 0.8rem;
+}
+
+/* https://identity.stanford.edu/design-elements */
+:root {
+  --soft-grey: #DAD7CB;
+  --interact: #006CB8;
+  --record: #E50808;
+
+  --active: #008566;
+
+  --primary: #8C1515;
+  --light: #CBA8A6;
+  --dark: #820000;
+  --secondary: #53565A;
+  --disabled: var(--soft-grey);
+
+  --title: 'Source Sans 3', sans-serif;
+  --compact: 'Roboto', sans-serif;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --page-background-color: #FFF;
+    --page-text-color: #000000DE;
+    --org-icon: url("Stanford_light.svg");
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page-background-color: #231F20;
+    --page-text-color: #FFFFFFDE;
+    --org-icon: url("Stanford_dark.svg");
+  }
+}

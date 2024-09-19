@@ -1,0 +1,47 @@
+.template {
+  display: none;
+}
+.transcript:empty::before {
+  content: "[empty]";
+  color: red;
+}
+thead {
+  background: cornflowerblue;
+}
+.userinfo {
+  background: lightblue;
+}
+.username {
+  float: left;
+}
+.time {
+  float: right;
+}
+#showall {
+  color: black;
+}
+.answer > span:not(:first-child)::before {
+  content: ", ";
+}
+.answer > span::after {
+  display: block;
+  text-align: center;
+  font-family: monospace;
+}
+.answer > span {
+  position: relative;
+  display: inline-block;
+}
+.correct::after {
+  content: "\2714";
+}
+.incorrect::after {
+  content: "\10102";
+}
+body {
+  background-color: var(--page-background-color);
+  color: var(--page-text-color);
+}
+th, .userinfo {
+  color: #000000DE;
+}

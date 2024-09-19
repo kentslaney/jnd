@@ -2,80 +2,9 @@
 <html lang="en-US">
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-<script type="text/javascript">
-fetch("/jnd/api/quick/recognized" + window.location.search)
-  .then(response => response.json())
-  .then(data => {
-    let users = {}
-    for (const row of data) {
-      if (!(row["subject"] in users)) {
-        users[row["subject"]] = {
-          "id": row["subject"],
-          "time": new Date(row["time"] + " UTC"),
-          "username": row["username"],
-          "results": []
-        };
-      }
-      asr_data = row["transcript"] === null ? null :
-        JSON.parse(row["transcript"]);
-      users[row["subject"]]["results"].push({
-        "prompt": "/jnd/quick/" + row["prompt"],
-        "upload": "/jnd/api/quick/upload/" + row["upload"],
-        "transcript": row["transcript"] === null ? null : asr_data["text"],
-        "asr_data": asr_data,
-        "answer": row["answer"].split(","),
-        "annotations": row["annotations"]
-      });
-    }
-    let entries = Object.entries(users)
-      .sort(([a,], [b,]) => a - b).map(([,k]) => k);
-
-    const [head, body] = Array.prototype.map.call(
-      document.querySelectorAll(".template"), x => {
-        let copy = x.cloneNode(true)
-        copy.classList.remove("template")
-        return copy
-      })
-    const parent = document.querySelector(".template").parentElement
-
-    for (const user of entries) {
-      user_head = parent.appendChild(head.cloneNode(true))
-      let plot = document.createElement("a")
-      plot.href = "/jnd/api/quick/plot?user=" + user["id"]
-      plot.innerText = user["username"]
-      // plot.setAttribute("target", "_blank")
-      user_head.querySelector(".username").appendChild(plot)
-      const datestr = user["time"].toLocaleTimeString("en-US", {
-        hour12: false, year: "numeric", month: "2-digit", day: "2-digit",
-        timeZoneName: "short" });
-      user_head.querySelector(".time").innerText = datestr
-
-      for (const trial of user["results"]) {
-        el = parent.appendChild(body.cloneNode(true))
-        el.querySelector(".prompt").src = trial["prompt"]
-        el.querySelector(".response").src = trial["upload"]
-        el.querySelector(".transcript").innerText = trial["transcript"]
-        const ans = el.querySelector(".answer")
-        if (trial["annotations"] === undefined) {
-          ans.innerText = trial["answer"].join(",")
-        } else {
-          for (let i = 0; i < trial["answer"].length; i++) {
-            const container = ans.appendChild(document.createElement("span"))
-            container.innerText = trial["answer"][i]
-            const result = trial["annotations"][i]
-            container.classList.add(result ? "correct": "incorrect")
-          }
-        }
-      }
-    }
-
-    if((new URLSearchParams(window.location.search)).get("user") == "all") {
-      let a = document.querySelector("#showall");
-      a.href = "/jnd/api/quick/plot?user=all"
-      // a.setAttribute("target", "_blank")
-    }
-  })
-</script>
+  <link rel="stylesheet" href="vars.css" />
+  <link rel="stylesheet" href="recognized.css" />
+  <script type="text/javascript" src="recognized.js"></script>
   <table border=1>
     <thead>
       <th>Prompt</th>
@@ -105,46 +34,4 @@ fetch("/jnd/api/quick/recognized" + window.location.search)
       <tr><td class="answer"></td></tr>
     </tbody>
   </table>
-<style>
-.template {
-  display: none;
-}
-.transcript:empty::before {
-  content: "[empty]";
-  color: red;
-}
-thead {
-  background: cornflowerblue;
-}
-.userinfo {
-  background: lightblue;
-}
-.username {
-  float: left;
-}
-.time {
-  float: right;
-}
-#showall {
-  color: black;
-}
-.answer > span:not(:first-child)::before {
-  content: ", ";
-}
-.answer > span::after {
-  display: block;
-  text-align: center;
-  font-family: monospace;
-}
-.answer > span {
-  position: relative;
-  display: inline-block;
-}
-.correct::after {
-  content: "\2714";
-}
-.incorrect::after {
-  content: "\10102";
-}
-</style>
 </html>

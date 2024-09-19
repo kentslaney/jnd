@@ -1,7 +1,5 @@
 :root {
   --symbol-height: 3rem !important;
-  --soft-grey: #DAD7CB;
-  --active: #008566;
 }
 
 #instructions {
@@ -38,7 +36,6 @@
 #content {
   /* 33% of the div is positioned at 33% of the viewport height */
   transform: translateY(max(0px, calc(33vh - 33%)));
-  color: rgba(0, 0, 0, 0.87);
 }
 #content, input {
   font-family: 'Roboto', sans-serif;
@@ -98,4 +95,10 @@ img {
   display: inline-block;
   width: 2rem;
 }
-
+.org-icon {
+  content: var(--org-icon);
+}
+body {
+  background-color: var(--page-background-color);
+  color: var(--page-text-color);
+}
