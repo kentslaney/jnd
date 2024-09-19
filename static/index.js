@@ -96,9 +96,12 @@ function claim_username() {
   request_controller = new AbortController();
   const signal = request_controller.signal;
   submit.disabled = true;
-  const query = encodeURIComponent(input);
-  const lists = document.getElementById("lists").value;
-  request = fetch(`/jnd/api/set-username?v=${query}&l=${lists}`, { signal })
+  let url = URL.parse("/jnd/api/set-username", window.location.href)
+  url.searchParams.set("v", input)
+  url.searchParams.set("l", document.getElementById("lists").value)
+  url.searchParams.set(
+    "t", document.querySelector("[name=test-type]:checked").id)
+  request = fetch(url, { signal })
     .then(apijson).then((data) => {
       if (data) {
         // window.location.href = "/jnd/pitch.html";
@@ -116,7 +119,6 @@ function claim_username() {
 }
 
 // catches autofilled values
-window.addEventListener("load", check_username);
 fetch("/jnd/api/authorized", { method: "POST" }).then(apijson).catch(e => {
   if (e.status === 401) {
     window.location.href = "/login?next=" + encodeURIComponent(
@@ -154,5 +156,6 @@ window.addEventListener("load", () => {
   recorder = new DiscretelyTunedRecorder(".sound-dot")
   document.getElementById("username").setAttribute(
     "placeholder", generateShortID())
+  check_username()
 })
 

@@ -94,3 +94,8 @@ img {
   color: #000;
 }
 
+.h-radio-spacer {
+  display: inline-block;
+  width: 2rem;
+}
+

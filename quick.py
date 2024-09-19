@@ -7,6 +7,7 @@ from plot import scatter_results, logistic_results
 quick_levels = 6
 quick_files = relpath("all_spin_index.csv")
 upload_location = relpath("uploads")
+disabled_lists = (3, 4, 5, 7, 9)
 
 class QuickDB(Database):
     def __init__(self, *args, **kw):
@@ -29,10 +30,22 @@ class QuickDB(Database):
             "INSERT INTO quick_trials "
             "(trial_number, level_number, snr, filename, answer, active) "
             "VALUES (?, ?, ?, ?, ?, 1)", experiments)
+        # Python formatting alright since disabled_levels isn't user input
+        cur.execute(
+                "UPDATE quick_trials SET active=0 WHERE trial_number IN "
+                f"({",".join(map(str, disabled_lists))})")
         con.commit()
         # levels 1 indexed
         assert quick_levels <= self.queryone(
             "SELECT MAX(level_number) FROM quick_trials WHERE active=1")[0]
+
+    def _username_hook(self):
+        res = getattr(super(), "_username_hook", lambda: None)()
+        self.execute(
+                "INSERT INTO user_info (user, info_key, value) "
+                "VALUES (?, 'test-type', ?)",
+                (int(session["user"]), request.args.get("t", "unknown")))
+        return res
 
 def saved_png(path):
     def decorator(f):

@@ -7,7 +7,13 @@ from quick import QuickDB, QuickOutputBP
 # use multiple inheritance to add other DB hooks
 # class ExperimentDB(PitchDB, QuickDB):
 class ExperimentDB(QuickDB):
-    pass
+    def _username_hook(self):
+        res = set_username(self)
+        super()._username_hook()
+        return res
+
+def username_hook(db):
+    return db._username_hook()
 
 class APIBlueprint(DatabaseBP):
     def __init__(self,
@@ -19,7 +25,7 @@ class APIBlueprint(DatabaseBP):
         # self.register_blueprint(PitchBP(db))
         self.register_blueprint(QuickOutputBP(db))
         self._route_db("/username-available")(username_available)
-        self._route_db("/set-username")(set_username)
+        self._route_db("/set-username")(username_hook)
         self._route_db("/authorized", methods=["POST"])(authorized)
 
     def _bind_db(self, app):
@@ -70,14 +76,21 @@ def set_username(db):
         name = f"{name}-{uuid.uuid4()}"
 
     try:
-        uid = db.execute("INSERT INTO users (username, ip) VALUES (?, ?)",
-                         (name, request.remote_addr))
+        uid = db.execute(
+            "INSERT INTO users (username, ip) VALUES (?, ?)",
+            (name, request.remote_addr))
     except sqlite3.IntegrityError:
         return json.dumps(False)
 
+    search = json.dumps(dict(request.args))
+    db.execute(
+        "INSERT INTO user_info (user, info_key, value) "
+        "VALUES (?, 'searchParams', ?)",
+        (uid, search))
+
     session.clear()
     session["user"], session["username"] = uid, name
-    session["meta"] = json.dumps(dict(request.args))
+    session["meta"] = search
     return json.dumps(True)
 
 def authorized(db):
