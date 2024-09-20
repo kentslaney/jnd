@@ -65,7 +65,7 @@ img {
 
 .mic-test {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 0.5rem;
 }
 .sound-dot {
   width: 1rem;
@@ -101,4 +101,9 @@ img {
 body {
   background-color: var(--page-background-color);
   color: var(--page-text-color);
+}
+#mic-debug {
+    display: block;
+    height: 1rem;
+    margin: 0.5rem 0;
 }

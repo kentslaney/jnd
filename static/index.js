@@ -126,6 +126,13 @@ fetch("/jnd/api/authorized", { method: "POST" }).then(apijson).catch(e => {
   }
 })
 
+class TestRecorder extends DiscretelyTunedRecorder {
+    debug(message) {
+        let container = document.getElementById("mic-debug")
+        container.innerText = message
+    }
+}
+
 let recorder
 window.addEventListener("load", () => {
   let samples = document.getElementById("samples")
@@ -153,7 +160,7 @@ window.addEventListener("load", () => {
     audio.setAttribute("preload", "")
     samples.appendChild(audio)
   }
-  recorder = new DiscretelyTunedRecorder(".sound-dot")
+  recorder = new TestRecorder(".sound-dot")
   document.getElementById("username").setAttribute(
     "placeholder", generateShortID())
   check_username()
