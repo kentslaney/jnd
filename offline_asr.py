@@ -27,6 +27,15 @@ def main(asr):
     for rowid, fname, ans in tqdm(quick_queue()):
         update(rowid, asr(str(basename / "uploads" / fname)))
 
+def deduplicate(**kw):
+    dup, sep = "json_extract(data, '$.' || ?) = ?", " AND "
+    clause = sep.join((dup,) * len(kw))
+    args = sum(kw.items(), ())
+    cur = con.cursor()
+    cur.execute("DELETE FROM quick_asr WHERE " + clause, args)
+    con.commit()
+    cur.close()
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
@@ -44,7 +53,11 @@ if __name__ == "__main__":
             action="store_const", const="PromptedWhisperASR", help=(
                 "use the correct answer as the model prompt; can help accuracy "
                 "but can also bias results towards correct"))
+    parser.add_argument("--force", action="store_true")
     args = parser.parse_args()
+    if args.force:
+        model_type = "default" if args.asr == "WhisperASR" else "prompted"
+        deduplicate(model_name=args.model, model_type=model_type)
     import asr
     main(getattr(asr, args.asr)(args.model))
 
