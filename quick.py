@@ -107,14 +107,11 @@ class QuickBP(DatabaseBP):
                     abort(Response("out of levels", code=400))
                 q = random.choice(q)
             else:
+                # TODO: stick with a single list the whole way through
+                # TODO: this may repeat the same list when preloading w/o result
                 q = db.queryone(
                     "SELECT * FROM quick_trials WHERE level_number=? AND "
-                    "active=1 AND trial_number IN ("
-                        "SELECT trial_number FROM quick_results "
-                        "LEFT JOIN quick_trials "
-                        "ON quick_results.trial=quick_trials.id "
-                        "WHERE subject=? AND level_number=1"
-                    ") AND trial_number NOT IN ("
+                    "active=1 AND trial_number NOT IN ("
                         "SELECT trial_number FROM quick_results "
                         "LEFT JOIN quick_trials "
                         "ON quick_results.trial=quick_trials.id "
