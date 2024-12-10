@@ -388,11 +388,11 @@ class QuickResultsBP(QuickAnnotatedBP):
         self._route_db("/upload/<fname>")(self.upload)
 
     def quick_recognized(self, db):
+        if user == "all":
+            return self.quick_recognize(db)
         if "user" not in session:
             abort(400)
         user = request.args.get("user", session["user"])
-        if user == "all":
-            return self.quick_recognize(db)
         return self.quick_recognize(
             db, " WHERE quick_results.subject=?", (user,))
 
