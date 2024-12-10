@@ -109,7 +109,7 @@ class QuickBP(DatabaseBP):
             else:
                 # TODO: stick with a single list the whole way through
                 # TODO: this may repeat the same list when preloading w/o result
-                q = db.queryone(
+                q = db.queryall(
                     "SELECT * FROM quick_trials WHERE level_number=? AND "
                     "active=1 AND trial_number NOT IN ("
                         "SELECT trial_number FROM quick_results "
@@ -117,6 +117,7 @@ class QuickBP(DatabaseBP):
                         "ON quick_results.trial=quick_trials.id "
                         "WHERE subject=? AND level_number=?)",
                     (level, session["user"], level))
+                q = random.choice(q)
                 if q is None: # preloading one, just has to match
                     assert level == 2
                     q = db.queryone(
