@@ -116,7 +116,7 @@ class QuickBP(DatabaseBP):
                         "LEFT JOIN quick_trials "
                         "ON quick_results.trial=quick_trials.id "
                         "WHERE subject=? AND level_number=?)",
-                    (level, session["user"], session["user"], level))
+                    (level, session["user"], level))
                 if q is None: # preloading one, just has to match
                     assert level == 2
                     q = db.queryone(
