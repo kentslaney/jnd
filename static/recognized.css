@@ -20,10 +20,10 @@ thead {
 #showall {
   color: black;
 }
-.answer > span:not(:first-child)::before {
-  content: ", ";
+.answer > span:not(:last-child)::after {
+  content: ",\00a0";
 }
-.answer > span::after {
+.answer > span::before {
   display: block;
   text-align: center;
   font-family: monospace;
@@ -32,10 +32,10 @@ thead {
   position: relative;
   display: inline-block;
 }
-.correct::after {
+.correct::before {
   content: "\2714";
 }
-.incorrect::after {
+.incorrect::before {
   content: "\10102";
 }
 body {
@@ -44,4 +44,14 @@ body {
 }
 th, .userinfo {
   color: #000000DE;
+}
+
+.answer {
+  padding-bottom: 1rem
+}
+.incorrect::before {
+  transform: translateY(-1rem);
+}
+.incorrect {
+  transform: translateY(1rem);
 }
