@@ -94,6 +94,8 @@ def set_username(db):
     session.clear()
     session["user"], session["username"] = uid, name
     session["meta"] = search
+    if request.args.get("l", "null") != "null":
+        session["requested"] = request.args.get("l")
     return json.dumps(True)
 
 def authorized(db):

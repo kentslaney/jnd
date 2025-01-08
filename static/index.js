@@ -99,6 +99,7 @@ function claim_username() {
   submit.disabled = true;
   let url = URL.parse("/jnd/api/set-username", window.location.href)
   url.searchParams.set("v", input)
+  url.searchParams.set("l", document.getElementById("list").value)
   url.searchParams.set(
     "t", document.querySelector("[name=test-type]:checked").id)
   request = fetch(url, { signal })
@@ -118,8 +119,14 @@ function claim_username() {
     })
 }
 
-// catches autofilled values
-fetch("/jnd/api/authorized", { method: "POST" }).then(apijson).catch(e => {
+fetch("/jnd/api/quick/lists").then(apijson).then(data => {
+  let parent = document.getElementById("list");
+  data.forEach(x => {
+    let el = parent.appendChild(document.createElement("option"));
+    el.setAttribute("value", x);
+    el.innerText = x;
+  })
+}).catch(e => {
   if (e.status === 401) {
     window.location.href = "/login?next=" + encodeURIComponent(
       window.location.href)

@@ -49,6 +49,11 @@
     </div>
     <form action="javascript:;" onsubmit="claim_username()" class="userbox"
         autocomplete="off">
+      <label for="list">Select specific list:</label>
+      <select id="list">
+        <option value="null">None</option>
+      </select>
+      <br>
       Store audio data: <input type="checkbox" id="storage" checked />
       <br><br>
       <!-- lpignore is for lastpass because they ignore autocomplete -->
