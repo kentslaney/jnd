@@ -92,38 +92,14 @@ class QuickBP(DatabaseBP):
             if left <= 1:
                 self.quick_async(*done(True))
         else:
-            lists = json.loads(session["lists"])
-            level = quick_levels - (left - 2) // lists
-            if level == 1:
-                q = db.queryall(
-                    "SELECT * FROM quick_trials WHERE level_number=1 AND "
-                    "active=1 AND trial_number NOT IN ("
-                        "SELECT trial_number FROM quick_results "
-                        "LEFT JOIN quick_trials "
-                        "ON quick_results.trial=quick_trials.id "
-                        "WHERE subject=?)",
-                    (session["user"],))
-                if len(q) == 0:
-                    abort(Response("out of levels", code=400))
-                q = random.choice(q)
-            else:
-                # TODO: stick with a single list the whole way through
-                # TODO: this may repeat the same list when preloading w/o result
-                q = db.queryall(
-                    "SELECT * FROM quick_trials WHERE level_number=? AND "
-                    "active=1 AND trial_number NOT IN ("
-                        "SELECT trial_number FROM quick_results "
-                        "LEFT JOIN quick_trials "
-                        "ON quick_results.trial=quick_trials.id "
-                        "WHERE subject=? AND level_number=?)",
-                    (level, session["user"], level))
-                q = random.choice(q)
-                if q is None: # preloading one, just has to match
-                    assert level == 2
-                    q = db.queryone(
-                        "SELECT * FROM quick_trials WHERE level_number=2 AND "
-                        "active=1 AND trial_number=?",
-                        (cur["trial_number"],))
+            level = quick_levels - left + 2
+            q = db.queryone(
+                    "SELECT * FROM quick_trials WHERE "
+                    "active=1 AND level_number=? AND trial_number=?",
+                    (level, cur['trial_number']))
+            if q is None:
+                assert left == 2
+                q = quick_done
         q = self.quick_trial_dict(q)
         session["q"] = json.dumps(q)
         return self.quick_url(q["filename"])
@@ -138,17 +114,17 @@ class QuickBP(DatabaseBP):
                 "cur": cur, "next": {1: q}, "name": session["username"],
                 "has_results": json.loads(session["left"]) < quick_levels - 1})
         cur = db.queryall(
-            "SELECT * FROM quick_trials WHERE active=1 AND level_number=1")
+            "SELECT * FROM quick_trials WHERE active=1 AND level_number=1 AND "
+            "trial_number NOT IN ("
+                "SELECT trial_number FROM quick_results LEFT JOIN quick_trials "
+                "ON quick_results.trial=quick_trials.id "
+                "WHERE subject=? AND level_number=1)",
+            (session["user"],))
         if len(cur) == 0:
             abort(400)
         cur = self.quick_trial_dict(random.choice(cur))
         session["cur"] = json.dumps(cur)
-        try:
-            lists = int(json.loads(session["meta"]).get("l", "1"))
-        except ValueError:
-            abort(400)
-        session["lists"] = json.dumps(lists)
-        session["left"] = json.dumps(quick_levels * lists)
+        session["left"] = json.dumps(quick_levels)
         return json.dumps({
             "cur": self.quick_url(cur["filename"]), "has_results": False,
             "next": {1: self.quick_next(db, cur)}, "name": session["username"]})
@@ -237,6 +213,7 @@ class QuickBP(DatabaseBP):
             "transcript": "quick_asr.data",
             "prompt": "quick_trials.filename",
             "answer": "quick_trials.answer",
+            "trial_number": "quick_trials.trial_number",
         })
 
     def quick_recognize(self, db, query="", args=()):
