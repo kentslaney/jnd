@@ -18,5 +18,5 @@ def root():
     return redirect(app_prefix)
 
 if __name__ == "__main__":
-    app.run(port=8088, debug=True)
+    app.run(port=8080, debug=True)
 
