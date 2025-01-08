@@ -27,7 +27,7 @@ function generateShortID(size=8, chars=distinctive) {
 
 function check_username() {
   const el = document.getElementById("username");
-  const input = el.value || el.getAttribute("placeholder");
+  const input = el.value;
   const output = document.getElementById("username-status");
   const submit = document.getElementById("submit");
   // avoids checking on key up for the shift key, for example
@@ -87,7 +87,7 @@ function claim_username() {
     return
   }
   const el = document.getElementById("username")
-  const input = el.value || el.getAttribute("placeholder");
+  const input = el.value;
   const output = document.getElementById("username-status");
   const submit = document.getElementById("submit");
   if (request_controller !== null) {
@@ -160,8 +160,6 @@ window.addEventListener("load", () => {
     samples.appendChild(audio)
   }
   recorder = new TestRecorder(".sound-dot")
-  document.getElementById("username").setAttribute(
-    "placeholder", generateShortID())
   check_username()
 })
 
