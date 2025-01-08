@@ -60,6 +60,8 @@ def username_available(db):
     if checking is None or not username_rules(checking):
         return json.dumps(False)
 
+    return json.dumps(True)
+
     if always_accept(checking):
         return json.dumps(True)
 
@@ -80,7 +82,8 @@ def set_username(db):
             "INSERT INTO users (username, ip) VALUES (?, ?)",
             (name, request.remote_addr))
     except sqlite3.IntegrityError:
-        return json.dumps(False)
+        #return json.dumps(False)
+        uid = db.queryone("SELECT id FROM users WHERE username=?", (name,))[0]
 
     search = json.dumps(dict(request.args))
     db.execute(

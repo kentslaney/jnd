@@ -48,6 +48,7 @@ function check_username() {
   } else {
     output.innerText = "";
     submit.disabled = false;
+    return
     if (request_controller !== null) {
       request_controller.abort();
     }
