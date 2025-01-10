@@ -46,6 +46,7 @@ CREATE TABLE pitch_results (
 CREATE TABLE quick_trials (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   snr INTEGER,
+  lang TEXT,
   level_number INTEGER, /* which sentence in this list */
   trial_number INTEGER, /* which QuickSIN list */
   filename TEXT, /* basename, not path */

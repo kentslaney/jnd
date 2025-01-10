@@ -4,10 +4,10 @@ from flask import (
 from utils import Database, relpath, DatabaseBP
 from plot import scatter_results, logistic_results
 
+# TODO: remove level count and count upwards now that it can be tracked per list
 quick_levels = 6
 quick_files = relpath("all_spin_index.csv")
 upload_location = relpath("uploads")
-enabled_lists = (3, 4, 5, 7, 9)
 
 # prefixed with quick to avoid namespace collisions with other APIs
 class QuickDB(Database):
@@ -20,21 +20,17 @@ class QuickDB(Database):
         assert os.path.exists(quick_files)
         with open(quick_files, "r") as f:
             experiments = [
-                [part.strip() for part in line.split(",", 4)] for line in f]
+                [part.strip() for part in line.split(",", 6)] for line in f]
         con = self.get()
         cur = con.cursor()
         cur.execute(
             "INSERT INTO quick_trials "
-            "(trial_number, level_number, snr, filename, answer, active) "
-            "VALUES (1, -1, 0, 'invalid', 'invalid', 0)")
+            "(active, lang, trial_number, level_number, snr, filename, answer) "
+            "VALUES (0, '--', 1, -1, 0, 'invalid', 'invalid')")
         cur.executemany(
             "INSERT INTO quick_trials "
-            "(trial_number, level_number, snr, filename, answer, active) "
-            "VALUES (?, ?, ?, ?, ?, 1)", experiments)
-        # Python formatting alright since disabled_levels isn't user input
-        cur.execute(
-                "UPDATE quick_trials SET active=0 WHERE trial_number NOT IN "
-                f"({','.join(map(str, enabled_lists))})")
+            "(active, lang, trial_number, level_number, snr, filename, answer) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)", experiments)
         con.commit()
         # levels 1 indexed
         assert quick_levels <= self.queryone(
@@ -65,10 +61,11 @@ def bytes_png(f):
 
 class QuickBP(DatabaseBP):
     quick_keys = (
-        "id", "snr", "level_number", "trial_number", "filename", "answer")
+        "id", "snr", "lang", "level_number", "trial_number", "filename",
+        "answer")
     quick_trial_dict = staticmethod(lambda v: dict(zip(QuickBP.quick_keys, v)))
     quick_url = staticmethod(lambda v: v and "/jnd/quick/" + v)
-    quick_done = [1, 0, 0, 1, "", 1]
+    quick_done = [1, 0, "--", 0, 1, "", 1]
 
     def __init__(self, db, name="quick", url_prefix="/quick"):
         Blueprint.__init__(self, name, __name__, url_prefix=url_prefix)
@@ -87,8 +84,12 @@ class QuickBP(DatabaseBP):
         raise NotImplementedError()
 
     def quick_lists(self, db):
-        return json.dumps([i[0] for i in db.queryall(
-                "SELECT trial_number FROM quick_trials WHERE level_number=1")])
+        langs = [i[0] for i in db.queryall(
+                "SELECT DISTINCT lang FROM quick_trials WHERE level_number=1")]
+        lists = [i[0] for i in db.queryall(
+                "SELECT lang || '-' || trial_number FROM quick_trials WHERE "
+                "level_number=1")]
+        return json.dumps(langs + lists)
 
     def quick_next(self, db, cur, done=None):
         left = json.loads(session["left"])
@@ -101,8 +102,8 @@ class QuickBP(DatabaseBP):
             level = quick_levels - left + 2
             q = db.queryone(
                     "SELECT * FROM quick_trials WHERE "
-                    "level_number=? AND trial_number=?",
-                    (level, cur['trial_number']))
+                    "level_number=? AND trial_number=? AND lang=?",
+                    (level, cur['trial_number'], cur['lang']))
             if q is None:
                 assert left == 2
                 q = quick_done
@@ -119,22 +120,23 @@ class QuickBP(DatabaseBP):
             return json.dumps({
                 "cur": cur, "next": {1: q}, "name": session["username"],
                 "has_results": json.loads(session["left"]) < quick_levels - 1})
-        elif "requested" in session:
+        lang, trial_number = json.loads(session["requested"])
+        if trial_number is not None:
             cur = [db.queryone(
                     "SELECT * from quick_trials WHERE "
-                    "level_number=1 AND trial_number=?",
-                    (json.loads(session["requested"]),))]
+                    "level_number=1 AND lang=? AND trial_number=?",
+                    (lang, trial_number))]
         else:
             cur = db.queryall(
                 "SELECT * FROM quick_trials WHERE "
-                "active=1 AND level_number=1 AND "
+                "lang=? AND active=1 AND level_number=1 AND "
                 "trial_number NOT IN ("
                     "SELECT trial_number FROM quick_results "
                     "LEFT JOIN quick_trials "
                     "ON quick_results.trial=quick_trials.id "
                     "WHERE subject=? AND level_number=1)",
-                (session["user"],))
-        if len(cur) == 0:
+                (lang, session["user"]))
+        if len(cur) == 0 or None in cur:
             abort(400)
         cur = self.quick_trial_dict(random.choice(cur))
         session["cur"] = json.dumps(cur)
@@ -314,7 +316,8 @@ class QuickAnnotatedBP(QuickBP):
 
     def quick_reset(self, db):
         session.pop("cur", None)
-        session.pop("requested", None)
+        session["requested"] = json.dumps([
+            json.loads(session.pop("requested", None))[0], None])
         return ""
 
     def quick_effort(self, db):

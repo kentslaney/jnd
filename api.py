@@ -1,5 +1,5 @@
 import json, sqlite3, unicodedata, uuid
-from flask import request, session
+from flask import request, session, abort
 from utils import relpath, DatabaseBP
 from pitch import PitchDB, PitchBP
 from quick import QuickDB, QuickOutputBP
@@ -94,8 +94,21 @@ def set_username(db):
     session.clear()
     session["user"], session["username"] = uid, name
     session["meta"] = search
-    if request.args.get("l", "null") != "null":
-        session["requested"] = request.args.get("l")
+    requested = request.args.get("list", "null")
+    if requested != "null":
+        if "-" in requested:
+            lang, trial_number = requested.rsplit("-", 1)
+            try:
+                trial_number = json.loads(trial_number)
+            except json.decoder.JSONDecodeError:
+                abort(400)
+            if not isinstance(trial_number, int):
+                abort(400)
+        else:
+            lang, trial_number = requested, None
+        session["requested"] = json.dumps([lang, trial_number])
+    else:
+        session["requested"] = json.dumps(['en', None])
     return json.dumps(True)
 
 def authorized(db):

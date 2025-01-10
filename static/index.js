@@ -99,7 +99,7 @@ function claim_username() {
   submit.disabled = true;
   let url = URL.parse("/jnd/api/set-username", window.location.href)
   url.searchParams.set("v", input)
-  url.searchParams.set("l", document.getElementById("list").value)
+  url.searchParams.set("list", document.getElementById("list").value)
   url.searchParams.set(
     "t", document.querySelector("[name=test-type]:checked").id)
   request = fetch(url, { signal })

@@ -463,7 +463,9 @@ class AnnotatedAudio extends AudioResults {
     if (typeof this.#playbackProgress === "string")
       this.#playbackProgress = document.querySelector(this.#playbackProgress)
     const [ list, seq ] = url.match(/[0-9]+/g).map(x => parseInt(x))
-    this.#playbackProgress.innerText = `List ${list} sentence ${seq} / 6`
+    const lang = url.match(/([^-/]+)-[^/]+$/)[1]
+    this.#playbackProgress.innerText =
+      `${lang} list ${list} sentence ${seq} / 6`;
     return super.debug(url)
   }
 
