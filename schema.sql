@@ -13,10 +13,16 @@ CREATE TABLE users (
   ip TEXT,
   t TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+/*
+ * Table for meta data about each user.  Right now it either contains entries
+ * for the CGI Params (info_key is searchParams) or the type of test (info_key
+ * is test-type).  Can be more than one entry per user.
+ */
 CREATE TABLE user_info (
   user INTEGER,
   info_key TEXT,
-  value TEXT,
+  value TEXT,  /* Which type of test: prepilot, pilot, patient */
   t TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY(user) REFERENCES users(id)
 );
@@ -50,7 +56,7 @@ CREATE TABLE quick_trials (
   level_number INTEGER, /* which sentence in this list */
   trial_number INTEGER, /* which QuickSIN list */
   filename TEXT, /* basename, not path */
-  answer TEXT,
+  answer TEXT, /* Ground truth answer */
   active BOOLEAN NOT NULL CHECK(active IN(0,1)) /* version control */
 );
 
@@ -75,7 +81,7 @@ CREATE TABLE quick_results (
  */
 CREATE TABLE quick_asr (
   ref INTEGER,
-  data TEXT,
+  data TEXT, /* JSON encoded dictionary of ASR Results */
   FOREIGN KEY(ref) REFERENCES quick_results(id)
 );
 
@@ -87,7 +93,7 @@ CREATE TABLE quick_asr (
  */
 CREATE TABLE quick_annotations (
   ref INTEGER,
-  data TEXT,
+  data TEXT, /* Comma separated list of True/False by audiologist by keyword */
   FOREIGN KEY(ref) REFERENCES quick_results(id)
 )
 
