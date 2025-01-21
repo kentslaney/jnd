@@ -26,8 +26,8 @@ def update(con: sqlite3.Connection, rowid: int, res: str):
     con.commit()
     cur.close()
 
-def main(asr, db_file: str ='experiments.db'):
-    con = sqlite3.connect(os.path.join(basename, "experiments.db"))
+def main(asr, db_file: str):
+    con = sqlite3.connect(db_file)
     for rowid, fname, ans in tqdm(quick_queue(con)):
         update(con, rowid, asr(str(basename / "uploads" / fname)))
 
@@ -52,7 +52,8 @@ if __name__ == "__main__":
     parser.add_argument("--model", default="large", choices=models, help=(
             "which whisper model size to use (default: large); see: "
             "https://github.com/openai/whisper#available-models-and-languages"))
-    parser.add_argument("--dbfile", default="experiments.db", 
+    parser.add_argument("--dbfile", 
+                        default=os.path.join(basename, "experiments.db"), 
                         help="Which SQLite3 database file to process")
     parser.add_argument(
             "--prompted", dest="asr", default="WhisperASR",
