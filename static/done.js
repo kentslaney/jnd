@@ -2,14 +2,14 @@ window.addEventListener("load", e => {
   const showing = new URL(document.baseURI).searchParams.get("debug")
   if (showing === "true") {
     const results = document.getElementById("results")
-    results.href = "/jnd/api/quick/plot?t=" + Date.now();
+    results.href = "/staging/api/quick/plot?t=" + Date.now();
     for (const el of document.getElementsByClassName("debug")) {
       el.classList.remove("hidden")
     }
   }
 }, { passive: true })
 
-fetch("/jnd/api/quick/recognized")
+fetch("/staging/api/quick/recognized")
   .then(response => response.json())
   .then(data => {
     if (data.length === 0) return;
@@ -35,7 +35,7 @@ fetch("/jnd/api/quick/recognized")
   })
 
 function reset(e) {
-  const api = "/jnd/api/quick/reset"
+  const api = "/staging/api/quick/reset"
   const el = e.target
   e.target.classList.add("loading")
   fetch(api, {method: "POST" }).then(response => {
@@ -51,7 +51,7 @@ function reset(e) {
 }
 
 async function submit_effort() {
-  const api = "/jnd/api/quick/reset"
+  const api = "/staging/api/quick/reset"
   const value = parseInt(document.getElementById("effort").value)
   const statusCase = document.getElementById("effort-status")
   if (value < 1 || value > 10) return

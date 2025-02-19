@@ -1,4 +1,4 @@
-fetch("/jnd/api/quick/recognized" + window.location.search)
+fetch("/staging/api/quick/recognized" + window.location.search)
   .then(response => response.json())
   .then(data => {
     let users = {}
@@ -14,8 +14,8 @@ fetch("/jnd/api/quick/recognized" + window.location.search)
       asr_data = row["transcript"] === null ? null :
         JSON.parse(row["transcript"]);
       users[row["subject"]]["results"].push({
-        "prompt": "/jnd/quick/" + row["prompt"],
-        "upload": "/jnd/api/quick/upload/" + row["upload"],
+        "prompt": "/staging/quick/" + row["prompt"],
+        "upload": "/staging/api/quick/upload/" + row["upload"],
         "transcript": row["transcript"] === null ? null : asr_data["text"],
         "asr_data": asr_data,
         "answer": row["answer"].split(","),
@@ -36,7 +36,7 @@ fetch("/jnd/api/quick/recognized" + window.location.search)
     for (const user of entries) {
       user_head = parent.appendChild(head.cloneNode(true))
       let plot = document.createElement("a")
-      plot.href = "/jnd/api/quick/plot?user=" + user["id"]
+      plot.href = "/staging/api/quick/plot?user=" + user["id"]
       plot.innerText = user["username"]
       // plot.setAttribute("target", "_blank")
       user_head.querySelector(".username").appendChild(plot)
@@ -66,7 +66,7 @@ fetch("/jnd/api/quick/recognized" + window.location.search)
 
     if((new URLSearchParams(window.location.search)).get("user") == "all") {
       let a = document.querySelector("#showall");
-      a.href = "/jnd/api/quick/plot?user=all"
+      a.href = "/staging/api/quick/plot?user=all"
       // a.setAttribute("target", "_blank")
     }
   })

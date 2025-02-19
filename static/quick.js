@@ -56,15 +56,15 @@ class Audio extends AudioPrefetch {
   }
 
   start() {
-    return fetch("/jnd/api/quick/start")
+    return fetch("/staging/api/quick/start")
   }
 
   done() {
-    window.location.href = "/jnd/done.html"
+    window.location.href = "/staging/done.html"
   }
 
   restart() {
-    window.location.href = "/jnd"
+    window.location.href = "/staging"
   }
 
   load(data) {
@@ -210,7 +210,7 @@ class AudioResults extends Audio {
 
   done() {
     if (this.overlaid) {
-      window.location.href = "/jnd/done.html?debug=true"
+      window.location.href = "/staging/done.html?debug=true"
     } else {
       super.done()
     }
@@ -254,7 +254,7 @@ class AudioResults extends Audio {
 
   get #overlayURL() {
     // time parameter to prevent caching; should be done with response headers
-    return "/jnd/api/quick/plot?t=" + Date.now();
+    return "/staging/api/quick/plot?t=" + Date.now();
   }
 }
 
@@ -310,7 +310,7 @@ class InteractiveRecorder extends DiscretelyTunedRecorder {
       return
     }
     this.nextButton.disabled = true;
-    const data = await this.result(`/jnd/api/quick/result`, {})
+    const data = await this.result(`/staging/api/quick/result`, {})
     await this.#audio.result(1, k => {
         return fetch(data[0], data[1]).then(response => {
           if (!response.ok) this.debug(response.statusText);

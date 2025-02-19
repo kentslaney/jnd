@@ -1,6 +1,6 @@
 import json, sqlite3, unicodedata, uuid
 from flask import request, session, abort
-from utils import relpath, DatabaseBP
+from jnd_utils import relpath, DatabaseBP
 from pitch import PitchDB, PitchBP
 from quick import QuickDB, QuickOutputBP
 
@@ -32,7 +32,7 @@ class APIBlueprint(DatabaseBP):
         super()._bind_db(app)
         self._blueprint_db = ExperimentDB(
             app, *self._db_paths, ["PRAGMA foreign_keys = ON"])
-        app.config.update(SESSION_COOKIE_NAME="jnd")
+        app.config.update(SESSION_COOKIE_NAME="staging")
 
         try:
             with open(relpath("secret_key"), "rb") as f:

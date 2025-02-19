@@ -1,7 +1,7 @@
 import os, os.path, json, random, functools, uuid
 from flask import (
     Blueprint, request, session, abort, redirect, Response, send_from_directory)
-from utils import Database, relpath, DatabaseBP
+from jnd_utils import Database, relpath, DatabaseBP
 from plot import scatter_results, logistic_results
 
 # TODO: remove level count and count upwards now that it can be tracked per list
@@ -64,12 +64,12 @@ class QuickBP(DatabaseBP):
         "id", "snr", "lang", "level_number", "trial_number", "filename",
         "answer")
     quick_trial_dict = staticmethod(lambda v: dict(zip(QuickBP.quick_keys, v)))
-    quick_url = staticmethod(lambda v: v and "/jnd/quick/" + v)
+    quick_url = staticmethod(lambda v: v and "/staging/quick/" + v)
     quick_done = [1, 0, "--", 0, 1, "", 1]
 
     def __init__(self, db, name="quick", url_prefix="/quick"):
         Blueprint.__init__(self, name, __name__, url_prefix=url_prefix)
-        self._route_db("/lists")(self.quick_lists)
+        self._route_db("/lists", methods=["POST"])(self.quick_lists)
         self._route_db("/start")(self.quick_start)
         self._route_db("/result", methods=["POST"])(self.quick_result)
         self._route_db("/recognized")(self.quick_recognized)

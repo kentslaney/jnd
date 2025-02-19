@@ -10,19 +10,19 @@
       }
 
       start() {
-        return fetch("/jnd/api/pitch/start")
+        return fetch("/staging/api/pitch/start")
       }
 
       submit(key) {
-        return fetch(`/jnd/api/pitch/result?sign=${key}`)
+        return fetch(`/staging/api/pitch/result?sign=${key}`)
       }
 
       done() {
-        window.location.href = "/jnd/done.html"
+        window.location.href = "/staging/done.html"
       }
 
       restart() {
-        window.location.href = "/jnd"
+        window.location.href = "/staging"
       }
 
       initialize(data) {

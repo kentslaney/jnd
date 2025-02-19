@@ -1,2 +1,2 @@
-uwsgi --ini "$( dirname -- "$0" )/uwsgi.ini"
+uwsgi --ini "$( dirname -- "$0" )/login.ini"
 

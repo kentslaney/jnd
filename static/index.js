@@ -58,7 +58,7 @@ function check_username() {
       if (signal.aborted) return;
       output.innerText = "checking availability...";
       const query = encodeURIComponent(input);
-      request = fetch(`/jnd/api/username-available?v=${query}`, { signal })
+      request = fetch(`/staging/api/username-available?v=${query}`, { signal })
         .then(apijson).then((data) => {
           if (data) {
             output.innerText = "";
@@ -97,7 +97,7 @@ function claim_username() {
   request_controller = new AbortController();
   const signal = request_controller.signal;
   submit.disabled = true;
-  let url = URL.parse("/jnd/api/set-username", window.location.href)
+  let url = URL.parse("/staging/api/set-username", window.location.href)
   url.searchParams.set("v", input)
   url.searchParams.set("list", document.getElementById("list").value)
   url.searchParams.set(
@@ -105,8 +105,8 @@ function claim_username() {
   request = fetch(url, { signal })
     .then(apijson).then((data) => {
       if (data) {
-        // window.location.href = "/jnd/pitch.html";
-        window.location.href = "/jnd/quick.html";
+        // window.location.href = "/staging/pitch.html";
+        window.location.href = "/staging/quick.html";
         submit.disabled = false;
       } else {
         output.innerText = "Username not available";
@@ -119,7 +119,7 @@ function claim_username() {
     })
 }
 
-fetch("/jnd/api/quick/lists").then(apijson).then(data => {
+fetch("/staging/api/quick/lists", {method: "POST"}).then(apijson).then(data => {
   let parent = document.getElementById("list");
   data.forEach(x => {
     let el = parent.appendChild(document.createElement("option"));
