@@ -308,7 +308,8 @@ class QuickAnnotatedBP(QuickBP):
                 "quick_results.id = quick_annotations.ref"
             f"{query}"), args)
         res = json.loads(res)
-        res = [{**i, "annotations": json.loads(i["annotations"])} for i in res]
+        res = [{**i, "annotations": [] if i["annotations"] is None else
+                json.loads(i["annotations"])} for i in res]
         return json.dumps(res)
 
     def quick_async(self, *args):
@@ -401,6 +402,20 @@ class QuickResultsBP(QuickAnnotatedBP):
     def upload(self, db, fname):
         return send_from_directory(upload_location, fname)
 
+class QuickConferenceBP(QuickWhisperBP, QuickResultsBP):
+    def quick_parse(self, db, rowid, fpath, answer, dump=False):
+        def wrapped(dump=False):
+            if dump:
+                return (db, rowid, fpath, answer)
+            reply = self.asr(fpath, answer)
+            db.execute(
+                "INSERT INTO quick_asr (ref, data) VALUES (?, ?)",
+                (rowid, json.dumps(reply)))
+            return False
+        if dump:
+            return wrapped()
+        return wrapped
+
 class QuickWhisperDebugBP(QuickResultsBP):
     def quick_next(self, db, cur, done=False):
         print(f'answer is "{cur["answer"]}"')
@@ -416,6 +431,7 @@ class QuickWhisperDebugBP(QuickResultsBP):
 
 # class QuickLogisticWhisperBP(QuickLogisticBP, QuickWhisperDebugBP):
 # class QuickLogisticWhisperBP(QuickLogisticBP, QuickWhisperBP):
-class QuickOutputBP(QuickLogisticBP, QuickResultsBP):
+# class QuickOutputBP(QuickLogisticBP, QuickResultsBP):
+class QuickOutputBP(QuickLogisticBP, QuickConferenceBP):
     pass
 
