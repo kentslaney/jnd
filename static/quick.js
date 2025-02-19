@@ -273,7 +273,8 @@ class InteractiveRecorder extends DiscretelyTunedRecorder {
     const f = audio.initialize, g = audio.overlayResults
     audio.initialize = () => {
       f.call(audio)
-      audio.audio.addEventListener("ended", this.ready.bind(this))
+      audio.audio.addEventListener("play", this.ready.bind(this))
+      audio.audio.addEventListener("ended", this.ended.bind(this))
     }
     audio.overlayResults = () => {
       if (g !== undefined) {
@@ -330,11 +331,14 @@ class InteractiveRecorder extends DiscretelyTunedRecorder {
 
   activate() {
     this.start()
-    resetPlaybackButton(this.playbackButton, "done");
     // this.playbackButton.onclick = () => this.done()
     this.playbackButton.onclick = () => {}
     this.nextButton.onclick = () => this.complete()
     this.nextButton.disabled = false;
+  }
+
+  ended() {
+    resetPlaybackButton(this.playbackButton, "done");
   }
 
   done() {
@@ -368,7 +372,7 @@ class InteractiveRecorder extends DiscretelyTunedRecorder {
 
 class AutoEndingRecorder extends InteractiveRecorder {
   #silence = -8
-  #timing = 1000 * 5
+  #timing = 1000 * 20
   #minimum = 1000 * 0.2
   #lastNoise
   #starting
