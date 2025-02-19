@@ -3,7 +3,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from flask import Flask
 from flask_modular_login import login_required, AccessNamespace
 
-group = AccessNamespace("google", "100312806121431583241", "audio")
+group = AccessNamespace("audio", "google", "100312806121431583241")
 
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1)
