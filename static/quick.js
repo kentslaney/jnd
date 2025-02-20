@@ -19,6 +19,7 @@ window.addEventListener("load", () => {
   usernameObserver.observe(username)
 }, {passive: true})
 
+/*
 window.addEventListener("load", () => {
   document.querySelector("#quick-all").addEventListener("click", () => {
     Array.from(document.querySelectorAll(".annotation-on")).forEach(
@@ -29,6 +30,7 @@ window.addEventListener("load", () => {
       x => { x.checked = true })
   })
 }, {passive: true})
+*/
 
 function findButtons(that) {
   that.playbackButton = document.getElementById("playback")
@@ -496,6 +498,6 @@ class AnnotatedAudio extends AudioResults {
   }
 }
 
-let audio = new AnnotatedAudio();
-let recorder = new AnnotatedRecorder(audio);
+let audio = new AudioResults();
+let recorder = new AutoEndingRecorder(audio);
 
