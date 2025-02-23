@@ -7,7 +7,7 @@ assert not subprocess.run(
 whisper_normalizer = EnglishTextNormalizer()
 
 class WhisperASR:
-    def __init__(self, model="small.en"):
+    def __init__(self, model="tiny.en"):
         self.model = whisper.load_model(model)
         self.meta = {"model_name": model, "model_type": "default"}
 

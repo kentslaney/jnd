@@ -244,7 +244,7 @@ class QuickBP(DatabaseBP):
         keys = self.result_fields[0]
         return json.dumps([dict(zip(keys, i)) for i in transcription])
 
-    def asr(self, path):
+    def asr(self, path, answer):
         raise NotImplementedError()
 
     def flask_png(self, x, y):
@@ -376,9 +376,9 @@ class QuickPromptedWhisperBP(QuickNormalizedBP):
         return self.prompted_whisper_asr(
             path, answer.replace(",", " ").replace("/", " "))
 
-# class QuickResultsBP(QuickWhisperBP):
+class QuickResultsBP(QuickBP):
 # class QuickResultsBP(QuickPromptedWhisperBP):
-class QuickResultsBP(QuickAnnotatedBP):
+# class QuickResultsBP(QuickAnnotatedBP):
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
         self._route_db("/plot")(self.quick_plot)
@@ -433,5 +433,15 @@ class QuickWhisperDebugBP(QuickResultsBP):
 # class QuickLogisticWhisperBP(QuickLogisticBP, QuickWhisperBP):
 # class QuickOutputBP(QuickLogisticBP, QuickResultsBP):
 class QuickOutputBP(QuickLogisticBP, QuickConferenceBP):
-    pass
+    def quick_parse(self, db, rowid, fpath, answer, dump=False, data=None):
+        def wrapped(dump=False):
+            if dump:
+                return (db, rowid, fpath, answer, True, data)
+            return False
+        if dump:
+            return wrapped()
+        return wrapped
+
+    def quick_async(self, *args):
+        return self.quick_parse(*args)
 

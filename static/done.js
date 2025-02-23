@@ -17,7 +17,7 @@ fetch("/staging/api/quick/recognized")
     document.getElementById("username").innerText = data[0]["username"]
     document.getElementById("trial_number").innerText = latest
     const [correct, total] = data.reduce((a, b) => {
-      if (b["trial_number"] == latest) {
+      if (b["trial_number"] == latest && "annotations" in b) {
         return [
               a[0] + b["annotations"].filter(x => x).length,
               a[1] + b["annotations"].length
