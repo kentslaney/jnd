@@ -5,36 +5,35 @@ from utils import Database, relpath, DatabaseBP
 from plot import scatter_results, logistic_results
 
 # TODO: remove level count and count upwards now that it can be tracked per list
-quick_levels = 6
-quick_files = relpath("all_spin_index.csv")
 upload_location = relpath("uploads")
 
 # prefixed with audio to avoid namespace collisions with other APIs
-class QuickDB(Database):
+class AudioDB(Database):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         os.makedirs(upload_location, exist_ok=True)
 
-    def db_init_hook(self):
+    def parse_csv(self, cls):
         super().db_init_hook()
-        assert os.path.exists(quick_files)
-        with open(quick_files, "r") as f:
+        assert os.path.exists(cls.audio_files)
+        with open(cls.audio_files, "r") as f:
             experiments = [
                 [part.strip() for part in line.split(",", 6)] for line in f]
         con = self.get()
         cur = con.cursor()
         cur.execute(
-            "INSERT INTO quick_trials "
+            f"INSERT INTO {cls.trials_table} "
             "(active, lang, trial_number, level_number, snr, filename, answer) "
             "VALUES (0, '--', 1, -1, 0, 'invalid', 'invalid')")
         cur.executemany(
-            "INSERT INTO quick_trials "
+            f"INSERT INTO {cls.trials_table} "
             "(active, lang, trial_number, level_number, snr, filename, answer) "
             "VALUES (?, ?, ?, ?, ?, ?, ?)", experiments)
         con.commit()
         # levels 1 indexed
-        assert quick_levels <= self.queryone(
-            "SELECT MAX(level_number) FROM quick_trials WHERE active=1")[0]
+        assert cls.audio_levels <= self.queryone(
+            f"SELECT MAX(level_number) FROM {cls.trials_table} "
+            "WHERE active=1")[0]
 
     def _username_hook(self):
         res = getattr(super(), "_username_hook", lambda: None)()
@@ -63,11 +62,15 @@ class AudioBP(DatabaseBP):
     audio_keys = (
         "id", "snr", "lang", "level_number", "trial_number", "filename",
         "answer")
-    audio_trial_dict = staticmethod(lambda v: dict(zip(audio_keys, v)))
-    audio_url = staticmethod(lambda v: v and "/jnd/quick/" + v)
     audio_done = [1, 0, "--", 0, 1, "", 1]
 
-    def __init__(self, db, name="quick", url_prefix="/quick"):
+    def audio_url(self, v):
+        return v and f"/jnd{self.url_prefix}/" + v
+
+    def audio_trial_dict(self, v):
+        return dict(zip(self.audio_keys, v))
+
+    def __init__(self, db, name, url_prefix):
         Blueprint.__init__(self, name, __name__, url_prefix=url_prefix)
         self._route_db("/lists")(self.audio_lists)
         self._route_db("/start")(self.audio_start)
@@ -100,7 +103,7 @@ class AudioBP(DatabaseBP):
             if left <= 1:
                 self.audio_async(*done(True))
         else:
-            level = quick_levels - left + 2
+            level = self.audio_levels - left + 2
             q = db.queryone(
                     f"SELECT * FROM {self.trials_table} WHERE "
                     "level_number=? AND trial_number=? AND lang=?",
@@ -120,7 +123,8 @@ class AudioBP(DatabaseBP):
                 session["cur"], session["q"]))
             return json.dumps({
                 "cur": cur, "next": {1: q}, "name": session["username"],
-                "has_results": json.loads(session["left"]) < quick_levels - 1})
+                "has_results": \
+                        json.loads(session["left"]) < self.audio_levels - 1})
         lang, trial_number = json.loads(session["requested"])
         if trial_number is not None:
             cur = [db.queryone(
@@ -141,7 +145,7 @@ class AudioBP(DatabaseBP):
             abort(400)
         cur = self.audio_trial_dict(random.choice(cur))
         session["cur"] = json.dumps(cur)
-        session["left"] = json.dumps(quick_levels)
+        session["left"] = json.dumps(self.audio_levels)
         return json.dumps({
             "cur": self.audio_url(cur["filename"]), "has_results": False,
             "next": {1: self.audio_next(db, cur)}, "name": session["username"]})
@@ -427,9 +431,19 @@ class AudioWhisperDebugBP(AudioResultsBP):
 class AudioOutputBP(AudioLogisticBP, AudioResultsBP):
     pass
 
-class QuickOutputBP(AudioOutputBP):
+class QuickSpec:
     trials_table = "quick_trials"
     results_table = "quick_results"
     asr_table = "quick_asr"
     annotations_table = "quick_annotations"
+    audio_files = relpath("all_spin_index.csv")
+    audio_levels = 6
 
+class QuickDB(QuickSpec, AudioDB):
+    def db_init_hook(self):
+        super().db_init_hook()
+        self.parse_csv(__class__)
+
+class QuickOutputBP(QuickSpec, AudioOutputBP):
+    def __init__(self, db, name="quick", url_prefix="/quick"):
+        super().__init__(db, name, url_prefix)
