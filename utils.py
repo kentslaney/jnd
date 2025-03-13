@@ -119,7 +119,7 @@ def mangle(namespace):
 class Parent:
     @mangle
     def a(self):
-        print(0, self.mangler.__name__, self.mangled, end=" ")
+        print(0, self.mangler.__name__, self.mangler.mangled, end=" ")
 
     @mangle
     def b(self):
