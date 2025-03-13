@@ -9,7 +9,7 @@ quick_levels = 6
 quick_files = relpath("all_spin_index.csv")
 upload_location = relpath("uploads")
 
-# prefixed with quick to avoid namespace collisions with other APIs
+# prefixed with audio to avoid namespace collisions with other APIs
 class QuickDB(Database):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
@@ -59,25 +59,20 @@ def bytes_png(f):
         return Response(f(*a, **kw), mimetype='image/png')
     return flask_response
 
-class QuickBP(DatabaseBP):
-    quick_keys = (
+class AudioBP(DatabaseBP):
+    audio_keys = (
         "id", "snr", "lang", "level_number", "trial_number", "filename",
         "answer")
-    quick_trial_dict = staticmethod(lambda v: dict(zip(QuickBP.quick_keys, v)))
-    quick_url = staticmethod(lambda v: v and "/jnd/quick/" + v)
-    quick_done = [1, 0, "--", 0, 1, "", 1]
-
-    trials_table = "quick_trials"
-    results_table = "quick_results"
-    asr_table = "quick_asr"
-    annotations_table = "quick_annotations"
+    audio_trial_dict = staticmethod(lambda v: dict(zip(audio_keys, v)))
+    audio_url = staticmethod(lambda v: v and "/jnd/quick/" + v)
+    audio_done = [1, 0, "--", 0, 1, "", 1]
 
     def __init__(self, db, name="quick", url_prefix="/quick"):
         Blueprint.__init__(self, name, __name__, url_prefix=url_prefix)
-        self._route_db("/lists")(self.quick_lists)
-        self._route_db("/start")(self.quick_start)
-        self._route_db("/result", methods=["POST"])(self.quick_result)
-        self._route_db("/recognized")(self.quick_recognized)
+        self._route_db("/lists")(self.audio_lists)
+        self._route_db("/start")(self.audio_start)
+        self._route_db("/result", methods=["POST"])(self.audio_result)
+        self._route_db("/recognized")(self.audio_recognized)
         self._bind_db = db
         self.result_fields = tuple(zip(*sorted(self.result_fields().items())))
 
@@ -85,10 +80,10 @@ class QuickBP(DatabaseBP):
     def _blueprint_db(self):
         return self._bind_db()
 
-    def quick_async(self, db, rowid, fpath, answer):
+    def audio_async(self, db, rowid, fpath, answer):
         raise NotImplementedError()
 
-    def quick_lists(self, db):
+    def audio_lists(self, db):
         langs = [i[0] for i in db.queryall(
                 f"SELECT DISTINCT lang FROM {self.trials_table} "
                 "WHERE level_number=1")]
@@ -97,13 +92,13 @@ class QuickBP(DatabaseBP):
                 "WHERE level_number=1")]
         return json.dumps(langs + lists)
 
-    def quick_next(self, db, cur, done=None):
+    def audio_next(self, db, cur, done=None):
         left = json.loads(session["left"])
         session["left"] = json.dumps(left - 1)
         if left <= 1 or done and done():
-            q = self.quick_done
+            q = self.audio_done
             if left <= 1:
-                self.quick_async(*done(True))
+                self.audio_async(*done(True))
         else:
             level = quick_levels - left + 2
             q = db.queryone(
@@ -112,16 +107,16 @@ class QuickBP(DatabaseBP):
                     (level, cur['trial_number'], cur['lang']))
             if q is None:
                 assert left == 2
-                q = quick_done
-        q = self.quick_trial_dict(q)
+                q = self.audio_done
+        q = self.audio_trial_dict(q)
         session["q"] = json.dumps(q)
-        return self.quick_url(q["filename"])
+        return self.audio_url(q["filename"])
 
-    def quick_start(self, db):
+    def audio_start(self, db):
         if "user" not in session:
             abort(400)
         elif "cur" in session:
-            cur, q = map(lambda x: self.quick_url(json.loads(x)["filename"]), (
+            cur, q = map(lambda x: self.audio_url(json.loads(x)["filename"]), (
                 session["cur"], session["q"]))
             return json.dumps({
                 "cur": cur, "next": {1: q}, "name": session["username"],
@@ -144,14 +139,14 @@ class QuickBP(DatabaseBP):
                 (lang, session["user"]))
         if len(cur) == 0 or None in cur:
             abort(400)
-        cur = self.quick_trial_dict(random.choice(cur))
+        cur = self.audio_trial_dict(random.choice(cur))
         session["cur"] = json.dumps(cur)
         session["left"] = json.dumps(quick_levels)
         return json.dumps({
-            "cur": self.quick_url(cur["filename"]), "has_results": False,
-            "next": {1: self.quick_next(db, cur)}, "name": session["username"]})
+            "cur": self.audio_url(cur["filename"]), "has_results": False,
+            "next": {1: self.audio_next(db, cur)}, "name": session["username"]})
 
-    def quick_parse(self, db, rowid, fpath, answer, dump=False):
+    def audio_parse(self, db, rowid, fpath, answer, dump=False):
         def wrapped(dump=False):
             if dump:
                 return (db, rowid, fpath, answer)
@@ -164,7 +159,7 @@ class QuickBP(DatabaseBP):
             return wrapped()
         return wrapped
 
-    def quick_result(self, db):
+    def audio_result(self, db):
         if "user" not in session or "file" not in request.files:
             abort(400)
         file = request.files["file"]
@@ -179,9 +174,9 @@ class QuickBP(DatabaseBP):
             "(subject, trial, reply_filename) VALUES (?, ?, ?)",
             (session["user"], cur["id"], fname))
         session["cur"] = session["q"]
-        return json.dumps({1: self.quick_next(
+        return json.dumps({1: self.audio_next(
             db, json.loads(session["cur"]),
-            self.quick_parse(db, rowid, fpath, cur["answer"]))})
+            self.audio_parse(db, rowid, fpath, cur["answer"]))})
 
     # delayed by one level because of preloading
     def completion_condition(self, reply, answer):
@@ -207,7 +202,7 @@ class QuickBP(DatabaseBP):
             i[0] for i in sep[:-1]))
         return "".join(j + f(answer[i:k]) for (i, j), k in sep)
 
-    def quick_plotter(self, db, query="", args=()):
+    def audio_plotter(self, db, query="", args=()):
         results = db.queryall(
             f"SELECT {self.trials_table}.snr, {self.asr_table}.data, "
             f"{self.trials_table}.answer FROM {self.results_table} "
@@ -223,10 +218,10 @@ class QuickBP(DatabaseBP):
             json.loads(reply), answer)) for snr, reply, answer in results]
         return self.flask_png(*zip(*results))
 
-    def quick_recognized(self, db):
+    def audio_recognized(self, db):
         if "user" not in session:
             abort(400)
-        return self.quick_recognize(
+        return self.audio_recognize(
             db, f" WHERE {self.results_table}.subject=?", (session["user"],))
 
     def result_fields(self):
@@ -241,7 +236,7 @@ class QuickBP(DatabaseBP):
             "trial_number": f"{self.trials_table}.trial_number",
         }
 
-    def quick_recognize(self, db, query="", args=()):
+    def audio_recognize(self, db, query="", args=()):
         transcription = db.queryall(
             "SELECT "
                 f"{','.join(self.result_fields[1])} "
@@ -261,16 +256,16 @@ class QuickBP(DatabaseBP):
     def flask_png(self, x, y):
         raise NotImplementedError()
 
-class QuickAnnotatedBP(QuickBP):
+class AudioAnnotatedBP(AudioBP):
     def __init__(self, *a, **kw):
         fields = self.result_fields()
-        fields["annotations"] = "quick_annotations.data"
+        fields["annotations"] = f"{self.annotations_table}.data"
         self.result_fields = lambda: fields
         super().__init__(*a, **kw)
-        self._route_db("/reset", methods=["POST"])(self.quick_reset)
-        self._route_db("/effort", methods=["POST"])(self.quick_effort)
+        self._route_db("/reset", methods=["POST"])(self.audio_reset)
+        self._route_db("/effort", methods=["POST"])(self.audio_effort)
 
-    def quick_plotter(self, db, query="", args=()):
+    def audio_plotter(self, db, query="", args=()):
         results = db.queryall(
             f"SELECT {self.trials_table}.snr, {self.annotations_table}.data "
             f"FROM {self.results_table} "
@@ -287,7 +282,7 @@ class QuickAnnotatedBP(QuickBP):
         results = [(snr, sum(data) / len(data)) for snr, data in results]
         return self.flask_png(*zip(*results))
 
-    def quick_parse(self, db, rowid, fpath, answer, dump=False, data=None):
+    def audio_parse(self, db, rowid, fpath, answer, dump=False, data=None):
         def wrapped(dump=False):
             nonlocal data
             data = data or request.args["annotations"]
@@ -301,21 +296,21 @@ class QuickAnnotatedBP(QuickBP):
             return wrapped()
         return wrapped
 
-    def quick_start(self, db):
-        res = json.loads(super().quick_start(db))
+    def audio_start(self, db):
+        res = json.loads(super().audio_start(db))
         res["answer"] = [
                 json.loads(session[i])["answer"] for i in ("cur", "q")]
         return json.dumps(res)
 
-    def quick_result(self, db):
+    def audio_result(self, db):
         if "annotations" not in request.args:
             abort(400)
-        res = json.loads(super().quick_result(db))
+        res = json.loads(super().audio_result(db))
         res["answer"] = json.loads(session["q"])["answer"]
         return json.dumps(res)
 
-    def quick_recognize(self, db, query="", args=()):
-        res = super().quick_recognize(db, (
+    def audio_recognize(self, db, query="", args=()):
+        res = super().audio_recognize(db, (
             f" LEFT JOIN {self.annotations_table} ON "
                 f"{self.results_table}.id = {self.annotations_table}.ref"
             f"{query}"), args)
@@ -323,16 +318,16 @@ class QuickAnnotatedBP(QuickBP):
         res = [{**i, "annotations": json.loads(i["annotations"])} for i in res]
         return json.dumps(res)
 
-    def quick_async(self, *args):
-        return self.quick_parse(*args)
+    def audio_async(self, *args):
+        return self.audio_parse(*args)
 
-    def quick_reset(self, db):
+    def audio_reset(self, db):
         session.pop("cur", None)
         session["requested"] = json.dumps([
             json.loads(session.pop("requested", None))[0], None])
         return ""
 
-    def quick_effort(self, db):
+    def audio_effort(self, db):
         if "user" not in session or "v" not in request.args:
             abort(400)
         try:
@@ -345,19 +340,19 @@ class QuickAnnotatedBP(QuickBP):
             (int(session["user"]), effort))
         return ""
 
-class QuickScatterBP:
+class AudioScatterBP:
     @staticmethod
     @bytes_png
     def flask_png(x, y):
         return scatter_results(x, y)
 
-class QuickLogisticBP:
+class AudioLogisticBP:
     @staticmethod
     @bytes_png
     def flask_png(x, y):
         return logistic_results(x, y) if len(x) > 1 else scatter_results(x, y)
 
-class QuickNormalizedBP(QuickBP):
+class AudioNormalizedBP(AudioBP):
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
         from asr import whisper_normalizer
@@ -368,7 +363,7 @@ class QuickNormalizedBP(QuickBP):
             self.normalizer(reply["text"]),
             self.map_answer(self.normalizer, answer))
 
-class QuickWhisperBP(QuickNormalizedBP):
+class AudioWhisperBP(AudioNormalizedBP):
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
         from asr import WhisperASR
@@ -377,7 +372,7 @@ class QuickWhisperBP(QuickNormalizedBP):
     def asr(self, path, answer):
         return self.whisper_asr(path)
 
-class QuickPromptedWhisperBP(QuickNormalizedBP):
+class AudioPromptedWhisperBP(AudioNormalizedBP):
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
         from asr import PromptedWhisperASR
@@ -387,48 +382,54 @@ class QuickPromptedWhisperBP(QuickNormalizedBP):
         return self.prompted_whisper_asr(
             path, answer.replace(",", " ").replace("/", " "))
 
-# class QuickResultsBP(QuickWhisperBP):
-# class QuickResultsBP(QuickPromptedWhisperBP):
-class QuickResultsBP(QuickAnnotatedBP):
+# class AudioResultsBP(AudioWhisperBP):
+# class AudioResultsBP(AudioPromptedWhisperBP):
+class AudioResultsBP(AudioAnnotatedBP):
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
-        self._route_db("/plot")(self.quick_plot)
+        self._route_db("/plot")(self.audio_plot)
         self._route_db("/upload/<fname>")(self.upload)
 
-    def quick_recognized(self, db):
+    def audio_recognized(self, db):
         if request.args.get("user", None) == "all":
-            return self.quick_recognize(db)
+            return self.audio_recognize(db)
         if "user" not in session:
             abort(400)
         user = request.args.get("user", session["user"])
-        return self.quick_recognize(
+        return self.audio_recognize(
             db, f" WHERE {self.results_table}.subject=?", (user,))
 
-    def quick_plot(self, db):
+    def audio_plot(self, db):
         user = request.args.get("user", session["user"])
         if user == "all":
-            return self.quick_plotter(db)
-        return self.quick_plotter(
+            return self.audio_plotter(db)
+        return self.audio_plotter(
                 db, f"{self.results_table}.subject=?", (user,))
 
     def upload(self, db, fname):
         return send_from_directory(upload_location, fname)
 
-class QuickWhisperDebugBP(QuickResultsBP):
-    def quick_next(self, db, cur, done=False):
+class AudioWhisperDebugBP(AudioResultsBP):
+    def audio_next(self, db, cur, done=False):
         print(f'answer is "{cur["answer"]}"')
-        return super().quick_next(db, cur, done)
+        return super().audio_next(db, cur, done)
 
     def proportion_correct(self, reply, answer):
         res = super().proportion_correct(reply, answer)
         print(f'heard "{reply}": {res}')
         return res
 
-    def quick_async(self, db, rowid, fpath, answer):
-        return self.quick_parse(db, rowid, fpath, answer, True)
+    def audio_async(self, db, rowid, fpath, answer):
+        return self.audio_parse(db, rowid, fpath, answer, True)
 
-# class QuickLogisticWhisperBP(QuickLogisticBP, QuickWhisperDebugBP):
-# class QuickLogisticWhisperBP(QuickLogisticBP, QuickWhisperBP):
-class QuickOutputBP(QuickLogisticBP, QuickResultsBP):
+# class AudioLogisticWhisperBP(AudioLogisticBP, AudioWhisperDebugBP):
+# class AudioLogisticWhisperBP(AudioLogisticBP, AudioWhisperBP):
+class AudioOutputBP(AudioLogisticBP, AudioResultsBP):
     pass
+
+class QuickOutputBP(AudioOutputBP):
+    trials_table = "quick_trials"
+    results_table = "quick_results"
+    asr_table = "quick_asr"
+    annotations_table = "quick_annotations"
 
