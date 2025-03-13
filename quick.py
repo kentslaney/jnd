@@ -147,7 +147,7 @@ class AudioBP(DatabaseBP):
         session["left"] = json.dumps(quick_levels)
         return json.dumps({
             "cur": self.audio_url(cur["filename"]), "has_results": False,
-            "next": {1: self.quick_next(db, cur)}, "name": session["username"]})
+            "next": {1: self.next(db, cur)}, "name": session["username"]})
 
     @mangle
     def parse(self, db, rowid, fpath, answer, dump=False):
