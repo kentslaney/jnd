@@ -67,6 +67,11 @@ class QuickBP(DatabaseBP):
     quick_url = staticmethod(lambda v: v and "/jnd/quick/" + v)
     quick_done = [1, 0, "--", 0, 1, "", 1]
 
+    trials_table = "quick_trials"
+    results_table = "quick_results"
+    asr_table = "quick_asr"
+    annotations_table = "quick_annotations"
+
     def __init__(self, db, name="quick", url_prefix="/quick"):
         Blueprint.__init__(self, name, __name__, url_prefix=url_prefix)
         self._route_db("/lists")(self.quick_lists)
@@ -85,10 +90,11 @@ class QuickBP(DatabaseBP):
 
     def quick_lists(self, db):
         langs = [i[0] for i in db.queryall(
-                "SELECT DISTINCT lang FROM quick_trials WHERE level_number=1")]
+                f"SELECT DISTINCT lang FROM {self.trials_table} "
+                "WHERE level_number=1")]
         lists = [i[0] for i in db.queryall(
-                "SELECT lang || '-' || trial_number FROM quick_trials WHERE "
-                "level_number=1")]
+                f"SELECT lang || '-' || trial_number FROM {self.trials_table} "
+                "WHERE level_number=1")]
         return json.dumps(langs + lists)
 
     def quick_next(self, db, cur, done=None):
@@ -101,7 +107,7 @@ class QuickBP(DatabaseBP):
         else:
             level = quick_levels - left + 2
             q = db.queryone(
-                    "SELECT * FROM quick_trials WHERE "
+                    f"SELECT * FROM {self.trials_table} WHERE "
                     "level_number=? AND trial_number=? AND lang=?",
                     (level, cur['trial_number'], cur['lang']))
             if q is None:
@@ -123,17 +129,17 @@ class QuickBP(DatabaseBP):
         lang, trial_number = json.loads(session["requested"])
         if trial_number is not None:
             cur = [db.queryone(
-                    "SELECT * from quick_trials WHERE "
+                    f"SELECT * from {self.trials_table} WHERE "
                     "level_number=1 AND lang=? AND trial_number=?",
                     (lang, trial_number))]
         else:
             cur = db.queryall(
-                "SELECT * FROM quick_trials WHERE "
+                f"SELECT * FROM {self.trials_table} WHERE "
                 "lang=? AND active=1 AND level_number=1 AND "
                 "trial_number NOT IN ("
-                    "SELECT trial_number FROM quick_results "
-                    "LEFT JOIN quick_trials "
-                    "ON quick_results.trial=quick_trials.id "
+                    f"SELECT trial_number FROM {self.results_table} "
+                    f"LEFT JOIN {self.trials_table} "
+                    f"ON {self.results_table}.trial={self.trials_table}.id "
                     "WHERE subject=? AND level_number=1)",
                 (lang, session["user"]))
         if len(cur) == 0 or None in cur:
@@ -151,7 +157,7 @@ class QuickBP(DatabaseBP):
                 return (db, rowid, fpath, answer)
             reply = self.asr(fpath, answer)
             db.execute(
-                "INSERT INTO quick_asr (ref, data) VALUES (?, ?)",
+                f"INSERT INTO {self.asr_table} (ref, data) VALUES (?, ?)",
                 (rowid, json.dumps(reply)))
             return self.completion_condition(reply, answer)
         if dump:
@@ -169,7 +175,7 @@ class QuickBP(DatabaseBP):
         fpath = os.path.join(upload_location, fname)
         file.save(fpath)
         rowid = db.execute(
-            "INSERT INTO quick_results "
+            f"INSERT INTO {self.results_table} "
             "(subject, trial, reply_filename) VALUES (?, ?, ?)",
             (session["user"], cur["id"], fname))
         session["cur"] = session["q"]
@@ -203,11 +209,13 @@ class QuickBP(DatabaseBP):
 
     def quick_plotter(self, db, query="", args=()):
         results = db.queryall(
-            "SELECT quick_trials.snr, quick_asr.data, "
-            "quick_trials.answer FROM quick_results "
-            "LEFT JOIN quick_trials ON quick_results.trial=quick_trials.id "
-            "LEFT JOIN quick_asr ON quick_results.id=quick_asr.ref "
-            "WHERE quick_asr.data IS NOT NULL"
+            f"SELECT {self.trials_table}.snr, {self.asr_table}.data, "
+            f"{self.trials_table}.answer FROM {self.results_table} "
+            f"LEFT JOIN {self.trials_table} "
+                f"ON {self.results_table}.trial={self.trials_table}.id "
+            f"LEFT JOIN {self.asr_table} "
+                f"ON {self.results_table}.id={self.asr_table}.ref "
+            f"WHERE {self.asr_table}.data IS NOT NULL"
             f"{query and ' AND ' + query}", args)
         if len(results) == 0:
             abort(400)
@@ -219,27 +227,30 @@ class QuickBP(DatabaseBP):
         if "user" not in session:
             abort(400)
         return self.quick_recognize(
-            db, " WHERE quick_results.subject=?", (session["user"],))
+            db, f" WHERE {self.results_table}.subject=?", (session["user"],))
 
-    result_fields = staticmethod(lambda: {
+    def result_fields(self):
+        return {
             "time": "users.t",
-            "subject": "quick_results.subject",
+            "subject": f"{self.results_table}.subject",
             "username": "users.username",
-            "upload": "quick_results.reply_filename",
-            "transcript": "quick_asr.data",
-            "prompt": "quick_trials.filename",
-            "answer": "quick_trials.answer",
-            "trial_number": "quick_trials.trial_number",
-        })
+            "upload": f"{self.results_table}.reply_filename",
+            "transcript": f"{self.asr_table}.data",
+            "prompt": f"{self.trials_table}.filename",
+            "answer": f"{self.trials_table}.answer",
+            "trial_number": f"{self.trials_table}.trial_number",
+        }
 
     def quick_recognize(self, db, query="", args=()):
         transcription = db.queryall(
             "SELECT "
                 f"{','.join(self.result_fields[1])} "
-            "FROM quick_results "
-                "LEFT JOIN quick_trials ON quick_results.trial=quick_trials.id "
+            f"FROM {self.results_table} "
+                f"LEFT JOIN {self.trials_table} "
+                    f"ON {self.results_table}.trial={self.trials_table}.id "
                 "LEFT JOIN users ON subject=users.id "
-                "LEFT JOIN quick_asr ON quick_results.id=quick_asr.ref"
+                f"LEFT JOIN {self.asr_table} "
+                    f"ON {self.results_table}.id={self.asr_table}.ref"
             f"{query}", args)
         keys = self.result_fields[0]
         return json.dumps([dict(zip(keys, i)) for i in transcription])
@@ -261,13 +272,14 @@ class QuickAnnotatedBP(QuickBP):
 
     def quick_plotter(self, db, query="", args=()):
         results = db.queryall(
-            "SELECT quick_trials.snr, quick_annotations.data "
-            "FROM quick_results "
-            "LEFT JOIN quick_trials ON quick_results.trial=quick_trials.id "
-            "LEFT JOIN quick_annotations ON "
-            "quick_results.id=quick_annotations.ref "
-            "WHERE quick_annotations.data IS NOT NULL "
-            "AND quick_annotations.data != ''"
+            f"SELECT {self.trials_table}.snr, {self.annotations_table}.data "
+            f"FROM {self.results_table} "
+            f"LEFT JOIN {self.trials_table} ON "
+                f"{self.results_table}.trial={self.trials_table}.id "
+            f"LEFT JOIN {self.annotations_table} ON "
+                f"{self.results_table}.id={self.annotations_table}.ref "
+            f"WHERE {self.annotations_table}.data IS NOT NULL "
+            f"AND {self.annotations_table}.data != ''"
             f"{query and ' AND ' + query}", args)
         if len(results) == 0:
             abort(400)
@@ -282,7 +294,7 @@ class QuickAnnotatedBP(QuickBP):
             if dump:
                 return (db, rowid, fpath, answer, True, data)
             db.execute(
-                "INSERT INTO quick_annotations (ref, data) VALUES (?, ?)",
+                f"INSERT INTO {self.annotations_table} (ref, data) VALUES (?, ?)",
                 (rowid, data))
             return False # audiologist can end test when they want to
         if dump:
@@ -304,8 +316,8 @@ class QuickAnnotatedBP(QuickBP):
 
     def quick_recognize(self, db, query="", args=()):
         res = super().quick_recognize(db, (
-            " LEFT JOIN quick_annotations ON "
-                "quick_results.id = quick_annotations.ref"
+            f" LEFT JOIN {self.annotations_table} ON "
+                f"{self.results_table}.id = {self.annotations_table}.ref"
             f"{query}"), args)
         res = json.loads(res)
         res = [{**i, "annotations": json.loads(i["annotations"])} for i in res]
@@ -390,13 +402,14 @@ class QuickResultsBP(QuickAnnotatedBP):
             abort(400)
         user = request.args.get("user", session["user"])
         return self.quick_recognize(
-            db, " WHERE quick_results.subject=?", (user,))
+            db, f" WHERE {self.results_table}.subject=?", (user,))
 
     def quick_plot(self, db):
         user = request.args.get("user", session["user"])
         if user == "all":
             return self.quick_plotter(db)
-        return self.quick_plotter(db, "quick_results.subject=?", (user,))
+        return self.quick_plotter(
+                db, f"{self.results_table}.subject=?", (user,))
 
     def upload(self, db, fname):
         return send_from_directory(upload_location, fname)
