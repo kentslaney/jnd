@@ -8,6 +8,9 @@ upload_location = relpath("uploads")
 
 # prefixed with audio to avoid namespace collisions with other APIs
 class AudioDB(Database):
+    csv_keys = (
+        "active", "lang", "trial_number", "level_number", "filename", "answer")
+
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         os.makedirs(upload_location, exist_ok=True)
@@ -20,14 +23,10 @@ class AudioDB(Database):
                 [part.strip() for part in line.split(",", 6)] for line in f]
         con = self.get()
         cur = con.cursor()
-        cur.execute(
-            f"INSERT INTO {cls.trials_table} "
-            "(active, lang, trial_number, level_number, snr, filename, answer) "
-            "VALUES (0, '--', 1, -1, 0, 'invalid', 'invalid')")
         cur.executemany(
             f"INSERT INTO {cls.trials_table} "
-            "(active, lang, trial_number, level_number, snr, filename, answer) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?)", experiments)
+            f"({', '.join(self.csv_keys)}) "
+            f"VALUES ({', '.join('?' * len(self.csv_keys))})", experiments)
         con.commit()
 
     def _username_hook(self):
@@ -55,9 +54,8 @@ def bytes_png(f):
 
 class AudioBP(DatabaseBP):
     audio_keys = (
-        "id", "snr", "lang", "level_number", "trial_number", "filename",
-        "answer")
-    audio_done = [1, 0, "--", 0, 1, "", 1]
+        "id", "lang", "level_number", "trial_number", "filename", "answer")
+    audio_done = [1, "--", 0, 1, "", 1]
 
     def audio_url(self, v):
         return v and f"/jnd{self.url_prefix}/" + v
