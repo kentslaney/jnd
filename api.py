@@ -2,11 +2,10 @@ import json, sqlite3, unicodedata, uuid
 from flask import request, session, abort
 from utils import relpath, DatabaseBP
 from pitch import PitchDB, PitchBP
-from quick import QuickDB, QuickOutputBP
+from projects import QuickDB, QuickOutputBP
 
 # use multiple inheritance to add other DB hooks
-# class ExperimentDB(PitchDB, QuickDB):
-class ExperimentDB(QuickDB):
+class ExperimentDB(PitchDB, QuickDB):
     def _username_hook(self):
         res = set_username(self)
         super()._username_hook()
@@ -16,17 +15,25 @@ def username_hook(db):
     return db._username_hook()
 
 class APIBlueprint(DatabaseBP):
+    default_project = "quick"
+
     def __init__(self,
                  db_path=relpath("experiments.db"),
                  schema_path=relpath("schema.sql"),
                  name="api", url_prefix=None):
         super().__init__(db_path, schema_path, name, url_prefix)
         db = lambda: self._blueprint_db
-        # self.register_blueprint(PitchBP(db))
-        self.register_blueprint(QuickOutputBP(db))
+        self.projects = {
+            "quick": QuickOutputBP(db),
+            "pitch": PitchBP(db),
+        }
+        assert self.default_project in self.projects and "" not in self.projects
+        for bp in self.projects.values():
+            self.register_blueprint(bp)
         self._route_db("/username-available")(username_available)
         self._route_db("/set-username")(username_hook)
         self._route_db("/authorized", methods=["POST"])(authorized)
+        self._route_db("/lists")(self.audio_lists)
 
     def _bind_db(self, app):
         super()._bind_db(app)
@@ -43,6 +50,11 @@ class APIBlueprint(DatabaseBP):
                 secret = os.urandom(24)
                 f.write(secret)
                 app.secret_key = secret
+
+    def audio_lists(self, db):
+        return json.dumps({"": self.default_project, **{
+            k: json.loads(v.audio_lists(db))
+            for k, v in self.projects.items()}})
 
 username_blocks = ("L", "Nd", "Nl", "Pc", "Pd", "Zs")
 def username_rules(value: str):
@@ -72,7 +84,7 @@ def username_available(db):
 def set_username(db):
     name = request.args.get("v")
     if name is None or not username_rules(name):
-        return json.dumps(False)
+        return json.dumps("")
 
     if always_accept(name):
         name = f"{name}-{uuid.uuid4()}"
@@ -82,7 +94,7 @@ def set_username(db):
             "INSERT INTO users (username, ip) VALUES (?, ?)",
             (name, request.remote_addr))
     except sqlite3.IntegrityError:
-        #return json.dumps(False)
+        #return json.dumps("")
         uid = db.queryone("SELECT id FROM users WHERE username=?", (name,))[0]
 
     search = json.dumps(dict(request.args))
@@ -109,7 +121,7 @@ def set_username(db):
         session["requested"] = json.dumps([lang, trial_number])
     else:
         session["requested"] = json.dumps(['en', None])
-    return json.dumps(True)
+    return json.dumps(APIBlueprint.default_project)
 
 def authorized(db):
     return json.dumps(True)

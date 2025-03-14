@@ -11,11 +11,11 @@ def fig_png(f):
         return output.getvalue()
     return functools.wraps(f)(decorator)
 
-def quick_labeled(fig, axis):
+def audio_labeled(fig, axis):
     axis.legend()
     axis.set_xlabel('SNR (dB)')
     axis.set_ylabel('Fraction recognized correctly')
-    fig.suptitle('Logistic Regression for QuickSIN Data')
+    fig.suptitle('Logistic Regression for Audio Data')
     return fig
 
 @fig_png
@@ -23,7 +23,7 @@ def scatter_results(x, y):
     fig = Figure()
     axis = fig.add_subplot(1, 1, 1)
     axis.scatter(x, y, marker='x', label='Experimental Data')
-    return quick_labeled(fig, axis)
+    return audio_labeled(fig, axis)
 
 # https://github.com/MalcolmSlaney/GoogleSIN/blob/main/google_asr_sin.py
 import numpy as np
@@ -62,5 +62,5 @@ def logistic_results(spin_snrs, scores):
         label='Logistic Fit')
     axis.plot([0, 25], [0.5, 0.5], '--', label='50% Theshold')
     axis.plot([logistic_params[1], logistic_params[1]], [0, 0.5], ':')
-    return quick_labeled(fig, axis)
+    return audio_labeled(fig, axis)
 

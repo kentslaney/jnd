@@ -108,3 +108,6 @@ class PitchBP(DatabaseBP):
     @property
     def _blueprint_db(self):
         return self._bind_db()
+
+    def audio_lists(self, db):
+        return "[]"

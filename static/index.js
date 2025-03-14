@@ -99,6 +99,8 @@ function claim_username() {
   submit.disabled = true;
   let url = URL.parse("/jnd/api/set-username", window.location.href)
   url.searchParams.set("v", input)
+  let project = document.getElementById("project").value
+  url.searchParams.set("project", project)
   url.searchParams.set("list", document.getElementById("list").value)
   url.searchParams.set(
     "t", document.querySelector("[name=test-type]:checked").id)
@@ -106,7 +108,8 @@ function claim_username() {
     .then(apijson).then((data) => {
       if (data) {
         // window.location.href = "/jnd/pitch.html";
-        window.location.href = "/jnd/quick.html";
+        project = project === "null" ? data : project
+        window.location.href = `/jnd/${project}.html`;
         submit.disabled = false;
       } else {
         output.innerText = "Username not available";
@@ -119,13 +122,32 @@ function claim_username() {
     })
 }
 
-fetch("/jnd/api/quick/lists").then(apijson).then(data => {
-  let parent = document.getElementById("list");
-  data.forEach(x => {
+fetch("/jnd/api/lists").then(apijson).then(data => {
+  let parent = document.getElementById("project");
+  Object.keys(data).forEach(x => {
+    if (x === "") return;
     let el = parent.appendChild(document.createElement("option"));
     el.setAttribute("value", x);
     el.innerText = x;
   })
+  let secondary = document.getElementById("list");
+  function updated() {
+    let project = parent.value === "null" ? data[""] : parent.value
+    while (secondary.firstElementChild)
+      secondary.removeChild(secondary.firstElementChild)
+    let el = secondary.appendChild(document.createElement("option"));
+    el.setAttribute("value", null);
+    el.innerText = "Default";
+    data[project].forEach(x => {
+      let el = secondary.appendChild(document.createElement("option"));
+      el.setAttribute("value", x);
+      el.innerText = x;
+    })
+    document.getElementById("results").href =
+      `/jnd/recognized.html?user=all&project=${project}`
+  }
+  updated()
+  parent.addEventListener("change", updated)
 }).catch(e => {
   if (e.status === 401) {
     window.location.href = "/login?next=" + encodeURIComponent(

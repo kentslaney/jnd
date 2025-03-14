@@ -58,7 +58,7 @@ class LoadQueue {
 class AudioPrefetch {
   audio;
   loadq
-  constructor(audio) {
+  constructor(audio, ...args) {
     this.loadq = new LoadQueue(this)
 
     this.loadq.add(() => {
@@ -70,7 +70,7 @@ class AudioPrefetch {
       this.initialize()
     })
 
-    this.#result_promise = this.require_retry(() => this.start()
+    this.#result_promise = this.require_retry(() => this.start(...args)
       .then(response => {
         if (response.status == 400) { // landed without cookies
           this.restart()

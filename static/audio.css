@@ -275,9 +275,9 @@ body.overlaying #results-overlay {
   display: none;
 }
 
-.option-on, #quick-none { background: var(--record); }
+.option-on, #result-none { background: var(--record); }
 
-#quick-options {
+#result-options {
     order: 1;
     text-align: center;
 }
