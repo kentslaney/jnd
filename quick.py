@@ -428,7 +428,6 @@ class QuickSpec:
     asr_table = "quick_asr"
     annotations_table = "quick_annotations"
     audio_files = relpath("all_spin_index.csv")
-    audio_levels = 6
 
 class QuickDB(QuickSpec, AudioDB):
     def db_init_hook(self):
