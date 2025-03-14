@@ -5,8 +5,7 @@ from pitch import PitchDB, PitchBP
 from projects import QuickDB, QuickOutputBP
 
 # use multiple inheritance to add other DB hooks
-# class ExperimentDB(PitchDB, QuickDB):
-class ExperimentDB(QuickDB):
+class ExperimentDB(PitchDB, QuickDB):
     def _username_hook(self):
         res = set_username(self)
         super()._username_hook()

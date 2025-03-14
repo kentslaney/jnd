@@ -79,7 +79,7 @@ with open(metapath, 'w') as fp:
 
                 filename = f'pitch_jnd_{f0}_{i}_{t}.wav'
                 path = os.path.join(basedir, filename)
-                fp.write(', '.join((f0, i, t, filename, sign)) + '\n')
+                fp.write(', '.join(map(str, (f0, i, t, filename, sign))) + '\n')
                 # wav files written by scipy break web audio playback
                 try:
                     subprocess.run(
