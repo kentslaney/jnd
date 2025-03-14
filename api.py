@@ -28,7 +28,7 @@ class APIBlueprint(DatabaseBP):
             "quick": QuickOutputBP(db),
             "pitch": PitchBP(db),
         }
-        assert self.default_project in self.projects
+        assert self.default_project in self.projects and "" not in self.projects
         for bp in self.projects.values():
             self.register_blueprint(bp)
         self._route_db("/username-available")(username_available)
