@@ -421,19 +421,3 @@ class AudioWhisperDebugBP(AudioResultsBP):
 # class AudioLogisticWhisperBP(AudioLogisticBP, AudioWhisperBP):
 class AudioOutputBP(AudioLogisticBP, AudioResultsBP):
     pass
-
-class QuickSpec:
-    trials_table = "quick_trials"
-    results_table = "quick_results"
-    asr_table = "quick_asr"
-    annotations_table = "quick_annotations"
-    audio_files = relpath("all_spin_index.csv")
-
-class QuickDB(QuickSpec, AudioDB):
-    def db_init_hook(self):
-        super().db_init_hook()
-        self.parse_csv(__class__)
-
-class QuickOutputBP(QuickSpec, AudioOutputBP):
-    def __init__(self, db, name="quick", url_prefix="/quick"):
-        super().__init__(db, name, url_prefix)

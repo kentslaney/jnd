@@ -61,7 +61,8 @@ class Audio extends AudioPrefetch {
   }
 
   done() {
-    window.location.href = `/jnd/${this.project}_done.html`
+    window.location.href =
+      `/jnd/${this.project}_done.html?project=${this.project}`
   }
 
   restart() {

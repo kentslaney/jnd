@@ -49,6 +49,11 @@
     </div>
     <form action="javascript:;" onsubmit="claim_username()" class="userbox"
         autocomplete="off">
+      <label for="project">Select project:</label>
+      <select id="project">
+        <option value="null">Default</option>
+      </select>
+      <br>
       <label for="list">Select list:</label>
       <select id="list">
         <option value="null">Default</option>
@@ -74,7 +79,7 @@
     </form>
     <img class="org-icon" />
     <br><br>
-    <a href="/jnd/recognized.html?user=all&project=quick" id="results">
+    <a href="#" id="results">
       Results
     </a>
     <br><br><div id="copy">
