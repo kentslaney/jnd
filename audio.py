@@ -20,13 +20,13 @@ class AudioDB(Database):
         assert os.path.exists(cls.audio_files)
         with open(cls.audio_files, "r") as f:
             experiments = [
-                [part.strip() for part in line.split(",", 6)] for line in f]
+                [part.strip() for part in line.split(",")] for line in f]
         con = self.get()
         cur = con.cursor()
         cur.executemany(
             f"INSERT INTO {cls.trials_table} "
-            f"({', '.join(self.csv_keys)}) "
-            f"VALUES ({', '.join('?' * len(self.csv_keys))})", experiments)
+            f"({', '.join(cls.csv_keys)}) "
+            f"VALUES ({', '.join('?' * len(cls.csv_keys))})", experiments)
         con.commit()
 
     def _username_hook(self):
@@ -178,7 +178,7 @@ class AudioBP(DatabaseBP):
     def proportion_correct(self, reply, answer):
         reply = set(reply.split(" "))
         correct, total = 0, 0
-        for options in answer.split(","):
+        for options in answer.split(" "):
             total += 1
             for option in options.split("/"):
                 if option in reply:
@@ -187,7 +187,7 @@ class AudioBP(DatabaseBP):
         return correct / max(total, 1)
 
     @staticmethod
-    def map_answer(f, answer, delimitors=",/"):
+    def map_answer(f, answer, delimitors=" /"):
         sep = ([len(s) for s in answer.split(d)] for d in delimitors)
         sep = sorted((sum(i[:j + 1]) + j, d) for i, d in zip(
             sep, delimitors) for j in range(len(i)))
@@ -373,7 +373,7 @@ class AudioPromptedWhisperBP(AudioNormalizedBP):
 
     def asr(self, path, answer):
         return self.prompted_whisper_asr(
-            path, answer.replace(",", " ").replace("/", " "))
+            path, answer.replace("/", " "))
 
 # class AudioResultsBP(AudioWhisperBP):
 # class AudioResultsBP(AudioPromptedWhisperBP):

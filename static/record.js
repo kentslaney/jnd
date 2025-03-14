@@ -424,7 +424,7 @@ class AnnotatedAudio extends AudioResults {
     if (existing !== null) this.#holder.removeChild(existing)
     const container = this.#holder.appendChild(document.createElement("div"))
     container.classList.add("options-case")
-    answer.split(",").forEach((x, i) => {
+    answer.split(" ").forEach((x, i) => {
       const name = `option-${i}`
       const wrapper = container.appendChild(document.createElement("div"))
       for (const j of ['on', 'off']) {
@@ -470,12 +470,21 @@ class AnnotatedAudio extends AudioResults {
     if (url === undefined) return
     if (typeof this.#playbackProgress === "string")
       this.#playbackProgress = document.querySelector(this.#playbackProgress)
+    this.#playbackProgress.innerText = url;
+    return super.debug(url)
+  }
+  /*
+  debug(url) {
+    if (url === undefined) return
+    if (typeof this.#playbackProgress === "string")
+      this.#playbackProgress = document.querySelector(this.#playbackProgress)
     const [ list, seq ] = url.match(/[0-9]+/g).map(x => parseInt(x))
     const lang = url.match(/([^-/]+)-[^/]+$/)[1]
     this.#playbackProgress.innerText =
       `${lang} list ${list} sentence ${seq}`;
     return super.debug(url)
   }
+  */
 
   initialize() {
     super.initialize()

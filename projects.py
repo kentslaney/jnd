@@ -6,7 +6,7 @@ class QuickSpec:
     results_table = "quick_results"
     asr_table = "quick_asr"
     annotations_table = "quick_annotations"
-    audio_files = relpath("all_spin_index.csv")
+    audio_files = relpath("metadata/all_spin_index.csv")
 
 class QuickDB(QuickSpec, AudioDB):
     csv_keys = (
@@ -17,12 +17,28 @@ class QuickDB(QuickSpec, AudioDB):
         super().db_init_hook()
         self.parse_csv(__class__)
 
-class QuickOutputBP(QuickSpec, AudioOutputBP):
+class QuickBP(QuickSpec, AudioOutputBP):
     audio_keys = (
         "id", "snr", "lang", "level_number", "trial_number", "filename",
         "answer")
     audio_done = [1, 0, "--", 0, 1, "", 1]
 
     def __init__(self, db, name="quick", url_prefix="/quick"):
+        super().__init__(db, name, url_prefix)
+
+class Nu6Spec:
+    trials_table = "nu6_trials"
+    results_table = "nu6_results"
+    asr_table = "nu6_asr"
+    annotations_table = "nu6_annotations"
+    audio_files = relpath("metadata/NU6_transcript.csv")
+
+class Nu6DB(Nu6Spec, AudioDB):
+    def db_init_hook(self):
+        super().db_init_hook()
+        self.parse_csv(__class__)
+
+class Nu6BP(Nu6Spec, AudioOutputBP):
+    def __init__(self, db, name="nu6", url_prefix="/nu6"):
         super().__init__(db, name, url_prefix)
 

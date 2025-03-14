@@ -95,5 +95,37 @@ CREATE TABLE quick_annotations (
   ref INTEGER,
   data TEXT, /* Comma separated list of True/False by audiologist by keyword */
   FOREIGN KEY(ref) REFERENCES quick_results(id)
-)
+);
+
+CREATE TABLE nu6_trials (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  lang TEXT,
+  level_number INTEGER,
+  trial_number INTEGER,
+  filename TEXT,
+  answer TEXT,
+  active BOOLEAN NOT NULL CHECK(active IN(0,1))
+);
+
+CREATE TABLE nu6_results (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  subject INTEGER,
+  trial INTEGER,
+  reply_filename TEXT,
+  t TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(subject) REFERENCES users(id),
+  FOREIGN KEY(trial) REFERENCES nu6_trials(id)
+);
+
+CREATE TABLE nu6_asr (
+  ref INTEGER,
+  data TEXT,
+  FOREIGN KEY(ref) REFERENCES nu6_results(id)
+);
+
+CREATE TABLE nu6_annotations (
+  ref INTEGER,
+  data TEXT,
+  FOREIGN KEY(ref) REFERENCES nu6_results(id)
+);
 

@@ -3,7 +3,7 @@ from flask import Blueprint, request, session, abort
 from utils import Database, relpath, DatabaseBP
 
 pitch_levels = 8
-pitch_files = relpath("pitch_jnd_files.csv")
+pitch_files = relpath("metadata/pitch_jnd_files.csv")
 
 class PitchDB(Database):
     def db_init_hook(self):

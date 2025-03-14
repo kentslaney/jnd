@@ -2,8 +2,9 @@ nohup.out
 /secret_key
 /static/pitches
 /static/quick
-/pitch_jnd_files.csv
-/all_spin_index.csv
+/static/azbio10
+/static/cnc
+/static/nu6
 /experiments.db
 /uploads
 
