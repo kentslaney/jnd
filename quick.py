@@ -4,7 +4,6 @@ from flask import (
 from utils import Database, relpath, DatabaseBP
 from plot import scatter_results, logistic_results
 
-# TODO: remove level count and count upwards now that it can be tracked per list
 upload_location = relpath("uploads")
 
 # prefixed with audio to avoid namespace collisions with other APIs
@@ -30,10 +29,6 @@ class AudioDB(Database):
             "(active, lang, trial_number, level_number, snr, filename, answer) "
             "VALUES (?, ?, ?, ?, ?, ?, ?)", experiments)
         con.commit()
-        # levels 1 indexed
-        assert cls.audio_levels <= self.queryone(
-            f"SELECT MAX(level_number) FROM {cls.trials_table} "
-            "WHERE active=1")[0]
 
     def _username_hook(self):
         res = getattr(super(), "_username_hook", lambda: None)()
@@ -96,21 +91,17 @@ class AudioBP(DatabaseBP):
         return json.dumps(langs + lists)
 
     def audio_next(self, db, cur, done=None):
-        left = json.loads(session["left"])
-        session["left"] = json.dumps(left - 1)
-        if left <= 1 or done and done():
+        level = json.loads(session["level"])
+        session["level"] = json.dumps(level + 1)
+        q = db.queryone(
+                f"SELECT * FROM {self.trials_table} WHERE "
+                "level_number=? AND trial_number=? AND lang=?",
+                (level + 1, cur['trial_number'], cur['lang']))
+        if q is None:
             q = self.audio_done
-            if left <= 1:
-                self.audio_async(*done(True))
-        else:
-            level = self.audio_levels - left + 2
-            q = db.queryone(
-                    f"SELECT * FROM {self.trials_table} WHERE "
-                    "level_number=? AND trial_number=? AND lang=?",
-                    (level, cur['trial_number'], cur['lang']))
-            if q is None:
-                assert left == 2
-                q = self.audio_done
+            self.audio_async(*done(True))
+        elif done and done():
+            q = self.audio_done
         q = self.audio_trial_dict(q)
         session["q"] = json.dumps(q)
         return self.audio_url(q["filename"])
@@ -123,8 +114,7 @@ class AudioBP(DatabaseBP):
                 session["cur"], session["q"]))
             return json.dumps({
                 "cur": cur, "next": {1: q}, "name": session["username"],
-                "has_results": \
-                        json.loads(session["left"]) < self.audio_levels - 1})
+                "has_results": json.loads(session["level"]) > 1})
         lang, trial_number = json.loads(session["requested"])
         if trial_number is not None:
             cur = [db.queryone(
@@ -145,7 +135,8 @@ class AudioBP(DatabaseBP):
             abort(400)
         cur = self.audio_trial_dict(random.choice(cur))
         session["cur"] = json.dumps(cur)
-        session["left"] = json.dumps(self.audio_levels)
+        # levels 1 indexed
+        session["level"] = json.dumps(1)
         return json.dumps({
             "cur": self.audio_url(cur["filename"]), "has_results": False,
             "next": {1: self.audio_next(db, cur)}, "name": session["username"]})

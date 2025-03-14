@@ -469,7 +469,7 @@ class AnnotatedAudio extends AudioResults {
     const [ list, seq ] = url.match(/[0-9]+/g).map(x => parseInt(x))
     const lang = url.match(/([^-/]+)-[^/]+$/)[1]
     this.#playbackProgress.innerText =
-      `${lang} list ${list} sentence ${seq} / 6`;
+      `${lang} list ${list} sentence ${seq}`;
     return super.debug(url)
   }
 
