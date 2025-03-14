@@ -20,11 +20,11 @@ window.addEventListener("load", () => {
 }, {passive: true})
 
 window.addEventListener("load", () => {
-  document.querySelector("#quick-all").addEventListener("click", () => {
+  document.querySelector("#result-all").addEventListener("click", () => {
     Array.from(document.querySelectorAll(".annotation-on")).forEach(
       x => { x.checked = true })
   })
-  document.querySelector("#quick-none").addEventListener("click", () => {
+  document.querySelector("#result-none").addEventListener("click", () => {
     Array.from(document.querySelectorAll(".annotation-off")).forEach(
       x => { x.checked = true })
   })
@@ -51,16 +51,17 @@ function resetPlaybackButton(button, ...add) {
 }
 
 class Audio extends AudioPrefetch {
-  constructor() {
-    super("#playing")
+  constructor(project) {
+    super("#playing", project)
   }
 
-  start() {
-    return fetch("/jnd/api/quick/start")
+  start(project) {
+    this.project = project
+    return fetch(`/jnd/api/${this.project}/start`)
   }
 
   done() {
-    window.location.href = "/jnd/done.html"
+    window.location.href = `/jnd/${this.project}_done.html`
   }
 
   restart() {
@@ -210,7 +211,8 @@ class AudioResults extends Audio {
 
   done() {
     if (this.overlaid) {
-      window.location.href = "/jnd/done.html?debug=true"
+      window.location.href = `/jnd/${this.project}_done.html?` +
+        `debug=true&project=${this.project}`
     } else {
       super.done()
     }
@@ -254,7 +256,7 @@ class AudioResults extends Audio {
 
   get #overlayURL() {
     // time parameter to prevent caching; should be done with response headers
-    return "/jnd/api/quick/plot?t=" + Date.now();
+    return `/jnd/api/${this.project}/plot?t=` + Date.now();
   }
 }
 
@@ -311,7 +313,7 @@ class InteractiveRecorder extends DiscretelyTunedRecorder {
       return
     }
     this.nextButton.disabled = true;
-    const data = await this.result(`/jnd/api/quick/result`, {})
+    const data = await this.result(`/jnd/api/${this.#audio.project}/result`, {})
     await this.#audio.result(1, k => {
         return fetch(data[0], data[1]).then(response => {
           if (!response.ok) this.debug(response.statusText);
@@ -408,6 +410,7 @@ class AnnotatedRecorder extends AutoEndingRecorder {
   }
 }
 
+// TODO: prefetch answers
 class AnnotatedAudio extends AudioResults {
   #holding
   #holder = "#aux-data"
@@ -495,7 +498,4 @@ class AnnotatedAudio extends AudioResults {
     super.done()
   }
 }
-
-let audio = new AnnotatedAudio();
-let recorder = new AnnotatedRecorder(audio);
 

@@ -4,9 +4,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script type="text/javascript" src="audio.js"></script>
-    <script type="text/javascript" src="quick.js"></script>
+    <script type="text/javascript" src="record.js"></script>
+    <script type="text/javascript">
+      let audio = new AnnotatedAudio("quick");
+      let recorder = new AnnotatedRecorder(audio);
+    </script>
     <link rel="stylesheet" href="vars.css">
-    <link rel="stylesheet" href="quick.css">
+    <link rel="stylesheet" href="audio.css">
     <link rel="stylesheet" href="playback.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -49,11 +53,11 @@
           </div>
         </div>
         <div id="aux-data">
-          <div id="quick-options">
-            <button class="base-button" id="quick-all" type="button">
+          <div id="result-options">
+            <button class="base-button" id="result-all" type="button">
               All
             </button>
-            <button class="base-button" id="quick-none" type="button">
+            <button class="base-button" id="result-none" type="button">
               None
             </button>
           </div>
