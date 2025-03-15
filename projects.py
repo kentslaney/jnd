@@ -73,4 +73,3 @@ class CncDB(CncSpec, AudioDB):
 class CncBP(CncSpec, AudioOutputBP):
     def __init__(self, db, name="cnc", url_prefix="/cnc"):
         super().__init__(db, name, url_prefix)
-

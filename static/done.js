@@ -43,4 +43,3 @@ async function submit_effort() {
     .then(() => "recorded").catch(() => "network error")
   statusCase.innerText = status
 }
-

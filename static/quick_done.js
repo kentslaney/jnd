@@ -25,4 +25,3 @@ fetch(`/jnd/api/${project}/recognized`)
     const scale = 1e1, round = Math.round(score * scale) / scale
     document.getElementById("score").innerText = round.toString()
   })
-
