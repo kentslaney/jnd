@@ -161,3 +161,35 @@ CREATE TABLE azbio_annotations (
   FOREIGN KEY(ref) REFERENCES azbio_results(id)
 );
 
+CREATE TABLE cnc_trials (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  lang TEXT,
+  level_number INTEGER,
+  trial_number INTEGER,
+  filename TEXT,
+  answer TEXT,
+  active BOOLEAN NOT NULL CHECK(active IN(0,1))
+);
+
+CREATE TABLE cnc_results (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  subject INTEGER,
+  trial INTEGER,
+  reply_filename TEXT,
+  t TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(subject) REFERENCES users(id),
+  FOREIGN KEY(trial) REFERENCES cnc_trials(id)
+);
+
+CREATE TABLE cnc_asr (
+  ref INTEGER,
+  data TEXT,
+  FOREIGN KEY(ref) REFERENCES cnc_results(id)
+);
+
+CREATE TABLE cnc_annotations (
+  ref INTEGER,
+  data TEXT,
+  FOREIGN KEY(ref) REFERENCES cnc_results(id)
+);
+

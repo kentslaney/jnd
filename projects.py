@@ -58,3 +58,19 @@ class AzBioBP(AzBioSpec, AudioOutputBP):
     def __init__(self, db, name="azbio", url_prefix="/azbio"):
         super().__init__(db, name, url_prefix)
 
+class CncSpec:
+    trials_table = "cnc_trials"
+    results_table = "cnc_results"
+    asr_table = "cnc_asr"
+    annotations_table = "cnc_annotations"
+    audio_files = relpath("metadata/CNC_transcript.csv")
+
+class CncDB(CncSpec, AudioDB):
+    def db_init_hook(self):
+        super().db_init_hook()
+        self.parse_csv(__class__)
+
+class CncBP(CncSpec, AudioOutputBP):
+    def __init__(self, db, name="cnc", url_prefix="/cnc"):
+        super().__init__(db, name, url_prefix)
+
