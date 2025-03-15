@@ -42,3 +42,19 @@ class Nu6BP(Nu6Spec, AudioOutputBP):
     def __init__(self, db, name="nu6", url_prefix="/nu6"):
         super().__init__(db, name, url_prefix)
 
+class AzBioSpec:
+    trials_table = "azbio_trials"
+    results_table = "azbio_results"
+    asr_table = "azbio_asr"
+    annotations_table = "azbio_annotations"
+    audio_files = relpath("metadata/AzBio_transcript.csv")
+
+class AzBioDB(AzBioSpec, AudioDB):
+    def db_init_hook(self):
+        super().db_init_hook()
+        self.parse_csv(__class__)
+
+class AzBioBP(AzBioSpec, AudioOutputBP):
+    def __init__(self, db, name="azbio", url_prefix="/azbio"):
+        super().__init__(db, name, url_prefix)
+
