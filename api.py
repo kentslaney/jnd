@@ -2,10 +2,15 @@ import json, sqlite3, unicodedata, uuid
 from flask import request, session, abort
 from utils import relpath, DatabaseBP
 from pitch import PitchDB, PitchBP
-from projects import QuickDB, QuickOutputBP
+from projects import (
+    QuickDB, QuickBP,
+    Nu6DB, Nu6BP,
+    AzBioDB, AzBioBP,
+    CncDB, CncBP,
+)
 
 # use multiple inheritance to add other DB hooks
-class ExperimentDB(PitchDB, QuickDB):
+class ExperimentDB(PitchDB, QuickDB, Nu6DB, AzBioDB, CncDB):
     def _username_hook(self):
         res = set_username(self)
         super()._username_hook()
@@ -24,12 +29,16 @@ class APIBlueprint(DatabaseBP):
         super().__init__(db_path, schema_path, name, url_prefix)
         db = lambda: self._blueprint_db
         self.projects = {
-            "quick": QuickOutputBP(db),
-            "pitch": PitchBP(db),
+            "quick": QuickBP,
+            "pitch": PitchBP,
+            "nu6": Nu6BP,
+            "azbio": AzBioBP,
+            "cnc": CncBP,
         }
         assert self.default_project in self.projects and "" not in self.projects
-        for bp in self.projects.values():
-            self.register_blueprint(bp)
+        for bp in self.projects.keys():
+            self.projects[bp] = self.projects[bp](db)
+            self.register_blueprint(self.projects[bp])
         self._route_db("/username-available")(username_available)
         self._route_db("/set-username")(username_hook)
         self._route_db("/authorized", methods=["POST"])(authorized)

@@ -25,16 +25,3 @@ fetch(`/jnd/api/${project}/recognized`)
     const scale = 1e1, round = Math.round(score * scale) / scale
     document.getElementById("score").innerText = round.toString()
   })
-
-async function submit_effort() {
-  const api = `/jnd/api/${project}/reset`
-  const value = parseInt(document.getElementById("effort").value)
-  const statusCase = document.getElementById("effort-status")
-  if (value < 1 || value > 10) return
-  let url = URL.parse(api, window.location.href)
-  url.searchParams.set("v", value)
-  statusCase.innerText = "loading..."
-  const status = await fetch(url, { method: "POST" })
-    .then(() => "recorded").catch(() => "network error")
-  statusCase.innerText = status
-}

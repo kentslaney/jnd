@@ -52,7 +52,7 @@ f0_list = [220, 440, 880, 2760]
 # metadir = basedir = tempfile.mkdtemp()
 # print(basedir)
 from utils import relpath
-metadir, basedir = relpath(), relpath("static", "pitches")
+metadir, basedir = relpath("metadata"), relpath("static", "pitches")
 
 metadata = 'pitch_jnd_files.csv'
 metapath = os.path.join(metadir, metadata)
