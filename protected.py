@@ -7,9 +7,9 @@ group = AccessNamespace("audio", "google", "100312806121431583241")
 
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1)
-#login_required.prefix = "//sub.domain.tld"
+login_required.prefix = "//www2.slaney.org"
 app.register_blueprint(login_required(APIBlueprint(), group=group))
 
 if __name__ == "__main__":
-    app.run(host="unix:///tmp/audio.experiments.api.sock")
+    app.run(host="unix:///tmp/kent.slaney.org.staging.sock")
 
