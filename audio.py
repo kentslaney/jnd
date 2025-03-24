@@ -1,7 +1,7 @@
 import os, os.path, json, random, functools, uuid
 from flask import (
     Blueprint, request, session, abort, redirect, Response, send_from_directory)
-from store import Database, relpath, DatabaseBP
+from storage import Database, relpath, DatabaseBP
 from plot import scatter_results, logistic_results
 
 upload_location = relpath("uploads")

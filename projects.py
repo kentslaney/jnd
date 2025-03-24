@@ -1,5 +1,5 @@
 from audio import AudioDB, AudioOutputBP
-from store import relpath
+from storage import relpath
 
 class QuickSpec:
     trials_table = "quick_trials"

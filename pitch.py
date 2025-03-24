@@ -1,6 +1,6 @@
 import os.path, json, random
 from flask import Blueprint, request, session, abort
-from store import Database, relpath, DatabaseBP
+from storage import Database, relpath, DatabaseBP
 
 pitch_levels = 8
 pitch_files = relpath("metadata/pitch_jnd_files.csv")

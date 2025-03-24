@@ -1,6 +1,6 @@
 import json, sqlite3, unicodedata, uuid
 from flask import request, session, abort
-from store import relpath, DatabaseBP
+from storage import relpath, DatabaseBP
 from pitch import PitchDB, PitchBP
 from projects import (
     QuickDB, QuickBP,
