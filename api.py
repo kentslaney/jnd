@@ -49,6 +49,7 @@ class APIBlueprint(DatabaseBP):
         self._blueprint_db = ExperimentDB(
             app, *self._db_paths, ["PRAGMA foreign_keys = ON"])
         app.config.update(SESSION_COOKIE_NAME="audio-experiments")
+        #app.config.update(SESSION_COOKIE_NAME="audio-experiments-staging")
 
         try:
             with open(relpath("secret_key"), "rb") as f:
