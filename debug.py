@@ -1,7 +1,7 @@
 from flask import Flask, Blueprint, redirect
 from api import APIBlueprint
 
-app_prefix = "/jnd"
+app_prefix = "/"
 
 bp = Blueprint("main", __name__, url_prefix=app_prefix)
 bp.register_blueprint(APIBlueprint(url_prefix="/api"))

@@ -1,7 +1,7 @@
 const params = new URL(document.baseURI).searchParams
 const project = params.get("project")
 
-fetch(`/jnd/api/${project}/recognized${window.location.search}`)
+fetch(`api/${project}/recognized${window.location.search}`)
   .then(response => response.json())
   .then(data => {
     let users = {}
@@ -17,8 +17,8 @@ fetch(`/jnd/api/${project}/recognized${window.location.search}`)
       asr_data = row["transcript"] === null ? null :
         JSON.parse(row["transcript"]);
       users[row["subject"]]["results"].push({
-        "prompt": `/jnd/${project}/${row["prompt"]}`,
-        "upload": `/jnd/api/${project}/upload/${row["upload"]}`,
+        "prompt": `${project}/${row["prompt"]}`,
+        "upload": `api/${project}/upload/${row["upload"]}`,
         "transcript": row["transcript"] === null ? null : asr_data["text"],
         "asr_data": asr_data,
         "answer": row["answer"].split(","),
@@ -39,7 +39,7 @@ fetch(`/jnd/api/${project}/recognized${window.location.search}`)
     for (const user of entries) {
       user_head = parent.appendChild(head.cloneNode(true))
       let plot = document.createElement("a")
-      plot.href = `/jnd/api/${project}/plot?user=${user["id"]}`
+      plot.href = `api/${project}/plot?user=${user["id"]}`
       plot.innerText = user["username"]
       // plot.setAttribute("target", "_blank")
       user_head.querySelector(".username").appendChild(plot)
@@ -69,7 +69,7 @@ fetch(`/jnd/api/${project}/recognized${window.location.search}`)
 
     if((new URLSearchParams(window.location.search)).get("user") == "all") {
       let a = document.querySelector("#showall");
-      a.href = `/jnd/api/${project}/plot?user=all`
+      a.href = `api/${project}/plot?user=all`
       // a.setAttribute("target", "_blank")
     }
   })

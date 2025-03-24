@@ -58,7 +58,7 @@ function check_username() {
       if (signal.aborted) return;
       output.innerText = "checking availability...";
       const query = encodeURIComponent(input);
-      request = fetch(`/jnd/api/username-available?v=${query}`, { signal })
+      request = fetch(`api/username-available?v=${query}`, { signal })
         .then(apijson).then((data) => {
           if (data) {
             output.innerText = "";
@@ -97,7 +97,7 @@ function claim_username() {
   request_controller = new AbortController();
   const signal = request_controller.signal;
   submit.disabled = true;
-  let url = URL.parse("/jnd/api/set-username", window.location.href)
+  let url = URL.parse("api/set-username", window.location.href)
   url.searchParams.set("v", input)
   let project = document.getElementById("project").value
   url.searchParams.set("project", project)
@@ -107,9 +107,9 @@ function claim_username() {
   request = fetch(url, { signal })
     .then(apijson).then((data) => {
       if (data) {
-        // window.location.href = "/jnd/pitch.html";
+        // window.location.href = "pitch.html";
         project = project === "null" ? data : project
-        window.location.href = `/jnd/${project}.html`;
+        window.location.href = `${project}.html`;
         submit.disabled = false;
       } else {
         output.innerText = "Username not available";
@@ -122,7 +122,7 @@ function claim_username() {
     })
 }
 
-fetch("/jnd/api/lists").then(apijson).then(data => {
+fetch("api/lists").then(apijson).then(data => {
   let parent = document.getElementById("project");
   Object.keys(data).forEach(x => {
     if (x === "") return;
@@ -144,7 +144,7 @@ fetch("/jnd/api/lists").then(apijson).then(data => {
       el.innerText = x;
     })
     document.getElementById("results").href =
-      `/jnd/recognized.html?user=all&project=${project}`
+      `recognized.html?user=all&project=${project}`
   }
   updated()
   parent.addEventListener("change", updated)

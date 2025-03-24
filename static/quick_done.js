@@ -1,7 +1,7 @@
 const params = new URL(document.baseURI).searchParams
 const project = params.get("project")
 
-fetch(`/jnd/api/${project}/recognized`)
+fetch(`api/${project}/recognized`)
   .then(response => response.json())
   .then(data => {
     if (data.length === 0) return;
@@ -9,7 +9,7 @@ fetch(`/jnd/api/${project}/recognized`)
     document.getElementById("username").innerText = data[0]["username"]
     document.getElementById("trial_number").innerText = latest
     const [correct, total] = data.reduce((a, b) => {
-      if (b["trial_number"] == latest) {
+      if (b["trial_number"] == latest && "annotations" in b) {
         return [
               a[0] + b["annotations"].filter(x => x).length,
               a[1] + b["annotations"].length

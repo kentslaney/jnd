@@ -1,7 +1,7 @@
 import os, os.path, json, random, functools, uuid
 from flask import (
     Blueprint, request, session, abort, redirect, Response, send_from_directory)
-from utils import Database, relpath, DatabaseBP
+from store import Database, relpath, DatabaseBP
 from plot import scatter_results, logistic_results
 
 upload_location = relpath("uploads")
@@ -58,7 +58,7 @@ class AudioBP(DatabaseBP):
     audio_done = [1, "--", 0, 1, "", 1]
 
     def audio_url(self, v):
-        return v and f"/jnd{self.url_prefix}/" + v
+        return v and self.url_prefix.lstrip("/") + "/" + v
 
     def audio_trial_dict(self, v):
         return dict(zip(self.audio_keys, v))
@@ -308,7 +308,8 @@ class AudioAnnotatedBP(AudioBP):
                 f"{self.results_table}.id = {self.annotations_table}.ref"
             f"{query}"), args)
         res = json.loads(res)
-        res = [{**i, "annotations": json.loads(i["annotations"])} for i in res]
+        res = [{**i, "annotations": [] if i["annotations"] is None else
+                json.loads(i["annotations"])} for i in res]
         return json.dumps(res)
 
     def audio_async(self, *args):
@@ -401,6 +402,33 @@ class AudioResultsBP(AudioAnnotatedBP):
 
     def upload(self, db, fname):
         return send_from_directory(upload_location, fname)
+
+class AudioConferenceBP(AudioWhisperBP, AudioResultsBP):
+    def audio_parse(self, db, rowid, fpath, answer, dump=False):
+        def wrapped(dump=False):
+            if dump:
+                return (db, rowid, fpath, answer)
+            reply = self.asr(fpath, answer)
+            db.execute(
+                f"INSERT INTO {self.asr_table} (ref, data) VALUES (?, ?)",
+                (rowid, json.dumps(reply)))
+            return False
+        if dump:
+            return wrapped()
+        return wrapped
+
+class AudioNopBP(AudioLogisticBP, AudioConferenceBP):
+    def audio_parse(self, db, rowid, fpath, answer, dump=False, data=None):
+        def wrapped(dump=False):
+            if dump:
+                return (db, rowid, fpath, answer, True, data)
+            return False
+        if dump:
+            return wrapped()
+        return wrapped
+
+    def audio_async(self, *args):
+        return self.audio_parse(*args)
 
 class AudioWhisperDebugBP(AudioResultsBP):
     def audio_next(self, db, cur, done=False):

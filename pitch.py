@@ -1,6 +1,6 @@
 import os.path, json, random
 from flask import Blueprint, request, session, abort
-from utils import Database, relpath, DatabaseBP
+from store import Database, relpath, DatabaseBP
 
 pitch_levels = 8
 pitch_files = relpath("metadata/pitch_jnd_files.csv")
@@ -25,7 +25,7 @@ class PitchDB(Database):
 
 pitch_keys = ("id", "f0", "level_number", "trial_number", "filename", "answer")
 pitch_trial_dict = lambda v: dict(zip(pitch_keys, v))
-pitch_url = lambda v: v and "/jnd/pitches/" + v
+pitch_url = lambda v: v and "pitches/" + v
 pitch_done = [0, 0, 0, 1, "", 1]
 
 def pitch_next(db, cur, left, sign=None):
