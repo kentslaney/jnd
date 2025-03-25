@@ -30,7 +30,7 @@ class APIBlueprint(DatabaseBP):
         db = lambda: self._blueprint_db
         self.projects = {
             "quick": QuickBP,
-            "pitch": PitchBP,
+            # "pitch": PitchBP,
             "nu6": Nu6BP,
             "azbio": AzBioBP,
             "cnc": CncBP,
@@ -42,7 +42,7 @@ class APIBlueprint(DatabaseBP):
         self._route_db("/username-available")(username_available)
         self._route_db("/set-username")(username_hook)
         self._route_db("/authorized", methods=["POST"])(authorized)
-        self._route_db("/lists")(self.audio_lists)
+        self._route_db("/lists", methods=["POST"])(self.audio_lists)
 
     def _bind_db(self, app):
         super()._bind_db(app)

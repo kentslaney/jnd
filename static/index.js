@@ -122,7 +122,7 @@ function claim_username() {
     })
 }
 
-fetch("api/lists").then(apijson).then(data => {
+fetch("api/lists", {method: "POST"}).then(apijson).then(data => {
   let parent = document.getElementById("project");
   Object.keys(data).forEach(x => {
     if (x === "") return;

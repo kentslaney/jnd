@@ -65,7 +65,7 @@ class AudioBP(DatabaseBP):
 
     def __init__(self, db, name, url_prefix):
         Blueprint.__init__(self, name, __name__, url_prefix=url_prefix)
-        self._route_db("/lists")(self.audio_lists)
+        self._route_db("/lists", methods=["POST"])(self.audio_lists)
         self._route_db("/start")(self.audio_start)
         self._route_db("/result", methods=["POST"])(self.audio_result)
         self._route_db("/recognized")(self.audio_recognized)
