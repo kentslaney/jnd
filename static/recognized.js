@@ -21,7 +21,7 @@ fetch(`api/${project}/recognized${window.location.search}`)
         "upload": `api/${project}/upload/${row["upload"]}`,
         "transcript": row["transcript"] === null ? null : asr_data["text"],
         "asr_data": asr_data,
-        "answer": row["answer"].split(","),
+        "answer": row["answer"].split(" "),
         "annotations": row["annotations"]
       });
     }
