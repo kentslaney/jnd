@@ -8,6 +8,7 @@ from projects import (
     AzBioDB, AzBioBP,
     CncDB, CncBP,
 )
+from review import ReviewBP
 
 # use multiple inheritance to add other DB hooks
 class ExperimentDB(PitchDB, QuickDB, Nu6DB, AzBioDB, CncDB):
@@ -34,6 +35,7 @@ class APIBlueprint(DatabaseBP):
             "nu6": Nu6BP,
             "azbio": AzBioBP,
             "cnc": CncBP,
+            "review": ReviewBP,
         }
         assert self.default_project in self.projects and "" not in self.projects
         for bp in self.projects.keys():

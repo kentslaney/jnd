@@ -25,8 +25,9 @@ class AudioDB(Database):
         cur = con.cursor()
         cur.executemany(
             f"INSERT INTO {cls.trials_table} "
-            f"({', '.join(cls.csv_keys)}) "
-            f"VALUES ({', '.join('?' * len(cls.csv_keys))})", experiments)
+            f"(project, {', '.join(cls.csv_keys)}) "
+            f"VALUES ({', '.join('?' * (len(cls.csv_keys) + 1))})",
+            [[cls.project_key] + i for i in experiments])
         con.commit()
 
     def _username_hook(self):
@@ -82,19 +83,20 @@ class AudioBP(DatabaseBP):
     def audio_lists(self, db):
         langs = [i[0] for i in db.queryall(
                 f"SELECT DISTINCT lang FROM {self.trials_table} "
-                "WHERE level_number=1")]
+                "WHERE project=? AND level_number=1", (self.project_key,))]
         lists = [i[0] for i in db.queryall(
                 f"SELECT lang || '-' || trial_number FROM {self.trials_table} "
-                "WHERE level_number=1")]
+                "WHERE project=? AND level_number=1", (self.project_key,))]
         return json.dumps(langs + lists)
 
     def audio_next(self, db, cur, done=None):
         level = json.loads(session["level"])
         session["level"] = json.dumps(level + 1)
         q = db.queryone(
-                f"SELECT * FROM {self.trials_table} WHERE "
+                f"SELECT {",".join(self.audio_keys)} "
+                f"FROM {self.trials_table} WHERE project=? AND "
                 "level_number=? AND trial_number=? AND lang=?",
-                (level + 1, cur['trial_number'], cur['lang']))
+                (self.project_key, level + 1, cur['trial_number'], cur['lang']))
         if q is None:
             q = self.audio_done
             self.audio_async(*done(True))
@@ -116,19 +118,21 @@ class AudioBP(DatabaseBP):
         lang, trial_number = json.loads(session["requested"])
         if trial_number is not None:
             cur = [db.queryone(
-                    f"SELECT * from {self.trials_table} WHERE "
+                    f"SELECT {",".join(self.audio_keys)} "
+                    f"from {self.trials_table} WHERE project=? AND "
                     "level_number=1 AND lang=? AND trial_number=?",
-                    (lang, trial_number))]
+                    (self.project_key, lang, trial_number))]
         else:
             cur = db.queryall(
-                f"SELECT * FROM {self.trials_table} WHERE "
+                f"SELECT {",".join(self.audio_keys)} "
+                f"FROM {self.trials_table} WHERE project=? AND "
                 "lang=? AND active=1 AND level_number=1 AND "
                 "trial_number NOT IN ("
                     f"SELECT trial_number FROM {self.results_table} "
                     f"LEFT JOIN {self.trials_table} "
                     f"ON {self.results_table}.trial={self.trials_table}.id "
                     "WHERE subject=? AND level_number=1)",
-                (lang, session["user"]))
+                (self.project_key, lang, session["user"]))
         if len(cur) == 0 or None in cur:
             abort(400)
         cur = self.audio_trial_dict(random.choice(cur))
@@ -195,7 +199,7 @@ class AudioBP(DatabaseBP):
             i[0] for i in sep[:-1]))
         return "".join(j + f(answer[i:k]) for (i, j), k in sep)
 
-    def audio_plotter(self, db, query="", args=()):
+    def audio_plotter(self, db, query="1", args=()):
         results = db.queryall(
             f"SELECT {self.trials_table}.snr, {self.asr_table}.data, "
             f"{self.trials_table}.answer FROM {self.results_table} "
@@ -203,8 +207,8 @@ class AudioBP(DatabaseBP):
                 f"ON {self.results_table}.trial={self.trials_table}.id "
             f"LEFT JOIN {self.asr_table} "
                 f"ON {self.results_table}.id={self.asr_table}.ref "
-            f"WHERE {self.asr_table}.data IS NOT NULL"
-            f"{query and ' AND ' + query}", args)
+            f"WHERE project=? AND {self.asr_table}.data IS NOT NULL AND "
+            f"{query}", (self.project_key,) + tuple(args))
         if len(results) == 0:
             abort(400)
         results = [(snr, self.proportion_correct(
@@ -215,7 +219,8 @@ class AudioBP(DatabaseBP):
         if "user" not in session:
             abort(400)
         return self.audio_recognize(
-            db, f" WHERE {self.results_table}.subject=?", (session["user"],))
+            db, f" WHERE project=? AND {self.results_table}.subject=?",
+            (self.project_key, session["user"]))
 
     def result_fields(self):
         return {
@@ -258,7 +263,7 @@ class AudioAnnotatedBP(AudioBP):
         self._route_db("/reset", methods=["POST"])(self.audio_reset)
         self._route_db("/effort", methods=["POST"])(self.audio_effort)
 
-    def audio_plotter(self, db, query="", args=()):
+    def audio_plotter(self, db, query="1", args=()):
         results = db.queryall(
             f"SELECT {self.trials_table}.snr, {self.annotations_table}.data "
             f"FROM {self.results_table} "
@@ -267,8 +272,9 @@ class AudioAnnotatedBP(AudioBP):
             f"LEFT JOIN {self.annotations_table} ON "
                 f"{self.results_table}.id={self.annotations_table}.ref "
             f"WHERE {self.annotations_table}.data IS NOT NULL "
-            f"AND {self.annotations_table}.data != ''"
-            f"{query and ' AND ' + query}", args)
+            f"AND {self.annotations_table}.data != '' AND "
+            f"{self.trials_table}.project=? AND {query}",
+            (self.project_key,) + tuple(args))
         if len(results) == 0:
             abort(400)
         results = [(snr, json.loads(data)) for snr, data in results]
@@ -282,8 +288,8 @@ class AudioAnnotatedBP(AudioBP):
             if dump:
                 return (db, rowid, fpath, answer, True, data)
             db.execute(
-                f"INSERT INTO {self.annotations_table} (ref, data) VALUES (?, ?)",
-                (rowid, data))
+                f"INSERT INTO {self.annotations_table} (ref, data) VALUES "
+                "(?, ?)", (rowid, data))
             return False # audiologist can end test when they want to
         if dump:
             return wrapped()
@@ -386,12 +392,14 @@ class AudioResultsBP(AudioAnnotatedBP):
 
     def audio_recognized(self, db):
         if request.args.get("user", None) == "all":
-            return self.audio_recognize(db)
+            return self.audio_recognize(
+                    db, f" WHERE project=?", (self.project_key,))
         if "user" not in session:
             abort(400)
         user = request.args.get("user", session["user"])
         return self.audio_recognize(
-            db, f" WHERE {self.results_table}.subject=?", (user,))
+            db, f" WHERE project=? AND {self.results_table}.subject=?",
+            (self.project_key, user))
 
     def audio_plot(self, db):
         user = request.args.get("user", session["user"])

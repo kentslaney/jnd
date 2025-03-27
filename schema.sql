@@ -49,8 +49,9 @@ CREATE TABLE pitch_results (
  * file, and contains the expected keywords (comma separated, with homonyms
  * separated by /).
  */
-CREATE TABLE quick_trials (
+CREATE TABLE audio_trials (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
+  project TEXT,
   snr INTEGER,
   lang TEXT,
   level_number INTEGER, /* which sentence in this list */
@@ -65,24 +66,24 @@ CREATE TABLE quick_trials (
  * points to user name and trial information (above).  The ASR response
  * links to entries in this table.
  */
-CREATE TABLE quick_results (
+CREATE TABLE audio_results (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   subject INTEGER,
   trial INTEGER,
   reply_filename TEXT,
   t TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY(subject) REFERENCES users(id),
-  FOREIGN KEY(trial) REFERENCES quick_trials(id)
+  FOREIGN KEY(trial) REFERENCES audio_trials(id)
 );
 
 /*
  * Table that describes the ASR response for a user trial.  Contains the ASR
  * response, and is keyed to the quick_results above.
  */
-CREATE TABLE quick_asr (
+CREATE TABLE audio_asr (
   ref INTEGER,
   data TEXT, /* JSON encoded dictionary of ASR Results */
-  FOREIGN KEY(ref) REFERENCES quick_results(id)
+  FOREIGN KEY(ref) REFERENCES audio_results(id)
 );
 
 /*
@@ -91,105 +92,16 @@ CREATE TABLE quick_asr (
  * ASR results in the quick_asr table.) Entries in this table are tied to the
  * quick_results table above.
  */
-CREATE TABLE quick_annotations (
+CREATE TABLE audio_annotations (
   ref INTEGER,
   data TEXT, /* Comma separated list of True/False by audiologist by keyword */
-  FOREIGN KEY(ref) REFERENCES quick_results(id)
+  FOREIGN KEY(ref) REFERENCES audio_results(id)
 );
 
-CREATE TABLE nu6_trials (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  lang TEXT,
-  level_number INTEGER,
-  trial_number INTEGER,
-  filename TEXT,
-  answer TEXT,
-  active BOOLEAN NOT NULL CHECK(active IN(0,1))
-);
-
-CREATE TABLE nu6_results (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  subject INTEGER,
-  trial INTEGER,
-  reply_filename TEXT,
-  t TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY(subject) REFERENCES users(id),
-  FOREIGN KEY(trial) REFERENCES nu6_trials(id)
-);
-
-CREATE TABLE nu6_asr (
+CREATE TABLE review_annotations (
   ref INTEGER,
   data TEXT,
-  FOREIGN KEY(ref) REFERENCES nu6_results(id)
+  labeler INTEGER,
+  FOREIGN KEY(ref) REFERENCES audio_results(id),
+  FOREIGN KEY(labeler) REFERENCES users(id)
 );
-
-CREATE TABLE nu6_annotations (
-  ref INTEGER,
-  data TEXT,
-  FOREIGN KEY(ref) REFERENCES nu6_results(id)
-);
-
-CREATE TABLE azbio_trials (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  lang TEXT,
-  level_number INTEGER,
-  trial_number INTEGER,
-  filename TEXT,
-  answer TEXT,
-  active BOOLEAN NOT NULL CHECK(active IN(0,1))
-);
-
-CREATE TABLE azbio_results (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  subject INTEGER,
-  trial INTEGER,
-  reply_filename TEXT,
-  t TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY(subject) REFERENCES users(id),
-  FOREIGN KEY(trial) REFERENCES azbio_trials(id)
-);
-
-CREATE TABLE azbio_asr (
-  ref INTEGER,
-  data TEXT,
-  FOREIGN KEY(ref) REFERENCES azbio_results(id)
-);
-
-CREATE TABLE azbio_annotations (
-  ref INTEGER,
-  data TEXT,
-  FOREIGN KEY(ref) REFERENCES azbio_results(id)
-);
-
-CREATE TABLE cnc_trials (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  lang TEXT,
-  level_number INTEGER,
-  trial_number INTEGER,
-  filename TEXT,
-  answer TEXT,
-  active BOOLEAN NOT NULL CHECK(active IN(0,1))
-);
-
-CREATE TABLE cnc_results (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  subject INTEGER,
-  trial INTEGER,
-  reply_filename TEXT,
-  t TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY(subject) REFERENCES users(id),
-  FOREIGN KEY(trial) REFERENCES cnc_trials(id)
-);
-
-CREATE TABLE cnc_asr (
-  ref INTEGER,
-  data TEXT,
-  FOREIGN KEY(ref) REFERENCES cnc_results(id)
-);
-
-CREATE TABLE cnc_annotations (
-  ref INTEGER,
-  data TEXT,
-  FOREIGN KEY(ref) REFERENCES cnc_results(id)
-);
-

@@ -412,7 +412,7 @@ class AnnotatedRecorder extends AutoEndingRecorder {
 }
 
 // TODO: prefetch answers
-class AnnotatedAudio extends AudioResults {
+class AnnotatedAudio extends Audio {
   #holding
   #holder = "#aux-data"
   options(answer) {
