@@ -27,7 +27,7 @@ def review_start(db):
     if len(q) > 1:
         q = random.choices(q, k=2)
     else:
-        q += [[0, "", ""]]
+        q += [[0, "", ""]] * (2 - len(q))
     session["cur"], session["q"] = map(json.dumps, q)
     return json.dumps({
         "cur": upload_url(q[0][1]),
