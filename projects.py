@@ -1,12 +1,15 @@
 from audio import AudioDB, AudioOutputBP
 from storage import relpath
 
-class QuickSpec:
-    trials_table = "quick_trials"
-    results_table = "quick_results"
-    asr_table = "quick_asr"
-    annotations_table = "quick_annotations"
+class AudioSpec:
+    trials_table = "audio_trials"
+    results_table = "audio_results"
+    asr_table = "audio_asr"
+    annotations_table = "audio_annotations"
+
+class QuickSpec(AudioSpec):
     audio_files = relpath("metadata/all_spin_index.csv")
+    project_key = "quick"
 
 class QuickDB(QuickSpec, AudioDB):
     csv_keys = (
@@ -26,12 +29,9 @@ class QuickBP(QuickSpec, AudioOutputBP):
     def __init__(self, db, name="quick", url_prefix="/quick"):
         super().__init__(db, name, url_prefix)
 
-class Nu6Spec:
-    trials_table = "nu6_trials"
-    results_table = "nu6_results"
-    asr_table = "nu6_asr"
-    annotations_table = "nu6_annotations"
+class Nu6Spec(AudioSpec):
     audio_files = relpath("metadata/NU6_transcript.csv")
+    project_key = "nu6"
 
 class Nu6DB(Nu6Spec, AudioDB):
     def db_init_hook(self):
@@ -42,12 +42,9 @@ class Nu6BP(Nu6Spec, AudioOutputBP):
     def __init__(self, db, name="nu6", url_prefix="/nu6"):
         super().__init__(db, name, url_prefix)
 
-class AzBioSpec:
-    trials_table = "azbio_trials"
-    results_table = "azbio_results"
-    asr_table = "azbio_asr"
-    annotations_table = "azbio_annotations"
+class AzBioSpec(AudioSpec):
     audio_files = relpath("metadata/AzBio_transcript.csv")
+    project_key = "azbio"
 
 class AzBioDB(AzBioSpec, AudioDB):
     def db_init_hook(self):
@@ -58,12 +55,9 @@ class AzBioBP(AzBioSpec, AudioOutputBP):
     def __init__(self, db, name="azbio", url_prefix="/azbio"):
         super().__init__(db, name, url_prefix)
 
-class CncSpec:
-    trials_table = "cnc_trials"
-    results_table = "cnc_results"
-    asr_table = "cnc_asr"
-    annotations_table = "cnc_annotations"
+class CncSpec(AudioSpec):
     audio_files = relpath("metadata/CNC_transcript.csv")
+    project_key = "cnc"
 
 class CncDB(CncSpec, AudioDB):
     def db_init_hook(self):
