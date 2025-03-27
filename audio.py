@@ -288,8 +288,8 @@ class AudioAnnotatedBP(AudioBP):
             if dump:
                 return (db, rowid, fpath, answer, True, data)
             db.execute(
-                f"INSERT INTO {self.annotations_table} (ref, data) VALUES (?, ?)",
-                (rowid, data))
+                f"INSERT INTO {self.annotations_table} (ref, data) VALUES "
+                "(?, ?)", (rowid, data))
             return False # audiologist can end test when they want to
         if dump:
             return wrapped()

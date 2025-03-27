@@ -98,3 +98,10 @@ CREATE TABLE audio_annotations (
   FOREIGN KEY(ref) REFERENCES audio_results(id)
 );
 
+CREATE TABLE review_annotations (
+  ref INTEGER,
+  data TEXT,
+  labeler INTEGER,
+  FOREIGN KEY(ref) REFERENCES audio_results(id),
+  FOREIGN KEY(labeler) REFERENCES users(id)
+);
