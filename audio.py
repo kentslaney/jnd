@@ -93,7 +93,7 @@ class AudioBP(DatabaseBP):
         level = json.loads(session["level"])
         session["level"] = json.dumps(level + 1)
         q = db.queryone(
-                f"SELECT {",".join(self.audio_keys)} "
+                f"SELECT {','.join(self.audio_keys)} "
                 f"FROM {self.trials_table} WHERE project=? AND "
                 "level_number=? AND trial_number=? AND lang=?",
                 (self.project_key, level + 1, cur['trial_number'], cur['lang']))
@@ -118,13 +118,13 @@ class AudioBP(DatabaseBP):
         lang, trial_number = json.loads(session["requested"])
         if trial_number is not None:
             cur = [db.queryone(
-                    f"SELECT {",".join(self.audio_keys)} "
+                    f"SELECT {','.join(self.audio_keys)} "
                     f"from {self.trials_table} WHERE project=? AND "
                     "level_number=1 AND lang=? AND trial_number=?",
                     (self.project_key, lang, trial_number))]
         else:
             cur = db.queryall(
-                f"SELECT {",".join(self.audio_keys)} "
+                f"SELECT {','.join(self.audio_keys)} "
                 f"FROM {self.trials_table} WHERE project=? AND "
                 "lang=? AND active=1 AND level_number=1 AND "
                 "trial_number NOT IN ("
