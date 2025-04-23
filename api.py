@@ -4,6 +4,7 @@ from storage import relpath, DatabaseBP
 from pitch import PitchDB, PitchBP
 from projects import (
     QuickDB, QuickBP,
+    Quick3dBDB, Quick3dBBP,
     Nu6DB, Nu6BP,
     AzBioDB, AzBioBP,
     CncDB, CncBP,
@@ -31,6 +32,7 @@ class APIBlueprint(DatabaseBP):
         db = lambda: self._blueprint_db
         self.projects = {
             "quick": QuickBP,
+            "quick3dB": Quick3dBBP,
             # "pitch": PitchBP,
             "nu6": Nu6BP,
             "azbio": AzBioBP,
