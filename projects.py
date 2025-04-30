@@ -29,17 +29,18 @@ class QuickBP(QuickSpec, AudioOutputBP):
     def __init__(self, db, name="quick", url_prefix="/quick"):
         super().__init__(db, name, url_prefix)
 
-# I'm not sure why there are three different, but related, classes.
-class QuickDB(QuickDB):
-    pass
-
-class Quick3dBBP(QuickBP):
-    def __init__(self, db, name="quick3dB", url_prefix="/quick"):
-        super().__init__(db, name, url_prefix)
-     
-class QuickSIN3dBSpec(AudioSpec):
+class Qs3Spec(AudioSpec):
     audio_files = relpath("metadata/QS3dB_transcript.csv")
     project_key = "qs3"
+
+class Qs3DB(Qs3Spec, AudioDB):
+    def db_init_hook(self):
+        super().db_init_hook()
+        self.parse_csv(__class__)
+
+class Qs3BP(Nu6Spec, AudioOutputBP):
+    def __init__(self, db, name="qs3", url_prefix="/qs3"):
+        super().__init__(db, name, url_prefix)
 
 class Nu6Spec(AudioSpec):
     audio_files = relpath("metadata/NU6_transcript.csv")
