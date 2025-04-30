@@ -38,7 +38,7 @@ class Qs3DB(Qs3Spec, AudioDB):
         super().db_init_hook()
         self.parse_csv(__class__)
 
-class Qs3BP(Nu6Spec, AudioOutputBP):
+class Qs3BP(Qs3Spec, AudioOutputBP):
     def __init__(self, db, name="qs3", url_prefix="/qs3"):
         super().__init__(db, name, url_prefix)
 
