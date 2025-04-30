@@ -67,5 +67,5 @@ if __name__ == "__main__":
         model_type = "default" if args.asr == "WhisperASR" else "prompted"
         deduplicate(model_name=args.model, model_type=model_type)
     
-    main(getattr(asr, args.asr)(args.model, args.dbfile))
+    main(getattr(asr, args.asr)(args.model), args.dbfile)
 
