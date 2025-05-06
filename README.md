@@ -20,11 +20,11 @@ To run offline ASR on the collected utterances (From Kent's account):
   python3 offline_asr.py --model tiny.en
 ```
 
-Colab that synthesizes the needed CSV transcript files is at:
-  https://colab.research.google.com/drive/1EOPHV74jawtxrZSQh94Dp5AFAGFt0Pkn?usp=sharing
+[Colab that synthesizes the needed CSV transcript files](
+https://colab.research.google.com/drive/1EOPHV74jawtxrZSQh94Dp5AFAGFt0Pkn?usp=sharing)
 
-Google drive folder with all the segmented data:
-  https://drive.google.com/drive/folders/1-fonvIACngqKWW3msZ5w6xU1ZhPqx8HD?usp=sharing
+[Google drive folder with all the segmented data](
+https://drive.google.com/drive/folders/1-fonvIACngqKWW3msZ5w6xU1ZhPqx8HD?usp=sharing)
 And within that the Web_Audio folder has the renamed data we play to subjects.
 
 To add a new test do the following:
