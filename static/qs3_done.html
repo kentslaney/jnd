@@ -6,31 +6,11 @@
     <link rel="stylesheet" href="vars.css" />
     <link rel="stylesheet" href="done.css" />
     <script type="text/javascript" src="done.js"></script>
-    <script type="text/javascript" src="quick_done.js"></script>
   </head>
   <body>
     <div id="content">
       That's all we need, thanks for your help
-      <form action="javascript:;" id="effort-case"
-          onsubmit="submit_effort()">
-        Subject Listening Effort (1-10):
-        <input type="number" id="effort" min="1" max="10" autofocus required />
-        <input type="submit" value="submit" />
-        <span id="effort-status"></span>
-      </form>
-      <div id="output">
-        Subject ID:
-        <span id="username" class="ajax-data"></span>
-        <br>
-        List Number:
-        <span id="trial_number" class="ajax-data"></span>
-        <br>
-        25.5 -
-        <span id="correct" class="ajax-data"></span>
-        <span id="total"></span>
-        =
-        <span id="score" class="ajax-data"></span>
-      </div>
+      <br />
       <a href="index.html">Start next patient</a>
       <a id="results" class="hidden">Results</a>
       <a id="recognized" class="hidden debug" href="#">
