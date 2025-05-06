@@ -14,9 +14,10 @@ class AudioDB(Database):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         os.makedirs(upload_location, exist_ok=True)
+        with self.app.app_context():
+            self.validate()
 
     def parse_csv(self, cls):
-        super().db_init_hook()
         assert os.path.exists(cls.audio_files)
         with open(cls.audio_files, "r") as f:
             experiments = [
@@ -29,6 +30,9 @@ class AudioDB(Database):
             f"VALUES ({', '.join('?' * (len(cls.csv_keys) + 1))})",
             [[cls.project_key] + i for i in experiments])
         con.commit()
+
+    def validate():
+        pass
 
     def _username_hook(self):
         res = getattr(super(), "_username_hook", lambda: None)()
