@@ -30,8 +30,8 @@ To add a new test do the following:
 2) Add the blueprint to the projects list and the database to the `ExperimentDB`
 inheritance in `api.py`
 3) Add new transcript to the metadata directory matching the path in the spec
-class (and migrate the database)
-4) Add the audio files to the server, but not the repo
-5) Add `static/[project].html` and replace the project name in the inline script
+class
+4) run `python migrate.py projects.[ProjectDBClass]`
+5) Add the audio files to the server, but not the repo
+6) Add `static/[project].html` and replace the project name in the inline script
 tag and add `static/[project]_done.html`
-6) run `python migrate.py projects.[ProjectDBClass]`
