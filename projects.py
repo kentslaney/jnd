@@ -1,11 +1,28 @@
 from audio import AudioDB, AudioOutputBP
 from storage import relpath
+import pathlib, warnings
 
 class AudioSpec:
     trials_table = "audio_trials"
     results_table = "audio_results"
     asr_table = "audio_asr"
     annotations_table = "audio_annotations"
+
+    def validate(self):
+        files = self.queryall(
+                f"SELECT project, filename FROM {__class__.trials_table}")
+        if not files:
+            return
+        missing = []
+        for project, file in files:
+            path = pathlib.Path(relpath("static", project, file))
+            if not path.exists():
+                missing.append(path)
+        if not missing:
+            return
+        common = [all(i[0] == j for j in i) for i in zip(*map(str, missing))]
+        pre = str(missing[0])[:min(range(len(common)), key=lambda x: common[x])]
+        warnings.warn(f"missing {len(missing)} files at {pre}[...]")
 
 class QuickSpec(AudioSpec):
     audio_files = relpath("metadata/all_spin_index.csv")
