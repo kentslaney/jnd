@@ -4,6 +4,7 @@ from storage import relpath, DatabaseBP
 from pitch import PitchDB, PitchBP
 from projects import (
     QuickDB, QuickBP,
+    Qs3DB, Qs3BP,
     Nu6DB, Nu6BP,
     AzBioDB, AzBioBP,
     CncDB, CncBP,
@@ -11,7 +12,7 @@ from projects import (
 from review import ReviewBP
 
 # use multiple inheritance to add other DB hooks
-class ExperimentDB(PitchDB, QuickDB, Nu6DB, AzBioDB, CncDB):
+class ExperimentDB(PitchDB, QuickDB, Qs3DB, Nu6DB, AzBioDB, CncDB):
     def _username_hook(self):
         res = set_username(self)
         super()._username_hook()
@@ -31,6 +32,7 @@ class APIBlueprint(DatabaseBP):
         db = lambda: self._blueprint_db
         self.projects = {
             "quick": QuickBP,
+            "qs3": Qs3BP,
             # "pitch": PitchBP,
             "nu6": Nu6BP,
             "azbio": AzBioBP,
