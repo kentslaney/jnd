@@ -1,6 +1,7 @@
 Flask
-OpenAI-whisper
+# OpenAI-whisper  # Instead try: pip install git+https://github.com/openai/whisper.git  
 matplotlib
 numpy
 scipy
+uWSGI
 
