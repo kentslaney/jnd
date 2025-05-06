@@ -15,7 +15,7 @@ class AudioSpec:
             return
         missing = []
         for project, file in files:
-            path = pathlib.Path(relpath("static", project, file))
+            path = pathlib.Path(relpath("static", "audio", project, file))
             if not path.exists():
                 missing.append(path)
         if not missing:

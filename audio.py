@@ -63,7 +63,7 @@ class AudioBP(DatabaseBP):
     audio_done = [1, "--", 0, 1, "", 1]
 
     def audio_url(self, v):
-        return v and self.url_prefix.lstrip("/") + "/" + v
+        return v and os.path.join(self.url_prefix.lstrip("/"), "audio", v)
 
     def audio_trial_dict(self, v):
         return dict(zip(self.audio_keys, v))

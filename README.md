@@ -26,12 +26,12 @@ Google drive folder with all the segmented data:
 https://drive.google.com/file/d/13jEsPhXe3BDUxHWO3Z0R3AMMfE6QDjAU/view?usp=drive_link
 
 To add a new test do the following:
-1) Add new spec, blueprint and database classes for the project to `projects.py`.
-2) Add the blueprint to the projects list and the database to the `ExperimentDB`
-inheritance in `api.py`
-3) Add new transcript to the metadata directory matching the path in the spec
-class
+1) Add new transcript to `metadata` matching the path in the spec class below
+2) In `projects.py`, add a new spec, blueprint and database classes for the
+project
+3) In `api.py`, add the blueprint to `APIBlueprint.projects` and the new
+database class to the `ExperimentDB` parents
 4) run `python migrate.py projects.[ProjectDBClass]`
-5) Add the audio files to the server, but not the repo
+5) Add the audio files to `static/audio/[project]/*.wav`
 6) Add `static/[project].html` and replace the project name in the inline script
 tag and add `static/[project]_done.html`

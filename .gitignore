@@ -1,10 +1,6 @@
 nohup.out
 /secret_key
-/static/pitches
-/static/quick
-/static/azbio
-/static/cnc
-/static/nu6
+/static/audio
 /experiments.db
 /uploads
 
