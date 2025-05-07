@@ -18,5 +18,7 @@ print("\n".join(f"{y}/{m:02}/{d:02}: {t: 4.2f}" for (y, m, d), t in days))
 print("            -----")
 
 total = sum(list(zip(*days))[1])
-print(f"{total: 17.2f} = ${total * 20:.2f}")
+rate = 20
+print(f"{total: 17.2f} * {rate} = ${total * rate:.2f}")
+print("https://www.paloalto.gov/Business/Business-Resources/Minimum-Wage")
 
