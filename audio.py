@@ -21,7 +21,8 @@ class AudioDB(Database):
         assert os.path.exists(cls.audio_files)
         with open(cls.audio_files, "r") as f:
             experiments = [
-                [part.strip() for part in line.split(",")] for line in f]
+                [part.strip() for part in line.split(
+                    ",", len(cls.csv_keys) - 1)] for line in f]
         con = self.get()
         cur = con.cursor()
         cur.executemany(
@@ -63,7 +64,7 @@ class AudioBP(DatabaseBP):
     audio_done = [1, "--", 0, 1, "", 1]
 
     def audio_url(self, v):
-        return v and "audio" + self.url_prefix + "/" + v
+        return v and "audio/" + v
 
     def audio_trial_dict(self, v):
         return dict(zip(self.audio_keys, v))

@@ -1,7 +1,6 @@
 import json, sqlite3, unicodedata, uuid
 from flask import request, session, abort
 from storage import relpath, DatabaseBP
-from pitch import PitchDB, PitchBP
 from projects import (
     QuickDB, QuickBP,
     Qs3DB, Qs3BP,
@@ -12,7 +11,7 @@ from projects import (
 from review import ReviewBP
 
 # use multiple inheritance to add other DB hooks
-class ExperimentDB(PitchDB, QuickDB, Qs3DB, Nu6DB, AzBioDB, CncDB):
+class ExperimentDB(QuickDB, Qs3DB, Nu6DB, AzBioDB, CncDB):
     def _username_hook(self):
         res = set_username(self)
         super()._username_hook()
@@ -33,7 +32,6 @@ class APIBlueprint(DatabaseBP):
         self.projects = {
             "quick": QuickBP,
             "qs3": Qs3BP,
-            # "pitch": PitchBP,
             "nu6": Nu6BP,
             "azbio": AzBioBP,
             "cnc": CncBP,
