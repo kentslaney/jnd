@@ -29,7 +29,10 @@ def update(con: sqlite3.Connection, rowid: int, res: str):
 def main(asr, db_file: str):
     con = sqlite3.connect(db_file)
     for rowid, fname, ans in tqdm(audio_queue(con)):
-        update(con, rowid, asr(str(basename / "uploads" / fname)))
+        print(f'\nRecognizing: Row {rowid} from {fname}')
+        asr_result = asr(str(basename / "uploads" / fname))
+        print(f' Got back {asr_result}')
+        update(con, rowid, asr_result)
 
 def deduplicate(**kw):
     dup, sep = "json_extract(data, '$.' || ?) = ?", " AND "

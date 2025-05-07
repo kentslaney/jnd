@@ -24,6 +24,8 @@ class AudioSpec:
         pre = str(missing[0])[:min(range(len(common)), key=lambda x: common[x])]
         eg = str(missing[0])[len(pre):]
         warnings.warn(f"missing {len(missing)} files at {pre}[...] (eg {eg})")
+        for m in missing:
+            print(m)
 
 class QuickSpec(AudioSpec):
     audio_files = relpath("metadata/all_spin_index.csv")
