@@ -39,7 +39,32 @@ database class to the `ExperimentDB` parents
 tag and add `static/[project]_done.html`
 
 ## OAuth
-1) update owner id in `protected.py`:
+1) [login client](https://github.com/kentslaney/login/) (as a sibling to jnd):
+```bash
+git clone git@github.com:kentslaney/login
+```
+
+2) [Google OAuth credentials page](
+https://console.cloud.google.com/apis/credentials) Web application replacing
+`sub.domain.tld` with the real subdomain
+
+Authorized JavaScript origins: `https://sub.domain.tld`
+
+Authorized redirect URIs: `https://sub.domain.tld/login/google/authorized`
+
+3) put the resulting credentials in `login/run/credentials.json`:
+```json
+{
+    "google": {"id": "username", "secret": "API key"}
+}
+```
+
+4) in `login`
+```bash
+sh server.sh start
+```
+
+5) update owner id in `protected.py`:
 ```
 malcolmslaney@gmail.com 110909794990702804159
 mslaney@stanford.edu    100987618575971262389
@@ -47,37 +72,12 @@ Varsha Mysore Athreya   114354889327043931514
 Matthew Fitzgerald      101607400393342786056
 ```
 
-2) update `protected.py`'s value for `login_required.prefix` to the real
+6) update `protected.py`'s value for `login_required.prefix` to the real
 subdomain
 
-3) [login client](https://github.com/kentslaney/login/) (as a sibling to jnd):
-```
-git clone git@github.com:kentslaney/login
-```
-
-4) [Google OAuth credentials page](
-https://console.cloud.google.com/apis/credentials) Web application replacing
-`sub.domain.tld` with the subdomain used in `protected.py`
-```
-Authorized JavaScript origins: https://sub.domain.tld
-Authorized redirect URIs: https://sub.domain.tld/login/google/authorized
-```
-
-5) put the resulting credentials in `login/run/credentials.json`:
-```
-{
-    "google|facebook|github": {"id": "username", "secret": "API key"},
-}
-```
-
-6) with the environment running the QuickSIN server:
+7) with the environment running the QuickSIN server:
 ```bash
 pip install -e path/to/login # ../login probably
-```
-
-7) in `login`
-```bash
-sh server.sh start
 ```
 
 8) change `server.sh` from `uwsgi.ini` to `login.ini` and start the QuickSIN
