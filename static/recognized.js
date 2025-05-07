@@ -17,7 +17,7 @@ fetch(`api/${project}/recognized${window.location.search}`)
       asr_data = row["transcript"] === null ? null :
         JSON.parse(row["transcript"]);
       users[row["subject"]]["results"].push({
-        "prompt": `${project}/${row["prompt"]}`,
+        "prompt": `audio/${project}/${row["prompt"]}`,
         "upload": `api/${project}/upload/${row["upload"]}`,
         "transcript": row["transcript"] === null ? null : asr_data["text"],
         "asr_data": asr_data,
