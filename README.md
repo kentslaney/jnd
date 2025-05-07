@@ -24,7 +24,7 @@ To run offline ASR on the collected utterances (From Kent's account):
 https://colab.research.google.com/drive/1EOPHV74jawtxrZSQh94Dp5AFAGFt0Pkn?usp=sharing)
 
 [Google drive folder with all the segmented data](
-https://drive.google.com/drive/folders/1-fonvIACngqKWW3msZ5w6xU1ZhPqx8HD?usp=sharing)
+https://drive.google.com/drive/folders/1XfQn3eAjBY6h9Q7wruck7zqJVS7cCEQG)
 And within that the Web_Audio folder has the renamed data we play to subjects.
 
 To add a new test do the following:
