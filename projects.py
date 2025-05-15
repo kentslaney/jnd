@@ -106,3 +106,16 @@ class CncDB(CncSpec, AudioDB):
 class CncBP(CncSpec, AudioOutputBP):
     def __init__(self, db, name="cnc", url_prefix="/cnc"):
         super().__init__(db, name, url_prefix)
+
+class WinSpec(AudioSpec):
+    audio_files = relpath("metadata/win_transcript.csv")
+    project_key = "win"
+
+class WinDB(WinSpec, AudioDB):
+    def db_init_hook(self):
+        super().db_init_hook()
+        self.parse_csv(__class__)
+
+class WinBP(WinSpec, AudioOutputBP):
+    def __init__(self, db, name="win", url_prefix="/win"):
+        super().__init__(db, name, url_prefix)

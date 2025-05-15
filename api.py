@@ -8,6 +8,7 @@ from projects import (
     Nu6DB, Nu6BP,
     AzBioDB, AzBioBP,
     CncDB, CncBP,
+    WinDB, WinBP,
 )
 from review import ReviewBP
 
@@ -37,6 +38,7 @@ class APIBlueprint(DatabaseBP):
             "nu6": Nu6BP,
             "azbio": AzBioBP,
             "cnc": CncBP,
+            "win": WinBP,
             "review": ReviewBP,
         }
         assert self.default_project in self.projects and "" not in self.projects
