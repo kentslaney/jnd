@@ -15,14 +15,15 @@ class AudioSpec:
             return
         missing = []
         for project, file in files:
-            path = pathlib.Path(relpath("static", "audio", project, file))
+            path = pathlib.Path(relpath("static", "audio", file))
             if not path.exists():
                 missing.append(path)
         if not missing:
             return
         common = [all(i[0] == j for j in i) for i in zip(*map(str, missing))]
         pre = str(missing[0])[:min(range(len(common)), key=lambda x: common[x])]
-        warnings.warn(f"missing {len(missing)} files at {pre}[...]")
+        eg = str(missing[0])[len(pre):]
+        warnings.warn(f"missing {len(missing)} files at {pre}[...] (eg {eg})")
 
 class QuickSpec(AudioSpec):
     audio_files = relpath("metadata/all_spin_index.csv")
@@ -47,7 +48,7 @@ class QuickBP(QuickSpec, AudioOutputBP):
         super().__init__(db, name, url_prefix)
 
 class Qs3Spec(AudioSpec):
-    audio_files = relpath("metadata/QS3dB_transcript.csv")
+    audio_files = relpath("metadata/qs3db_transcript.csv")
     project_key = "qs3"
 
 class Qs3DB(Qs3Spec, AudioDB):
@@ -69,7 +70,7 @@ class Qs3BP(Qs3Spec, AudioOutputBP):
         super().__init__(db, name, url_prefix)
 
 class Nu6Spec(AudioSpec):
-    audio_files = relpath("metadata/NU6_transcript.csv")
+    audio_files = relpath("metadata/nu6_transcript.csv")
     project_key = "nu6"
 
 class Nu6DB(Nu6Spec, AudioDB):
@@ -82,7 +83,7 @@ class Nu6BP(Nu6Spec, AudioOutputBP):
         super().__init__(db, name, url_prefix)
 
 class AzBioSpec(AudioSpec):
-    audio_files = relpath("metadata/AzBio_transcript.csv")
+    audio_files = relpath("metadata/azbio_transcript.csv")
     project_key = "azbio"
 
 class AzBioDB(AzBioSpec, AudioDB):
@@ -95,7 +96,7 @@ class AzBioBP(AzBioSpec, AudioOutputBP):
         super().__init__(db, name, url_prefix)
 
 class CncSpec(AudioSpec):
-    audio_files = relpath("metadata/CNC_transcript.csv")
+    audio_files = relpath("metadata/cnc_transcript.csv")
     project_key = "cnc"
 
 class CncDB(CncSpec, AudioDB):

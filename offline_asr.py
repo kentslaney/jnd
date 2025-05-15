@@ -8,13 +8,13 @@ import asr
 
 basename = pathlib.Path(__file__).parents[0]
 
-def quick_queue(con: sqlite3.Connection):
+def audio_queue(con: sqlite3.Connection):
     cur = con.execute(
-            "SELECT quick_results.id, reply_filename, answer "
-            "FROM quick_results "
-            "LEFT JOIN quick_trials ON quick_results.trial = quick_trials.id "
-            "LEFT JOIN quick_asr ON quick_results.id=quick_asr.ref "
-            "WHERE quick_asr.data IS NULL OR quick_asr.data = ''")
+            "SELECT audio_results.id, reply_filename, answer "
+            "FROM audio_results "
+            "LEFT JOIN audio_trials ON audio_results.trial = audio_trials.id "
+            "LEFT JOIN audio_asr ON audio_results.id=audio_asr.ref "
+            "WHERE audio_asr.data IS NULL OR audio_asr.data = ''")
     q = cur.fetchall()
     cur.close()
     return q
@@ -22,13 +22,13 @@ def quick_queue(con: sqlite3.Connection):
 def update(con: sqlite3.Connection, rowid: int, res: str):
     res = json.dumps(res)
     cur = con.cursor()
-    cur.execute("INSERT INTO quick_asr (ref, data) VALUES (?, ?)", (rowid, res))
+    cur.execute("INSERT INTO audio_asr (ref, data) VALUES (?, ?)", (rowid, res))
     con.commit()
     cur.close()
 
 def main(asr, db_file: str):
     con = sqlite3.connect(db_file)
-    for rowid, fname, ans in tqdm(quick_queue(con)):
+    for rowid, fname, ans in tqdm(audio_queue(con)):
         update(con, rowid, asr(str(basename / "uploads" / fname)))
 
 def deduplicate(**kw):
@@ -36,7 +36,7 @@ def deduplicate(**kw):
     clause = sep.join((dup,) * len(kw))
     args = sum(kw.items(), ())
     cur = con.cursor()
-    cur.execute("DELETE FROM quick_asr WHERE " + clause, args)
+    cur.execute("DELETE FROM audio_asr WHERE " + clause, args)
     con.commit()
     cur.close()
 
