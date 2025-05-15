@@ -13,7 +13,7 @@ from projects import (
 from review import ReviewBP
 
 # use multiple inheritance to add other DB hooks
-class ExperimentDB(PitchDB, QuickDB, Qs3DB, Nu6DB, AzBioDB, CncDB):
+class ExperimentDB(PitchDB, QuickDB, Qs3DB, Nu6DB, AzBioDB, CncDB, WinDB):
     def _username_hook(self):
         res = set_username(self)
         super()._username_hook()

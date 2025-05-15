@@ -43,8 +43,10 @@ To add a new type of audio test do the following:
   class below
 2) In `projects.py`, add a new spec, blueprint and database classes for the
   project
-3) In `api.py`, add the blueprint class name to `APIBlueprint.projects` and the 
-  new database class to the `ExperimentDB` parents
+3) In `api.py`, 
+    a) add the database and blueprint class to the import at the top, 
+    b) add the new database class to the `ExperimentDB` parents,
+    b) add the blueprint class name to the dictionary of `APIBlueprint.projects`
 4) run `python migrate.py projects.[ProjectDBClass]` (subclass of AudioDB)
 5) Add the audio files to `static/audio/[project]/*.wav`
 6) Add `static/[project].html` and replace the project name in the inline script
