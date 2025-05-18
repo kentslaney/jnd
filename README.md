@@ -49,7 +49,7 @@ To add a new type of audio test do the following:
     3. Add the blueprint class name to the dictionary of `APIBlueprint.projects`
 4. Run `python migrate.py projects.[ProjectDBClass]` (subclass of AudioDB)
 5. Add the audio files to `static/audio/[project]/*.wav`
-6. Add `static/[project].html` and replace the project name in the inline script tag and add `static/[project]_done.html`
+6. Add `static/[project].html`, replace the project name in the inline script tag (let audio =..), and add `static/[project]_done.html`
 
 ## OAuth
 1) [login client](https://github.com/kentslaney/login/) (as a sibling to jnd):
