@@ -40,6 +40,7 @@ And within that the Web_Audio folder has the renamed data we play to subjects.
 
 ## Adding tests
 To add a new type of audio test do the following:
+1. Add a section to the [colab](https://colab.research.google.com/drive/1EOPHV74jawtxrZSQh94Dp5AFAGFt0Pkn?usp=sharing) to create the transcript for the new test data.
 1. Add new transcript to the `metadata` folder matching the path in the spec class below
 2. In `projects.py`, add a new spec, blueprint and database classes for the project
 3. In `api.py`, 
@@ -48,7 +49,7 @@ To add a new type of audio test do the following:
     3. Add the blueprint class name to the dictionary of `APIBlueprint.projects`
 4. Run `python migrate.py projects.[ProjectDBClass]` (subclass of AudioDB)
 5. Add the audio files to `static/audio/[project]/*.wav`
-6. Add `static/[project].html` and replace the project name in the inline script tag and add `static/[project]_done.html`
+6. Add `static/[project].html`, replace the project name in the inline script tag (let audio =..), and add `static/[project]_done.html`
 
 ## OAuth
 1) [login client](https://github.com/kentslaney/login/) (as a sibling to jnd):

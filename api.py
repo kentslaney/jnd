@@ -6,13 +6,14 @@ from projects import (
     Qs3DB, Qs3BP,
     Nu6DB, Nu6BP,
     AzBioDB, AzBioBP,
+    AzBioQuietDB, AzBioQuietBP,
     CncDB, CncBP,
     WinDB, WinBP,
 )
 from review import ReviewBP
 
 # use multiple inheritance to add other DB hooks
-class ExperimentDB(QuickDB, Qs3DB, Nu6DB, AzBioDB, CncDB, WinDB):
+class ExperimentDB(QuickDB, Qs3DB, Nu6DB, AzBioDB, AzBioQuietDB, CncDB, WinDB):
     def _username_hook(self):
         res = set_username(self)
         super()._username_hook()
@@ -35,6 +36,7 @@ class APIBlueprint(DatabaseBP):
             "qs3": Qs3BP,
             "nu6": Nu6BP,
             "azbio": AzBioBP,
+            "azbio_quiet": AzBioQuietBP,
             "cnc": CncBP,
             "win": WinBP,
             "review": ReviewBP,
