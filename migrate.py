@@ -2,21 +2,19 @@ import sys, os, importlib, json, subprocess
 from storage import relpath
 from flask import Flask
 
-def main(args):
-    assert "." in args.qualname
-    assert os.path.exists(args.database)
-    module, attr = args.qualname.rsplit(".", 1)
+def main(qualname, database, rewrite):
+    assert "." in qualname
+    assert os.path.exists(database)
+    module, attr = qualname.rsplit(".", 1)
 
     sys.path.insert(0, relpath())
     db = getattr(importlib.import_module(module), attr)
 
     app = Flask(__name__)
-    db = db(app, args.database, None)
+    db = db(app, database, None)
     with app.app_context():
-        if args.rewrite:
-            db.execute(
-                    "DELETE FROM audio_trials WHERE project=?",
-                    (db.project_key,))
+        if rewrite:
+            db.upserting = True
         db.db_init_hook()
 
 if __name__ == "__main__":
@@ -27,7 +25,7 @@ if __name__ == "__main__":
     parser.add_argument("--rewrite", action="store_true")
     args = parser.parse_args()
     if args.qualname is not None:
-        main(args)
+        main(args.qualname, args.database, args.rewrite)
         exit(0)
     from audio import AudioDB
     with open(relpath("migrations.json")) as fp:
@@ -62,4 +60,7 @@ if __name__ == "__main__":
                         db.execute(create.rstrip(b'\x00').decode())
                 elif cmd == "cmd":
                     db.execute("".join(args))
+                elif cmd == "update":
+                    for arg in args:
+                        main(arg, args.database, args.rewrite)
         db.db_init_hook()

@@ -10,12 +10,21 @@ upload_location = relpath("uploads")
 class AudioDB(Database):
     csv_keys = (
         "active", "lang", "trial_number", "level_number", "filename", "answer")
+    id_keys = {"lang", "trial_number", "level_number"}
+    upserting = False
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         os.makedirs(upload_location, exist_ok=True)
         with self.app.app_context():
             self.validate()
+
+    def conflict_clause(self, cls):
+        if not self.upserting:
+            return ""
+        return " ON CONFLICT DO UPDATE SET " + ", ".join(
+                f"{i} = excluded.{i}" for i in cls.csv_keys
+                if i not in cls.id_keys)
 
     def parse_csv(self, cls):
         assert os.path.exists(cls.audio_files)
@@ -28,7 +37,8 @@ class AudioDB(Database):
         cur.executemany(
             f"INSERT INTO {cls.trials_table} "
             f"(project, {', '.join(cls.csv_keys)}) "
-            f"VALUES ({', '.join('?' * (len(cls.csv_keys) + 1))})",
+            f"VALUES ({', '.join('?' * (len(cls.csv_keys) + 1))})"
+            f"{self.conflict_clause(cls)}",
             [[cls.project_key] + i for i in experiments])
         con.commit()
 
