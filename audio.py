@@ -1,4 +1,4 @@
-import os, os.path, json, random, functools, uuid
+import os, os.path, json, random, functools, uuid, subprocess
 from flask import (
     Blueprint, request, session, abort, redirect, Response, send_from_directory)
 from storage import Database, relpath, DatabaseBP
@@ -32,8 +32,20 @@ class AudioDB(Database):
             [[cls.project_key] + i for i in experiments])
         con.commit()
 
-    def validate():
+    def validate(self):
         pass
+
+    @staticmethod
+    def commits():
+        return subprocess.check_output(
+                "git log | grep ^commit | cut -d' ' -f 2",
+                shell=True, cwd=relpath()).decode().strip().split()
+
+    def db_init_hook(self):
+        self.execute(
+                "INSERT INTO version (id, hash) VALUES (1, ?) "
+                "ON CONFLICT (id) DO UPDATE SET hash = excluded.hash",
+                self.commits()[:1])
 
     def _username_hook(self):
         res = getattr(super(), "_username_hook", lambda: None)()

@@ -1,0 +1,7 @@
+[
+    ["be3d4a5",
+        ["table", "version"],
+        ["cmd", "CREATE UNIQUE INDEX audio_trial ON audio_trials ",
+            "(project, lang, level_number, trial_number)"]
+    ]
+]

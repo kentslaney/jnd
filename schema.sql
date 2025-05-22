@@ -4,6 +4,11 @@
  * https://pubs.aip.org/asa/jel/article/4/9/095202/3311832/Comparing-human-and-machine-speech-recognition-in
  */
 
+CREATE TABLE version (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    hash TEXT
+);
+
 /*
  * Table that describes one user.
  */
@@ -60,6 +65,9 @@ CREATE TABLE audio_trials (
   answer TEXT, /* Ground truth answer */
   active BOOLEAN NOT NULL CHECK(active IN(0,1)) /* version control */
 );
+
+CREATE UNIQUE INDEX audio_trial ON audio_trials (
+    project, lang, level_number, trial_number);
 
 /*
  * Table that describes one trial (play one sound, get one response.)
