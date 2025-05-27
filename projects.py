@@ -98,7 +98,7 @@ class AzBioBP(AzBioSpec, AudioOutputBP):
 
 # AzBio in Quiet
 class AzBioQuietSpec(AudioSpec):
-    audio_files = relpath("metadata/azbio_transcript.csv")
+    audio_files = relpath("metadata/azbio_quiet_transcript.csv")
     project_key = "azbio_quiet"
 
 class AzBioQuietDB(AzBioQuietSpec, AudioDB):
