@@ -27,7 +27,11 @@ class AudioSpec:
         warnings.warn(f"missing {len(missing)} files at {pre}[...] (eg {eg})")
 
 class QuickSpec(AudioSpec):
+<<<<<<< HEAD
     audio_files = relpath("metadata/quicksin_transcript.csv")
+=======
+    audio_files = relpath("metadata/quicksin_index.csv")
+>>>>>>> 5a277fd (Update migrate instructions)
     project_key = "quick"
 
 class QuickDB(QuickSpec, AudioDB):
