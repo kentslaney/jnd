@@ -47,9 +47,13 @@ To add a new type of audio test do the following:
     1. Add the database and blueprint class to the import at the top, 
     2. Add the new database class to the `ExperimentDB` parents,
     3. Add the blueprint class name to the dictionary of `APIBlueprint.projects`
-4. Run `python migrate.py projects.[ProjectDBClass]` (subclass of AudioDB)
-5. Add the audio files to `static/audio/[project]/*.wav`
-6. Add `static/[project].html`, replace the project name in the inline script tag (let audio =..), and add `static/[project]_done.html`
+4. To install a new test
+    1. Run `python migrate.py projects.[ProjectDBClass]` (subclass of AudioDB)
+5. To update an existing database (online test) do the following:
+    1. Run `python migrate.py  # No extra arguments`
+    2. Run `python migrate.py projects.[ProjectDBClass] --rewrite`
+6. Add the audio files to `static/audio/[project]/*.wav`
+7. Add `static/[project].html`, replace the project name in the inline script tag (let audio =..), and add `static/[project]_done.html`
 
 ## OAuth
 1) [login client](https://github.com/kentslaney/login/) (as a sibling to jnd):
