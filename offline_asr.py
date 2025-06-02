@@ -37,7 +37,8 @@ def main(asr_engine: asr.WhisperASREngine, db_file: str):
             print(f"An error occurred: {e}")
             print('While processing', str(basename / "uploads" / fname))
 
-def deduplicate(**kw):
+def deduplicate(db_file: str, **kw):
+    con = sqlite3.connect(db_file)
     dup, sep = "json_extract(data, '$.' || ?) = ?", " AND "
     clause = sep.join((dup,) * len(kw))
     args = sum(kw.items(), ())
@@ -71,7 +72,7 @@ if __name__ == "__main__":
 
     if args.force:
         model_type = "default" if args.asr == "WhisperASR" else "prompted"
-        deduplicate(model_name=args.model, model_type=model_type)
+        deduplicate(args.dbfile, model_name=args.model, model_type=model_type)
     
     main(getattr(asr, args.asr)(args.model), args.dbfile)
 
