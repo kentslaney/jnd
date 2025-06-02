@@ -28,10 +28,14 @@ class AudioSpec:
 
 class QuickSpec(AudioSpec):
 <<<<<<< HEAD
+<<<<<<< HEAD
     audio_files = relpath("metadata/quicksin_transcript.csv")
 =======
     audio_files = relpath("metadata/quicksin_index.csv")
 >>>>>>> 5a277fd (Update migrate instructions)
+=======
+    audio_files = relpath("metadata/quicksin_index.csv")
+>>>>>>> 0ade22a (Move all_spin_index to quicksin_transcript.csv to match other tests.)
     project_key = "quick"
 
 class QuickDB(QuickSpec, AudioDB):
