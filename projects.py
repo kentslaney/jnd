@@ -9,6 +9,7 @@ class AudioSpec:
     annotations_table = "audio_annotations"
 
     def validate(self):
+        """Check to make sure all needed audio files exist on disk."""
         files = self.queryall(
                 f"SELECT project, filename FROM {__class__.trials_table}")
         if not files:
