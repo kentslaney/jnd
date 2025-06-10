@@ -9,6 +9,7 @@ class AudioSpec:
     annotations_table = "audio_annotations"
 
     def validate(self):
+        """Check to make sure all needed audio files exist on disk."""
         files = self.queryall(
                 f"SELECT project, filename FROM {__class__.trials_table}")
         if not files:
@@ -26,7 +27,7 @@ class AudioSpec:
         warnings.warn(f"missing {len(missing)} files at {pre}[...] (eg {eg})")
 
 class QuickSpec(AudioSpec):
-    audio_files = relpath("metadata/all_spin_index.csv")
+    audio_files = relpath("metadata/quicksin_transcript.csv")
     project_key = "quick"
 
 class QuickDB(QuickSpec, AudioDB):
