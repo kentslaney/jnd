@@ -58,7 +58,7 @@ To add a new type of audio test do the following:
 ## OAuth
 1) [login client](https://github.com/kentslaney/login/) (as a sibling to jnd):
 ```bash
-git clone git@github.com:kentslaney/login
+https://github.com/kentslaney/login.git
 ```
 
 2) [Google OAuth credentials page](
