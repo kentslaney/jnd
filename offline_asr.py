@@ -17,6 +17,7 @@ def audio_queue(con: sqlite3.Connection):
             "WHERE audio_asr.data IS NULL OR audio_asr.data = ''")
     q = cur.fetchall()
     cur.close()
+    print(f'Need to perform ASR on {len(q)} trials.')
     return q
 
 def update(con: sqlite3.Connection, rowid: int, res: str):
@@ -26,10 +27,15 @@ def update(con: sqlite3.Connection, rowid: int, res: str):
     con.commit()
     cur.close()
 
-def main(asr, db_file: str):
+def main(asr_engine: asr.WhisperASREngine, db_file: str):
     con = sqlite3.connect(db_file)
     for rowid, fname, ans in tqdm(audio_queue(con)):
-        update(con, rowid, asr(str(basename / "uploads" / fname)))
+        try:
+            update(con, rowid, asr_engine(str(basename / "uploads" / fname)))
+        except RuntimeError as e:
+            # Code to handle the exception
+            print(f"An error occurred: {e}")
+            print('While processing', str(basename / "uploads" / fname))
 
 def deduplicate(**kw):
     dup, sep = "json_extract(data, '$.' || ?) = ?", " AND "

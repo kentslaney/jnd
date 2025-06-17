@@ -43,8 +43,8 @@ To add a new type of audio test do the following:
 1. Add a section to the [colab](https://colab.research.google.com/drive/1EOPHV74jawtxrZSQh94Dp5AFAGFt0Pkn?usp=sharing) to create the transcript for the new test data.
 1. Add new transcript to the `metadata` folder matching the path in the spec class below
 2. In `projects.py`, add a new spec, blueprint and database classes for the project
-3. In `api.py`, 
-    1. Add the database and blueprint class to the import at the top, 
+3. In `api.py`,
+    1. Add the database and blueprint class to the import at the top,
     2. Add the new database class to the `ExperimentDB` parents,
     3. Add the blueprint class name to the dictionary of `APIBlueprint.projects`
 4. To install a new test
@@ -58,7 +58,7 @@ To add a new type of audio test do the following:
 ## OAuth
 1) [login client](https://github.com/kentslaney/login/) (as a sibling to jnd):
 ```bash
-git clone git@github.com:kentslaney/login
+git clone https://github.com/kentslaney/login.git
 ```
 
 2) [Google OAuth credentials page](
