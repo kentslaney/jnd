@@ -1,7 +1,9 @@
 import csv
 from dataclasses import dataclass
 import json
+import matplotlib.pyplot as plt
 import numpy as np
+from numpy.typing import NDArray
 from typing import Dict, List, Optional, Union
 
 import sqlite3
@@ -244,3 +246,59 @@ def save_results_as_csv(all_results: List[QS_result],
           writer.writerow(row_data)
 
   print(f'Results written to {csv_file}')
+
+
+def accumulate_errors(sum: NDArray, human: ArrayLike, asr: ArrayLike) -> None:
+  assert sum.ndim == 2
+  assert sum.shape == (2, 2)
+  for h, a in zip(human, asr):
+    sum[int(h), int(a)] += 1
+
+# sum = np.zeros((2, 2), dtype=int)
+# accumulate_errors(sum, [True, False], [True, True])
+# sum
+
+
+def all_test_confusions(all_results: List[QS_result]) -> Dict[str, NDArray]:
+  """Create a dictionary of confusion matrices, one per test type.
+  Each confusion matrix is indexed by
+    human, asr
+  """
+  valid_subject_re = re.compile('A\d+S\d+')
+  all_confusions = {}
+  for r in all_results:
+    if valid_subject_re.match(r.user_name):
+      test_name = r.trials_project
+      if test_name not in all_confusions:
+        all_confusions[test_name] = np.zeros((2, 2), dtype=int)
+      accumulate_errors(all_confusions[test_name], r.annotation_matches, r.asr_matches)
+  return all_confusions
+
+# all_confusions = all_test_confusions(all_results)
+# all_confusions
+
+
+def plot_confusions(all_confusions: Dict[str, NDArray]):
+  centers = [0, 1]
+  for i, test_name in enumerate(all_confusions.keys()):
+    plt.subplot(2, 3, i+1)
+    confusions = all_confusions[test_name]
+    plt.imshow(confusions)
+    for human_match in [0, 1]:
+      for asr_match in [0, 1]:
+        plt.text(centers[human_match], centers[asr_match], 
+                confusions[human_match, asr_match],
+                ha="center", va="center", color="w")
+    plt.title(test_name)
+    if i == 0 or i == 3:
+      plt.ylabel('Human')
+      plt.yticks([0, 1], ['False', 'True'])
+    else:
+      plt.yticks([])
+    if i >= 3:
+      plt.xlabel('ASR')
+      plt.xticks([0, 1], ['False', 'True'])
+    else:
+      plt.xticks([])
+  plt.tight_layout()
+
