@@ -4,7 +4,7 @@ import json
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.typing import NDArray
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import sqlite3
 
@@ -118,7 +118,7 @@ def normalize_results(a_result: QS_result):
 
 
 def score_asr_system(a_result: QS_result,
-                     all_ground_truth: Dict[(str, int, int), str],
+                     all_ground_truth: Dict[Tuple[str, int, int], str],
                      debug: bool = False):
   # Score the ASR results, creating a list of true/false
   # ground_truth = all_keyword_dict[(a_result.trials_trial_number-1,
@@ -170,12 +170,12 @@ def score_matches(a_result: QS_result, debug: bool = False):
 
 
 
-def convert_sql_to_results(all_query_results):
+def convert_sql_to_results(all_query_results,
+                           all_ground_truth) -> List[QS_result]:
   #Convert the SQL database into a list of qs_result objects
   debug_test_count = {}
   all_results = []
   no_asr_results = 0
-  not_quick_tests = 0
   for db_result in all_query_results: # Iterate through SQL responses
     a_result = QS_result(*db_result)
     if a_result.asr_results is None:
@@ -199,14 +199,15 @@ def convert_sql_to_results(all_query_results):
         continue
       # if a_result.user_info_value != 'pilot':
       #   continue
-      score_asr_system(a_result, debug_test_count[test_name] < 3)
+      score_asr_system(a_result, all_ground_truth, 
+                       debug_test_count[test_name] < 3)
       score_matches(a_result, debug_test_count[test_name] < 3)
     all_results.append(a_result)
   return all_results
 
 
 def save_results_as_csv(all_results: List[QS_result],
-                        csv_file: str = 'quicksin_results.csv'):
+                        csv_file: str = 'quicksin_results.csv') -> str:
 
   # Define the header row based on the QS_result dataclass fields you want to include
   header = [
@@ -246,6 +247,7 @@ def save_results_as_csv(all_results: List[QS_result],
           writer.writerow(row_data)
 
   print(f'Results written to {csv_file}')
+  return csv_file
 
 
 def accumulate_errors(sum: NDArray, human: ArrayLike, asr: ArrayLike) -> None:
@@ -264,7 +266,7 @@ def all_test_confusions(all_results: List[QS_result]) -> Dict[str, NDArray]:
   Each confusion matrix is indexed by
     human, asr
   """
-  valid_subject_re = re.compile('A\d+S\d+')
+  valid_subject_re = re.compile('A\d+P\d+')
   all_confusions = {}
   for r in all_results:
     if valid_subject_re.match(r.user_name):
@@ -302,3 +304,79 @@ def plot_confusions(all_confusions: Dict[str, NDArray]):
       plt.xticks([])
   plt.tight_layout()
 
+
+def generate_html_report(all_results: List[QS_result],
+                         all_ground_truth: Dict[Tuple[str, int, int], str],
+                         max_number: int = 10000000000) -> str:
+  # Generate an HTML report of the inconsistencies
+  html_output = """
+  <!DOCTYPE html>
+  <html>
+  <head>
+  <title>QuickSIN ASR vs Audiologist Discrepancies</title>
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    th, td {
+      border: 1px solid #dddddd;
+      text-align: left;
+      padding: 8px;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    .discrepancy {
+      background-color: #ffcccc;
+    }
+  </style>
+  </head>
+  <body>
+
+  <h1>QuickSIN ASR vs Audiologist Discrepancies</h1>
+
+  <table>
+    <tr>
+      <th>Subject</th>
+      <th>Test Type</th>
+      <th>List Number</th>
+      <th>Sentence Number</th>
+      <th>Ground Truth</th>
+      <th>ASR Words</th>
+      <th>Audiologist Matches</th>
+      <th>ASR Matches</th>
+      <th>Discrepancy</th>
+      <th>Subject Audio</th>
+    </tr>
+  """
+
+  valid_subject_re = re.compile('A\d+P\d+')
+  for result in all_results[:max_number]:
+    if not valid_subject_re.match(result.user_name):
+      continue
+    # Check if there's any disagreement between audiology_asr_matches
+    if result.audiology_asr_matches is not None and False in result.audiology_asr_matches:
+      html_output += "<tr>"
+      html_output += f"<td>{result.user_name} {valid_subject_re.match(result.user_name)}</td>"
+      html_output += f"<td>{result.trials_project}</td>"
+      html_output += f"<td>{result.trials_trial_number}</td>"
+      html_output += f"<td>{result.trials_level_number}</td>"
+      # Display ground truth from all_ground_truth dictionary
+      ground_truth = all_ground_truth.get((result.trials_project, result.trials_trial_number, result.trials_level_number), ["N/A"])
+      html_output += f"<td>{', '.join(ground_truth)}</td>"
+      html_output += f"<td>{', '.join(result.asr_words) if result.asr_words else 'N/A'}</td>"
+      html_output += f"<td>{result.annotation_matches}</td>"
+      html_output += f"<td>{result.asr_matches}</td>"
+      html_output += f"<td>{result.audiology_asr_matches}</td>"
+      audio_url = f"https://quicksin.stanford.edu/uploads/{result.results_reply_filename}.mp4"
+      html_output += f'<td><audio controls> <source src={audio_url} type=audio/mp4>Your browser does not support the audio element.</audio></td>'
+      html_output += "</tr>"
+
+  html_output += """
+  </table>
+
+  </body>
+  </html>
+  """
+  return html_output
