@@ -3,7 +3,8 @@ from dataclasses import dataclass
 import json
 import matplotlib.pyplot as plt
 import numpy as np
-from numpy.typing import NDArray
+from numpy.typing import ArrayLike, NDArray
+import re
 from typing import Dict, List, Optional, Tuple, Union
 
 import sqlite3
@@ -266,14 +267,15 @@ def all_test_confusions(all_results: List[QS_result]) -> Dict[str, NDArray]:
   Each confusion matrix is indexed by
     human, asr
   """
-  valid_subject_re = re.compile('A\d+P\d+')
+  valid_subject_re = re.compile('A\d+[SP]\d+')
   all_confusions = {}
   for r in all_results:
     if valid_subject_re.match(r.user_name):
       test_name = r.trials_project
       if test_name not in all_confusions:
         all_confusions[test_name] = np.zeros((2, 2), dtype=int)
-      accumulate_errors(all_confusions[test_name], r.annotation_matches, r.asr_matches)
+      accumulate_errors(all_confusions[test_name],
+                        r.annotation_matches, r.asr_matches)
   return all_confusions
 
 # all_confusions = all_test_confusions(all_results)
@@ -307,7 +309,9 @@ def plot_confusions(all_confusions: Dict[str, NDArray]):
 
 def generate_html_report(all_results: List[QS_result],
                          all_ground_truth: Dict[Tuple[str, int, int], str],
-                         max_number: int = 10000000000) -> str:
+                         only_discrepancies: bool = True,
+                         filter_tests: List[str] = None,
+                         max_number: int = 10000000000) -> Tuple[str, int]:
   # Generate an HTML report of the inconsistencies
   html_output = """
   <!DOCTYPE html>
@@ -346,32 +350,42 @@ def generate_html_report(all_results: List[QS_result],
       <th>ASR Words</th>
       <th>Audiologist Matches</th>
       <th>ASR Matches</th>
-      <th>Discrepancy</th>
+      <th>Agree</th>
       <th>Subject Audio</th>
     </tr>
   """
 
-  valid_subject_re = re.compile('A\d+P\d+')
+  valid_subject_re = re.compile('A\d+[PS]\d+')
+  row_count = 0
   for result in all_results[:max_number]:
     if not valid_subject_re.match(result.user_name):
       continue
+    if filter_tests and result.trials_project not in filter_tests:
+      continue
     # Check if there's any disagreement between audiology_asr_matches
-    if result.audiology_asr_matches is not None and False in result.audiology_asr_matches:
-      html_output += "<tr>"
-      html_output += f"<td>{result.user_name} {valid_subject_re.match(result.user_name)}</td>"
-      html_output += f"<td>{result.trials_project}</td>"
-      html_output += f"<td>{result.trials_trial_number}</td>"
-      html_output += f"<td>{result.trials_level_number}</td>"
-      # Display ground truth from all_ground_truth dictionary
-      ground_truth = all_ground_truth.get((result.trials_project, result.trials_trial_number, result.trials_level_number), ["N/A"])
-      html_output += f"<td>{', '.join(ground_truth)}</td>"
-      html_output += f"<td>{', '.join(result.asr_words) if result.asr_words else 'N/A'}</td>"
-      html_output += f"<td>{result.annotation_matches}</td>"
-      html_output += f"<td>{result.asr_matches}</td>"
-      html_output += f"<td>{result.audiology_asr_matches}</td>"
-      audio_url = f"https://quicksin.stanford.edu/uploads/{result.results_reply_filename}.mp4"
-      html_output += f'<td><audio controls> <source src={audio_url} type=audio/mp4>Your browser does not support the audio element.</audio></td>'
-      html_output += "</tr>"
+    if only_discrepancies and result.annotation_matches == result.asr_matches:
+      continue
+    html_output += "<tr>"
+    html_output += f"<td>{result.user_name} {valid_subject_re.match(result.user_name)}</td>"
+    html_output += f"<td>{result.trials_project}</td>"
+    html_output += f"<td>{result.trials_trial_number}</td>"
+    html_output += f"<td>{result.trials_level_number}</td>"
+    # Display ground truth from all_ground_truth dictionary
+    ground_truth = all_ground_truth.get((result.trials_project, result.trials_trial_number, result.trials_level_number), ["N/A"])
+    html_output += f"<td>{', '.join(ground_truth)}</td>"
+    html_output += f"<td>{', '.join(result.asr_words) if result.asr_words else 'N/A'}</td>"
+    html_output += f"<td>{result.annotation_matches}</td>"
+    html_output += f"<td>{result.asr_matches}</td>"
+    # https://www.w3schools.com/charsets/ref_utf_dingbats.asp
+    if all(result.audiology_asr_matches):
+      html_output += "<td>&#9989;</td>" # a check mark
+    else:
+      html_output += "<td>&#10008;</td>" # heavy ballot x
+    # html_output += f"<td>{result.audiology_asr_matches}</td>"
+    audio_url = f"https://quicksin.stanford.edu/uploads/{result.results_reply_filename}.mp4"
+    html_output += f'<td><audio controls> <source src={audio_url} type=audio/mp4>Your browser does not support the audio element.</audio></td>'
+    html_output += "</tr>"
+    row_count += 1
 
   html_output += """
   </table>
@@ -379,4 +393,4 @@ def generate_html_report(all_results: List[QS_result],
   </body>
   </html>
   """
-  return html_output
+  return html_output, row_count
