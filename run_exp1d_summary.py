@@ -15,7 +15,9 @@ from absl import logging
 # Define command line flags
 FLAGS = flags.FLAGS
 flags.DEFINE_string('base_dir', 'exp1', 'Base directory containing the experiment folders.')
-flags.DEFINE_string('output_plot', 'summary_oov_plot.png', 'Filename to save the generated plot.')
+# Replace XXX wth test-type.
+flags.DEFINE_string('output_plot', 'summary_XXX_plot.png', 'Filename to save the generated plot.')
+flags.DEFINE_enum('test_type', {'forced', 'exact'}, 'forced', 'Type of test to summarize.')
 
 def parse_metrics(filepath):
     """Parses the last 8 lines of the file to find 'cnc' and 'win' values."""
@@ -50,7 +52,9 @@ def main(argv):
     del argv
 
     # Glob pattern to match files like exp1/exp1_forced_XXX_results/analysis.txt
-    search_pattern = os.path.join(FLAGS.base_dir, '*_forced_*_results', 'analysis.txt')
+    search_pattern = os.path.join(FLAGS.base_dir, 
+                                  f'*_{FLAGS.test_type}_*_results',
+                                  'analysis.txt')
     file_list = glob.glob(search_pattern)
     
     if not file_list:
@@ -60,8 +64,8 @@ def main(argv):
     data = []
 
     # Regex to extract the OOV penalty (XXX) from the directory name
-    # It looks for '_forced_', captures any integer (including negative), followed by '_results'
-    dir_regex = re.compile(r'_forced_(-?\d+)_results')
+    # It looks for '_{test_type}_', captures any integer (including negative), followed by '_results'
+    dir_regex = re.compile(rf'_{FLAGS.test_type}_(-?\d+)_results')
 
     for filepath in file_list:
         match = dir_regex.search(filepath)
@@ -106,8 +110,9 @@ def main(argv):
     
     # Save and optionally show the plot
     # plt.tight_layout()
-    plt.savefig(FLAGS.output_plot)
-    logging.info(f"Plot saved successfully to {FLAGS.output_plot}")
+    output_filename = FLAGS.output_plot.replace('XXX', FLAGS.test_type) 
+    plt.savefig(output_filename)
+    logging.info(f"Plot saved successfully to {output_filename}")
     plt.show()
 
 if __name__ == '__main__':
