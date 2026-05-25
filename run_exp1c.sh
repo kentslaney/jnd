@@ -1,3 +1,5 @@
+# Obsolete.. use exp1d.sh and exp1e.sh instead, which run the same experiment but with a range of OOV penalties.
+
 prompt=forced
 dbfile=experiments_exp1_${prompt}.db
 rm -f $dbfile

@@ -449,6 +449,11 @@ def update(con: sqlite3.Connection, rowid: int, res: dict):
     try:
         cur.execute(sql, (rowid, res_json))
         con.commit()
+        print(f'Updating audio_asr for ref {rowid} with ASR result {res_json}.')
+    except Exception as exc:
+        print(
+            f'Failed to update audio_asr for ref {rowid} with ASR result {res_json}: {exc}'
+        )
     finally:
         cur.close()
 

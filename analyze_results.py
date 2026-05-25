@@ -59,13 +59,22 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 import sqlite3
 
-
 def get_all_sql_data(database: str = 'experiments.db'):
   """Get all the test results from the database, joining all the tables."""
   con = sqlite3.connect(database)
   print(type(con))
   cur = con.cursor()
-  query = """SELECT * FROM audio_results
+  
+  # Explicitly listing columns prevents alignment issues when the schema changes
+  query = """
+    SELECT 
+      audio_results.id, audio_results.subject, audio_results.trial, audio_results.reply_filename, audio_results.t,
+      audio_trials.id, audio_trials.project, audio_trials.snr, audio_trials.lang, audio_trials.level_number, audio_trials.trial_number, audio_trials.filename, audio_trials.answer, audio_trials.active,
+      users.id, users.username, users.ip, users.t,
+      user_info.user, user_info.info_key, user_info.value, user_info.t,
+      audio_asr.ref, audio_asr.data,
+      audio_annotations.ref, audio_annotations.data
+    FROM audio_results
     LEFT JOIN audio_trials ON audio_results.trial=audio_trials.id
     LEFT JOIN users ON subject=users.id
     LEFT JOIN (select * from user_info where info_key='test-type' group by user)
@@ -488,6 +497,8 @@ def plot_confusions(all_confusions: Dict[str, NDArray]):
   """
   centers = [0, 1]
   for i, test_name in enumerate(all_confusions.keys()):
+    if i >= 6:
+      break
     plt.subplot(2, 3, i+1)
     confusions = all_confusions[test_name]
     plt.imshow(confusions)

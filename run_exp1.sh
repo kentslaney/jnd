@@ -21,7 +21,7 @@ for prompt in noprompt prompt; do
   fi
   dbfile=experiments_exp1_${prompt}.db
   rm -f $dbfile
-  cp experiments.db $dbfile
+  cp ../jnd.emily/experiments.db $dbfile
   chmod 644 $dbfile
 
   python migration.py --dbfile $dbfile

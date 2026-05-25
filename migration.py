@@ -20,11 +20,10 @@ WHAT THIS SCRIPT DOES:
 import sqlite3
 import os
 
-def migrate_database(db_file):
-    if not os.path.exists(db_file):
-        print(f"Error: Database file '{db_file}' not found.")
-        return
+import absl.flags as flags
+import absl.app as app
 
+def migrate_database(db_file):
     print(f"Connecting to {db_file}...")
     # Use a context manager for the connection to handle closing automatically
     with sqlite3.connect(db_file) as con:
@@ -61,7 +60,38 @@ def migrate_database(db_file):
             con.rollback()
             print(f"Migration failed with error: {e}")
 
+
+def add_asr_columns_if_needed(db_file):
+    # Use a context manager for the connection to handle closing automatically
+    with sqlite3.connect(db_file) as con:
+      cursor = con.cursor()
+      # 3. Ensure the new columns exist in the audio_asr table
+      new_columns = {
+          'gt_word_count': 'INTEGER',
+          'correct_word_count': 'INTEGER',
+          'asr_clean_tokens': 'TEXT'
+      }
+      
+      for col, col_type in new_columns.items():
+          try:
+              cursor.execute(f"ALTER TABLE audio_asr ADD COLUMN {col} {col_type};")
+              print(f"Added new column '{col}' to audio_asr table.")
+          except sqlite3.OperationalError:
+              # Column likely already exists, which is fine
+              pass
+      con.commit()
+
+flags.DEFINE_string('dbfile', 'experiments_malcolm.db', 'Path to the SQLite database file to migrate.')
+FLAGS = flags.FLAGS
+
+def main(*argv):
+    if len(argv) > 1:
+        print(f"Warning: Unused command line arguments: {argv[1:]}")
+    if not os.path.exists(FLAGS.dbfile):
+        print(f"Error: Database file '{FLAGS.dbfile}' not found.")
+        return
+    migrate_database(FLAGS.dbfile)
+    add_asr_columns_if_needed(FLAGS.dbfile)
+
 if __name__ == "__main__":
-    # Change this to your actual database filename
-    TARGET_DB = "experiments_malcolm.db" 
-    migrate_database(TARGET_DB)
+  app.run(main)
