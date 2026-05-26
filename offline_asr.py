@@ -499,7 +499,8 @@ def recognize_with_priming(audio_path: str,
         else:
           adjusted_result = asr_result
     finally:
-        os.remove(combined_path)
+        if os.path.exists(combined_path):
+          os.remove(combined_path)
     return adjusted_result
 
 

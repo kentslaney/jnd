@@ -1,3 +1,5 @@
+# Obsolete !!!   Replaced by score_and_report which also creates the necessary reports.
+
 """Automates the scoring of ASR (Automatic Speech Recognition) results for speech-in-noise trials.
 
 This script evaluates machine-transcribed speech against ground-truth answers stored

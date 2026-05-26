@@ -1,3 +1,5 @@
+# Obsolete !!!   Replaced by score_and_report which stores the results back into the database.
+
 ## Analyze results from all the online subject data, perform speech 
 ## recognition, and compare to audiologist judgements.
 

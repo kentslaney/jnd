@@ -9,6 +9,7 @@ secret_key_google_text_to_speech
 /experiments*
 /*.wav
 malcolm_notes.txt
+quicksin_results.csv
 exp*/
 
 # Python byte-compiled / optimized / DLL files

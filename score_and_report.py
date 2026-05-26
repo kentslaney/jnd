@@ -9,6 +9,10 @@ It performs two main actions:
 2. Compares the ASR matches against human audiologist judgements (audio_annotations)
    to generate a CSV export, confusion matrices, an HTML discrepancy report, and 
    a terminal summary.
+
+To measure coverage:
+  coverage run score_and_report_test.py
+  coverage report -m --include=score_and_report.py
 """
 
 import sqlite3
