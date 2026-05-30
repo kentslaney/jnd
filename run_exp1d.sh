@@ -2,7 +2,7 @@
 # This is for the single word projects.
 prompt=forced
 
-for oov in 1000 -10 100 0 10 ; do
+for oov in 100000 10000 1000 -10 100 0 10 ; do
   dbfile=experiments_exp1_${prompt}_${oov}.db
   rm -f $dbfile
   cp experiments.db $dbfile
