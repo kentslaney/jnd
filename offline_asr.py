@@ -49,23 +49,23 @@ flags.DEFINE_string(
 )
 
 try:
-  flags.DEFINE_enum(
-      'model',
-      'medium.en',
-      models,
-      'Which Whisper model size to use; see: https://github.com/openai/whisper#available-models-and-languages'
-  )
+    flags.DEFINE_enum(
+        'model',
+        'medium.en',
+        models,
+        'Which Whisper model size to use; see: https://github.com/openai/whisper#available-models-and-languages'
+    )
 except DuplicateFlagError:
-  pass # Flag was already defined by another module during pytest collection
+    pass # Flag was already defined by another module during pytest collection
 
 try:
-flags.DEFINE_string(
-      'dbfile',
-      'experiments_malcolm.db',
-      'Which SQLite3 database file to process.'
-  )
+    flags.DEFINE_string(
+          'dbfile',
+          'experiments_malcolm.db',
+          'Which SQLite3 database file to process.'
+      )
 except DuplicateFlagError:
-  pass # Flag was already defined by another module during pytest collection
+    pass # Flag was already defined by another module during pytest collection
 
 flags.DEFINE_string(
     'single_word_projects',
