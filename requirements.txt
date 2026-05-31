@@ -1,5 +1,5 @@
 Flask
-OpenAI-whisper
+openai-whisper
 #OpenAI-whisper @ git+https://github.com/openai/whisper.git
 matplotlib
 numpy
