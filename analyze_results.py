@@ -47,6 +47,7 @@ type like QuickSIN, AzBio, CNC, etc.)
 
 """
 from absl import app, flags
+from absl.flags import DuplicateFlagError # To handle potential flag redefinition during testing
 import csv
 from dataclasses import dataclass
 from datetime import datetime # Make sure this is at the top of your file
@@ -667,8 +668,11 @@ def generate_html_report(all_results: List[QS_result],
 FLAGS = flags.FLAGS
 
 # Define flags
-flags.DEFINE_string('dbfile', 'experiments_malcolm.db', 
-                    'Sqllite3 database to read the experients results.')
+try:
+  flags.DEFINE_string('dbfile', 'experiments_malcolm.db', 
+                      'Sqllite3 database to read the experients results.')
+except DuplicateFlagError:
+    pass # Flag was already defined by another module during pytest collection
 flags.DEFINE_string('homonyms', 'homonym_list.csv', 
                     'CSV file containing list of homonyms.')
 flags.DEFINE_string('discrepancies', 'asr_audiology_discrepancies.html', 

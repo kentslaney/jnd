@@ -5,7 +5,7 @@ Flask
 openai-whisper
 #OpenAI-whisper @ git+https://github.com/openai/whisper.git
 matplotlib
-numpy
+numpy<2
 scipy
 uWSGI
 pytest

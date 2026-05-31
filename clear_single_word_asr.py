@@ -60,6 +60,11 @@ def print_asr_data_counts(cursor: sqlite3.Cursor):
 FLAGS = flags.FLAGS
 flags.DEFINE_boolean('dry_run', True, 
                      'If True, prints rows that would be updated. If False, performs the actual update.')
+try:
+  flags.DEFINE_string('dbfile', 'experiments_malcolm.db', 
+                      'Path to the SQLite database file.')
+except flags.DuplicateFlagError:
+    pass # Flag was already defined by another module during pytest collection
 flags.DEFINE_string('dbfile', 'experiments_malcolm.db', 
                     'Path to the SQLite database file.')
 flags.DEFINE_string('word', '%', 
