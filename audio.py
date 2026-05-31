@@ -355,7 +355,7 @@ class AudioAnnotatedBP(AudioBP):
             json.loads(session.pop("requested", None))[0], None])
         return ""
 
-    def audio_effort(self, db):
+    def audio_effort(self, db, effort):
         if "user" not in session or "v" not in request.args:
             abort(400)
         try:

@@ -529,8 +529,6 @@ def process_audio_task(task: Tuple,
         A tuple containing the row ID, ASR result dictionary or None,
         and an optional error message.
     """
-    global worker_asr_engine
-    
     # SQL Result: audio_results.id, reply_filename, project, data, users.username
     rowid, fname, project, audio_asr_data, username, answer = task
     test_filename = audio_to_filename(fname, audiodir)
