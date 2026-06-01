@@ -2,7 +2,7 @@
 # This is for the single word projects.
 prompt=forced
 
-for oov in 100000000 1000000 100000 10000 1000 -10 100 0 10 ; do
+for oov in 1e11 100000000 1000000 100000 10000 1000 -10 100 0 10 ; do
   dbfile=experiments_exp1_${prompt}_${oov}.db
   dir=exp1/exp1_${prompt}_${oov}_results
   mkdir -p $dir
@@ -23,3 +23,4 @@ for oov in 100000000 1000000 100000 10000 1000 -10 100 0 10 ; do
 
   mv asr_audiology_discrepancies.html confusion_matrices.png quicksin_results.csv $dir/
 done
+python run_exp1d_analysis.py 
