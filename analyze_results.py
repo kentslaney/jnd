@@ -75,7 +75,7 @@ def get_all_sql_data(database: str = 'experiments.db'):
       audio_trials.id, audio_trials.project, audio_trials.snr, audio_trials.lang, audio_trials.level_number, audio_trials.trial_number, audio_trials.filename, audio_trials.answer, audio_trials.active,
       users.id, users.username, users.ip, users.t,
       user_info.user, user_info.info_key, user_info.value, user_info.t,
-      audio_asr.ref, audio_asr.data,
+      audio_asr.ref, audio_asr.data, audio_asr.gt_word_count, audio_asr.correct_word_count, audio_asr.asr_clean_tokens
       audio_annotations.ref, audio_annotations.data
     FROM audio_results
     LEFT JOIN audio_trials ON audio_results.trial=audio_trials.id
