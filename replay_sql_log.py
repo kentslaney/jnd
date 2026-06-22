@@ -12,6 +12,7 @@ SQLite database. It ignores lines that cannot be parsed.
 
 import argparse
 import json
+import re
 import sqlite3
 from pathlib import Path
 
@@ -29,6 +30,11 @@ def parse_args():
         help="Path to the SQLite database file to rebuild or update.",
     )
     parser.add_argument(
+        "--schema",
+        default="schema.sql",
+        help="Path to the SQL schema that structures the database (default: schema.sql).",
+    )
+    parser.add_argument(
         "--skip-invalid",
         action="store_true",
         help="Skip malformed log entries instead of stopping.",
@@ -36,11 +42,24 @@ def parse_args():
     return parser.parse_args()
 
 
-def replay_log(log_path: Path, db_path: Path, skip_invalid: bool = False):
+def ensure_schema(con: sqlite3.Connection, schema_path: Path) -> None:
+    """Match database to schema file"""
+    if not schema_path.exists():
+        raise FileNotFoundError(f"Schema file not found: {schema_path}")
+
+    sql = schema_path.read_text(encoding="utf-8")
+    # create nonexistent tables
+    sql = re.sub(r"CREATE TABLE\b", "CREATE TABLE IF NOT EXISTS", sql, flags=re.IGNORECASE)
+    # create nonexistent index
+    sql = re.sub(r"CREATE (UNIQUE )?INDEX\b", r"CREATE \1INDEX IF NOT EXISTS", sql, flags=re.IGNORECASE)
+    con.executescript(sql)
+
+def replay_log(log_path: Path, db_path: Path, schema_path: Path = Path("schema.sql"), skip_invalid: bool = False):
     if not log_path.exists():
         raise FileNotFoundError(f"Log file not found: {log_path}")
 
     with sqlite3.connect(db_path) as con:
+        ensure_schema(con, schema_path)
         cur = con.cursor()
         with log_path.open("r", encoding="utf-8") as f:
             for line_number, raw_line in enumerate(f, start=1):
@@ -97,7 +116,7 @@ def replay_log(log_path: Path, db_path: Path, skip_invalid: bool = False):
 
 def main():
     args = parse_args()
-    replay_log(Path(args.log_file), Path(args.db_file), skip_invalid=args.skip_invalid)
+    replay_log(Path(args.log_file), Path(args.db_file), schema_path=Path(args.schema), skip_invalid=args.skip_invalid)
 
 
 if __name__ == "__main__":
