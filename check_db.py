@@ -8,7 +8,18 @@ import json
 import os
 import sqlite3
 
-DB_PATH = "experiments_malcolm.db"
+from absl import app
+from absl import flags
+
+FLAGS = flags.FLAGS
+try:
+    flags.DEFINE_string(
+        "dbfile",
+        "experiments_malcolm.db",
+        "Path to the SQLite database file.",
+    )
+except flags.DuplicateFlagError:
+    pass
 
 TABLES_TO_CHECK = [
     "users",
@@ -178,5 +189,10 @@ def verify(db_path=DB_PATH):
             print("\nNo audio_asr rows found.")
 
 
+def main(argv):
+    del argv
+    verify(FLAGS.dbfile)
+
+
 if __name__ == "__main__":
-    verify()
+    app.run(main)
