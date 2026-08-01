@@ -1,13 +1,44 @@
+# Databases
+*.db
+*.dba
+
+# Keys and configuration
+secret_key_google_text_to_speech
+
+# Audio outputs and junk
+*.wav
+*.mp3
+junk
+*.save
+
+# Plots and experiment output
+*.png
+exp1/
+
+
 nohup.out
 /secret_key
+secret_key_google_text_to_speech
 /static/audio
-/experiments.db
+/*.db
+/*.html
 /uploads
+/junk*
+/experiments*
+/*.wav
+malcolm_notes.txt
+quicksin_results.csv
+exp*/
+/test_config.py
+/output.mp3
+/output.wav
+/consent_form_uploads
 
 # Python byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+.DS_Store
 
 # Python environments
 .env

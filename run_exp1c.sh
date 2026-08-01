@@ -1,0 +1,21 @@
+# Obsolete.. use exp1d.sh and exp1e.sh instead, which run the same experiment but with a range of OOV penalties.
+
+prompt=forced
+dbfile=experiments_exp1_${prompt}.db
+rm -f $dbfile
+cp experiments.db $dbfile
+chmod 644 $dbfile
+
+dir=exp1/exp1_${prompt}_results
+
+python migration.py --dbfile $dbfile
+python clear_single_word_asr.py --dbfile $dbfile --nodry_run
+python offline_asr.py --dbfile $dbfile --single_word_projects="$project_list" \
+  --num_workers 6 --use_forced --valid_words valid_words.json --oov_penalty 10.0  --debug > $dir/offline_asr.log
+
+# Now that we have the ASR results, run the analysis and save the results.
+for prompt in forced; do
+  mkdir -p $dir
+  python analyze_results.py --dbfile experiments_exp1_${prompt}.db --debug_count=100000 > $dir/analysis.txt
+  mv asr_audiology_discrepancies.html confusion_matrices.png quicksin_results.csv $dir/
+done

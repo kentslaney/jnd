@@ -11,7 +11,8 @@ class AudioDB(Database):
     csv_keys = (
         "active", "lang", "trial_number", "level_number", "filename", "answer")
     id_keys = {"lang", "trial_number", "level_number"}
-    upserting = False
+    # insert or replace in the database without wiping
+    upserting = True
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
@@ -174,7 +175,7 @@ class AudioBP(DatabaseBP):
         def wrapped(dump=False):
             if dump:
                 return (db, rowid, fpath, answer)
-            reply = self.asr(fpath, answer)
+            reply = self.asr.recognize(fpath, answer)
             db.execute(
                 f"INSERT INTO {self.asr_table} (ref, data) VALUES (?, ?)",
                 (rowid, json.dumps(reply)))
@@ -354,7 +355,7 @@ class AudioAnnotatedBP(AudioBP):
             json.loads(session.pop("requested", None))[0], None])
         return ""
 
-    def audio_effort(self, db):
+    def audio_effort(self, db, effort):
         if "user" not in session or "v" not in request.args:
             abort(400)
         try:
@@ -397,7 +398,7 @@ class AudioWhisperBP(AudioNormalizedBP):
         self.whisper_asr = WhisperASR()
 
     def asr(self, path, answer):
-        return self.whisper_asr(path)
+        return self.whisper_asr.recognize(path)
 
 class AudioPromptedWhisperBP(AudioNormalizedBP):
     def __init__(self, *a, **kw):
@@ -406,7 +407,7 @@ class AudioPromptedWhisperBP(AudioNormalizedBP):
         self.prompted_whisper_asr = PromptedWhisperASR()
 
     def asr(self, path, answer):
-        return self.prompted_whisper_asr(
+        return self.prompted_whisper_asr.recognize(
             path, answer.replace("/", " "))
 
 # class AudioResultsBP(AudioWhisperBP):
@@ -443,7 +444,7 @@ class AudioConferenceBP(AudioWhisperBP, AudioResultsBP):
         def wrapped(dump=False):
             if dump:
                 return (db, rowid, fpath, answer)
-            reply = self.asr(fpath, answer)
+            reply = self.asr.recognize(fpath, answer)
             db.execute(
                 f"INSERT INTO {self.asr_table} (ref, data) VALUES (?, ?)",
                 (rowid, json.dumps(reply)))
